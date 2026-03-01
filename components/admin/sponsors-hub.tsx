@@ -370,7 +370,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                       <div className="flex items-center gap-3">
                         <p className="text-sm font-medium">{c.name}</p>
                         <span className="text-xs text-muted-foreground">
-                          {userCount} {userCount === 1 ? 'frilansare' : 'frilansare'}
+                          {userCount} {t('freelancers')}
                         </span>
                         {sponsor ? (
                           <Badge variant="default" className="text-[10px]">
@@ -433,7 +433,9 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                           <Badge variant="secondary" className="text-[10px]">
                             {s.category_name}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">{reach} frilansare</span>
+                          <span className="text-xs text-muted-foreground">
+                            {reach} {t('freelancers')}
+                          </span>
                           {!s.active && (
                             <Badge variant="destructive" className="text-[10px]">
                               {t('inactive')}
@@ -599,9 +601,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
               {targetingView === 'analyze' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      {t('analyzeTextDescription') || 'Match free-text entries to categories using AI'}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t('analyzeTextDescription')}</p>
                     <Button size="sm" variant="outline" onClick={handleAnalyze} disabled={analyzing}>
                       {analyzing ? (
                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -628,7 +628,6 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                             <div key={i} className="flex items-center gap-3 px-3 py-2 border-t text-xs">
                               <Checkbox
                                 checked={r.selected}
-                                disabled={!r.category_id}
                                 onCheckedChange={(checked) => {
                                   setAnalysisResults((prev) =>
                                     prev.map((item) =>
