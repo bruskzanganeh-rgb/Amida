@@ -757,6 +757,7 @@
     "loginButton": "Log in",
     "noAccount": "No account?",
     "createAccount": "Create account",
+    "acceptTerms": "I accept the <terms>terms of service</terms> and <privacy>privacy policy</privacy>",
     "wrongCredentials": "Wrong email or password",
     "signup": "Create account",
     "signupSubtitle": "Get started with Amida",

@@ -757,6 +757,7 @@
     "loginButton": "Logga in",
     "noAccount": "Inget konto?",
     "createAccount": "Skapa konto",
+    "acceptTerms": "Jag godkänner <terms>villkoren</terms> och <privacy>integritetspolicyn</privacy>",
     "wrongCredentials": "Fel e-post eller lösenord",
     "signup": "Skapa konto",
     "signupSubtitle": "Kom igång med Amida",

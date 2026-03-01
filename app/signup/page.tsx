@@ -21,6 +21,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -86,13 +87,7 @@ export default function SignupPage() {
       <div className="dark min-h-screen flex items-center justify-center bg-[#0B1E3A] p-4">
         <Card className="w-full max-w-md bg-[#102544] border-[#1a3a5c]">
           <CardHeader className="text-center">
-            <Image
-              src="/logo.png"
-              alt="Amida"
-              width={64}
-              height={64}
-              className="mx-auto mb-4 rounded-xl"
-            />
+            <Image src="/logo.png" alt="Amida" width={64} height={64} className="mx-auto mb-4 rounded-xl" />
             <CardTitle>{t('checkEmail')}</CardTitle>
             <CardDescription>
               {t.rich('confirmationSent', {
@@ -117,23 +112,13 @@ export default function SignupPage() {
     <div className="dark min-h-screen flex items-center justify-center bg-[#0B1E3A] p-4">
       <Card className="w-full max-w-md bg-[#102544] border-[#1a3a5c]">
         <CardHeader className="text-center">
-          <Image
-            src="/logo.png"
-            alt="Amida"
-            width={64}
-            height={64}
-            className="mx-auto mb-4"
-          />
+          <Image src="/logo.png" alt="Amida" width={64} height={64} className="mx-auto mb-4" />
           <CardTitle className="text-2xl">{t('signup')}</CardTitle>
           <CardDescription>{t('signupFree')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-400 bg-red-950/50 rounded-lg">
-                {error}
-              </div>
-            )}
+            {error && <div className="p-3 text-sm text-red-400 bg-red-950/50 rounded-lg">{error}</div>}
             <div className="space-y-2">
               <Label htmlFor="invitationCode">{t('invitationCode')}</Label>
               <Input
@@ -178,7 +163,29 @@ export default function SignupPage() {
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-input accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">
+                {t.rich('acceptTerms', {
+                  terms: (chunks) => (
+                    <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                      {chunks}
+                    </Link>
+                  ),
+                  privacy: (chunks) => (
+                    <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </span>
+            </label>
+            <Button type="submit" className="w-full" disabled={loading || !termsAccepted}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('createAccount')}
             </Button>
