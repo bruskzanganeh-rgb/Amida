@@ -237,6 +237,7 @@ export default function GigsPage() {
   const [upcomingSort, setUpcomingSort] = useState<SortConfig>({ column: 'date', direction: 'asc' })
   const [historySort, setHistorySort] = useState<SortConfig>({ column: 'date', direction: 'desc' })
   const [declinedSort, setDeclinedSort] = useState<SortConfig>({ column: 'date', direction: 'desc' })
+  const [mobileLimit, setMobileLimit] = useState({ upcoming: 20, history: 20, declined: 20 })
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesText, setNotesText] = useState('')
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
@@ -873,8 +874,8 @@ export default function GigsPage() {
                     ) : (
                       <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                         {/* Mobile card view */}
-                        <div className="lg:hidden space-y-2 max-h-[calc(100vh-13rem)] overflow-auto">
-                          {sortedUpcoming.map((gig) => {
+                        <div className="lg:hidden space-y-2">
+                          {sortedUpcoming.slice(0, mobileLimit.upcoming).map((gig) => {
                             const StatusIcon = statusConfig[gig.status as keyof typeof statusConfig]?.icon
                             return (
                               <div
@@ -918,6 +919,15 @@ export default function GigsPage() {
                               </div>
                             )
                           })}
+                          {sortedUpcoming.length > mobileLimit.upcoming && (
+                            <Button
+                              variant="ghost"
+                              className="w-full mt-2 text-sm text-muted-foreground"
+                              onClick={() => setMobileLimit((prev) => ({ ...prev, upcoming: prev.upcoming + 20 }))}
+                            >
+                              {t('showMore', { count: sortedUpcoming.length - mobileLimit.upcoming })}
+                            </Button>
+                          )}
                         </div>
 
                         {/* Desktop table view */}
@@ -1229,8 +1239,8 @@ export default function GigsPage() {
                     ) : (
                       <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                         {/* Mobile card view */}
-                        <div className="lg:hidden space-y-2 max-h-[calc(100vh-13rem)] overflow-auto">
-                          {sortedHistory.map((gig) => {
+                        <div className="lg:hidden space-y-2">
+                          {sortedHistory.slice(0, mobileLimit.history).map((gig) => {
                             const StatusIcon = statusConfig[gig.status as keyof typeof statusConfig]?.icon
                             return (
                               <div
@@ -1271,6 +1281,15 @@ export default function GigsPage() {
                               </div>
                             )
                           })}
+                          {sortedHistory.length > mobileLimit.history && (
+                            <Button
+                              variant="ghost"
+                              className="w-full mt-2 text-sm text-muted-foreground"
+                              onClick={() => setMobileLimit((prev) => ({ ...prev, history: prev.history + 20 }))}
+                            >
+                              {t('showMore', { count: sortedHistory.length - mobileLimit.history })}
+                            </Button>
+                          )}
                         </div>
 
                         {/* Desktop table view */}
@@ -1518,8 +1537,8 @@ export default function GigsPage() {
                     ) : (
                       <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                         {/* Mobile card view */}
-                        <div className="lg:hidden space-y-2 max-h-[calc(100vh-13rem)] overflow-auto">
-                          {sortedDeclined.map((gig) => {
+                        <div className="lg:hidden space-y-2">
+                          {sortedDeclined.slice(0, mobileLimit.declined).map((gig) => {
                             const StatusIcon = statusConfig[gig.status as keyof typeof statusConfig]?.icon
                             return (
                               <div
@@ -1560,6 +1579,15 @@ export default function GigsPage() {
                               </div>
                             )
                           })}
+                          {sortedDeclined.length > mobileLimit.declined && (
+                            <Button
+                              variant="ghost"
+                              className="w-full mt-2 text-sm text-muted-foreground"
+                              onClick={() => setMobileLimit((prev) => ({ ...prev, declined: prev.declined + 20 }))}
+                            >
+                              {t('showMore', { count: sortedDeclined.length - mobileLimit.declined })}
+                            </Button>
+                          )}
                         </div>
 
                         {/* Desktop table view */}

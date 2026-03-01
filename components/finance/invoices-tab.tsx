@@ -142,6 +142,7 @@ export default function InvoicesTab() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
   const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
+  const [mobileInvoiceLimit, setMobileInvoiceLimit] = useState(20)
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showScrollHint, setShowScrollHint] = useState(true)
@@ -643,8 +644,8 @@ export default function InvoicesTab() {
               ) : (
                 <>
                   {/* Mobile card view */}
-                  <div className="lg:hidden space-y-2 max-h-[calc(100vh-13rem)] overflow-auto">
-                    {invoices.map((invoice) => (
+                  <div className="lg:hidden space-y-2">
+                    {invoices.slice(0, mobileInvoiceLimit).map((invoice) => (
                       <div
                         key={invoice.id}
                         className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
@@ -732,6 +733,15 @@ export default function InvoicesTab() {
                         </div>
                       </div>
                     ))}
+                    {invoices.length > mobileInvoiceLimit && (
+                      <Button
+                        variant="ghost"
+                        className="w-full mt-2 text-sm text-muted-foreground"
+                        onClick={() => setMobileInvoiceLimit((prev) => prev + 20)}
+                      >
+                        {t('showMore', { count: invoices.length - mobileInvoiceLimit })}
+                      </Button>
+                    )}
                   </div>
 
                   {/* Desktop table view */}

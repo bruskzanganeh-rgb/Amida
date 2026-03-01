@@ -94,6 +94,7 @@
     "needsAction": "Needs action",
     "needsActionCount": "Needs action ({count})",
     "markCompleted": "Mark completed",
+    "showMore": "Show more ({count} remaining)",
     "markAllCompleted": "Mark all completed ({count})",
     "batchCompleteConfirmTitle": "Mark all as completed",
     "batchCompleteConfirmDescription": "Mark {count} gigs as completed. Continue?",
@@ -182,6 +183,7 @@
   "invoice": {
     "invoice": "Invoice",
     "invoices": "Invoices",
+    "showMore": "Show more ({count} remaining)",
     "newInvoice": "New invoice",
     "createInvoice": "Create invoice",
     "invoiceNumber": "Invoice number",

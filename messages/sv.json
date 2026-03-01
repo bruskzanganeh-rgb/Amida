@@ -94,6 +94,7 @@
     "needsAction": "Behöver åtgärd",
     "needsActionCount": "Behöver åtgärd ({count})",
     "markCompleted": "Markera genomfört",
+    "showMore": "Visa fler ({count} till)",
     "markAllCompleted": "Markera alla genomförda ({count})",
     "batchCompleteConfirmTitle": "Markera alla som genomförda",
     "batchCompleteConfirmDescription": "Markera {count} uppdrag som genomförda. Vill du fortsätta?",
@@ -182,6 +183,7 @@
   "invoice": {
     "invoice": "Faktura",
     "invoices": "Fakturor",
+    "showMore": "Visa fler ({count} till)",
     "newInvoice": "Ny faktura",
     "createInvoice": "Skapa faktura",
     "invoiceNumber": "Fakturanummer",
