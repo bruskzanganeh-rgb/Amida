@@ -19,11 +19,8 @@ export function BottomNav() {
   const actionCount = useActionCount()
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div className="flex h-16 items-center justify-around px-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe md:hidden">
+      <div className="flex h-[72px] items-center justify-around px-1">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const showBadge = item.nameKey === 'finance' && actionCount > 0
@@ -39,7 +36,7 @@ export function BottomNav() {
             >
               <item.icon className="h-6 w-6" />
               {showBadge && (
-                <span className="absolute top-1.5 left-1/2 ml-2 flex items-center justify-center min-w-[16px] h-[16px] rounded-full bg-destructive text-white text-[10px] font-bold leading-none px-1">
+                <span className="absolute top-2 left-1/2 ml-2 flex items-center justify-center min-w-[16px] h-[16px] rounded-full bg-destructive text-white text-[10px] font-bold leading-none px-1">
                   {actionCount > 9 ? '9+' : actionCount}
                 </span>
               )}
