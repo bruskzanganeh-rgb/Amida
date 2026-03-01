@@ -1,24 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-import { Menu, User, Users } from 'lucide-react'
+import { User, Users } from 'lucide-react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { navigationItems } from './nav-items'
 import { UserMenu } from './user-menu'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
-import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useActionCount } from '@/lib/hooks/use-action-count'
 
 export function Header() {
   const pathname = usePathname()
   const t = useTranslations('nav')
-  const [mobileOpen, setMobileOpen] = useState(false)
   const { isSharedMode, showOnlyMine, toggleShowOnlyMine } = useGigFilter()
+  const actionCount = useActionCount()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -30,44 +29,8 @@ export function Header() {
       style={{ backgroundColor: '#0B1E3A', borderColor: '#102544' }}
     >
       <div className="flex h-11 items-center gap-3 px-4 md:px-6">
-        {/* Mobile: hamburger (left) */}
-        <div className="md:hidden">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-white/10" style={{ color: '#ffffff' }}>
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">{t('menu')}</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
-              <SheetHeader className="px-6 py-4 border-b">
-                <SheetTitle className="text-left">Amida</SheetTitle>
-              </SheetHeader>
-
-              <nav className="flex-1 space-y-1 px-3 py-4">
-                {navigationItems.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                  return (
-                    <Link
-                      key={item.nameKey}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-accent text-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                      )}
-                    >
-                      <item.icon className={cn('h-5 w-5', isActive && 'text-primary')} />
-                      {t(item.nameKey)}
-                    </Link>
-                  )
-                })}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
+        {/* Spacer for mobile (logo centered) */}
+        <div className="md:hidden" />
 
         {/* Logo */}
         <Link href="/dashboard" className="mr-4 flex items-center gap-2 shrink-0">
@@ -91,7 +54,14 @@ export function Header() {
                 )}
                 style={{ color: isActive ? '#ffffff' : '#94a3b8' }}
               >
-                <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: isActive ? '#F59E0B' : undefined }} />
+                <span className="relative">
+                  <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: isActive ? '#F59E0B' : undefined }} />
+                  {item.nameKey === 'dashboard' && actionCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-destructive text-white text-[9px] font-bold leading-none px-0.5">
+                      {actionCount > 9 ? '9+' : actionCount}
+                    </span>
+                  )}
+                </span>
                 <span className="hidden lg:inline">{t(item.nameKey)}</span>
                 {isActive && (
                   <motion.div
