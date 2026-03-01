@@ -8,15 +8,24 @@ const anthropic = new Anthropic({
 
 // Schema for a single session within a day (lenient — AI may return nulls)
 const RawSessionSchema = z.object({
-  start: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  end: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  label: z.string().optional(),
+  start: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  end: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  label: z.string().nullable().optional(),
 })
 
 export const SessionSchema = z.object({
   start: z.string().regex(/^\d{2}:\d{2}$/),
-  end: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  label: z.string().optional(),
+  end: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  label: z.string().nullable().optional(),
 })
 
 export type Session = z.infer<typeof SessionSchema>
@@ -126,16 +135,14 @@ function cleanJsonResponse(text: string): string {
  */
 export async function parseScheduleTexts(
   entries: { date: string; text: string }[],
-  userId?: string
+  userId?: string,
 ): Promise<Record<string, Session[]>> {
   if (entries.length === 0) return {}
 
   try {
     const model = 'claude-haiku-4-5-20251001'
 
-    const userContent = entries
-      .map(e => `${e.date}: ${e.text}`)
-      .join('\n')
+    const userContent = entries.map((e) => `${e.date}: ${e.text}`).join('\n')
 
     const message = await anthropic.messages.create({
       model,
@@ -158,9 +165,7 @@ export async function parseScheduleTexts(
       userId,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('Inget svar från Claude')
@@ -174,9 +179,7 @@ export async function parseScheduleTexts(
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
     }
-    throw new Error(
-      `Kunde inte tolka schema: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte tolka schema: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
@@ -186,7 +189,7 @@ export async function parseScheduleTexts(
 export async function parseScheduleWithVision(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  userId?: string
+  userId?: string,
 ): Promise<ScannedScheduleData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
@@ -224,9 +227,7 @@ export async function parseScheduleWithVision(
       userId,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('Inget svar från Claude')
@@ -243,9 +244,7 @@ export async function parseScheduleWithVision(
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
     }
-    throw new Error(
-      `Kunde inte läsa schema: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte läsa schema: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
@@ -253,10 +252,7 @@ export async function parseScheduleWithVision(
  * Scan a schedule PDF by sending it directly to Claude's API.
  * Uses the document content type — no local PDF rendering needed.
  */
-export async function parseScheduleWithPdf(
-  pdfBase64: string,
-  userId?: string
-): Promise<ScannedScheduleData> {
+export async function parseScheduleWithPdf(pdfBase64: string, userId?: string): Promise<ScannedScheduleData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
     const message = await anthropic.messages.create({
@@ -293,9 +289,7 @@ export async function parseScheduleWithPdf(
       userId,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('Inget svar från Claude')
@@ -312,9 +306,7 @@ export async function parseScheduleWithPdf(
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
     }
-    throw new Error(
-      `Kunde inte läsa schema: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte läsa schema: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
@@ -324,7 +316,7 @@ export async function parseScheduleWithPdf(
  */
 export function sessionsToText(sessions: Session[]): string {
   return sessions
-    .map(s => {
+    .map((s) => {
       const label = s.label ? `${s.label.toLowerCase()} ` : ''
       const time = s.end ? `${s.start}-${s.end}` : s.start
       return `${label}${time}`
