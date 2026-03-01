@@ -11,9 +11,11 @@ import { PageTransition } from '@/components/ui/page-transition'
 import dynamic from 'next/dynamic'
 
 const CalendarTab = dynamic(() => import('@/components/calendar/calendar-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const AvailabilityTab = dynamic(() => import('@/components/calendar/availability-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 

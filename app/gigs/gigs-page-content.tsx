@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Suspense } from 'react'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
@@ -6,6 +6,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 import dynamic from 'next/dynamic'
 
 const GigsTab = dynamic(() => import('@/components/gigs/gigs-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 

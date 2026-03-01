@@ -13,9 +13,11 @@ import { PageTransition } from '@/components/ui/page-transition'
 import dynamic from 'next/dynamic'
 
 const ExpensesTab = dynamic(() => import('@/components/finance/expenses-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const ImportTab = dynamic(() => import('@/components/finance/import-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 

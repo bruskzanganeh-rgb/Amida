@@ -13,19 +13,23 @@ import { PageTransition } from '@/components/ui/page-transition'
 import dynamic from 'next/dynamic'
 
 const InvoicesTab = dynamic(() => import('@/components/finance/invoices-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const AnalyticsContent = dynamic(
   () => import('@/components/analytics/analytics-content').then((mod) => ({ default: mod.AnalyticsContent })),
-  { loading: () => <TabSkeleton /> },
+  { ssr: false, loading: () => <TabSkeleton /> },
 )
 const GigTypesTab = dynamic(() => import('@/components/settings/gig-types-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const PositionsTab = dynamic(() => import('@/components/settings/positions-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const ClientsTab = dynamic(() => import('@/components/settings/clients-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 

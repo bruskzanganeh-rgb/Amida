@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { PageTransition } from '@/components/ui/page-transition'
 import {
   Shield,
   Award,
@@ -30,18 +32,6 @@ import { SessionsTab } from '@/components/admin/sessions-tab'
 import { StripeTab } from '@/components/admin/stripe-tab'
 import { InvitationsTab } from '@/components/admin/invitations-tab'
 import { ContractsTab } from '@/components/admin/contracts-tab'
-
-type AdminTab =
-  | 'organizations'
-  | 'sponsors'
-  | 'categories'
-  | 'stats'
-  | 'stripe'
-  | 'audit'
-  | 'sessions'
-  | 'invitations'
-  | 'contracts'
-  | 'config'
 
 type User = {
   user_id: string
@@ -120,9 +110,18 @@ export default function AdminPage() {
 
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<AdminTab>('organizations')
+  const searchParams = useSearchParams()
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+
+  const currentTab = searchParams.get('tab') || 'organizations'
+
+  function handleTabChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', value)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   // Data
   const [users, setUsers] = useState<User[]>([])
@@ -276,7 +275,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -285,72 +284,103 @@ export default function AdminPage() {
 
   if (!isAdmin) return null
 
-  const tabs = [
-    { key: 'organizations' as const, label: t('companies'), icon: Building2 },
-    { key: 'sponsors' as const, label: t('sponsors'), icon: Award },
-    { key: 'categories' as const, label: t('categories'), icon: Music },
-    { key: 'stats' as const, label: t('statistics'), icon: TrendingUp },
-    { key: 'stripe' as const, label: t('stripe'), icon: CreditCard },
-    { key: 'audit' as const, label: t('audit'), icon: ScrollText },
-    { key: 'sessions' as const, label: t('sessions'), icon: Activity },
-    { key: 'invitations' as const, label: t('invitations'), icon: Ticket },
-    { key: 'contracts' as const, label: 'Contracts', icon: PenLine },
-    { key: 'config' as const, label: t('config'), icon: Settings },
-  ]
-
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
-      <div className="flex items-center gap-3">
-        <Shield className="h-8 w-8 text-red-600" />
-        <div>
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
+    <PageTransition>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Shield className="h-6 w-6 text-red-600" />
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold">{t('title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
+          </div>
         </div>
-      </div>
 
-      {/* Tab buttons */}
-      <div className="flex gap-2 border-b pb-2 overflow-x-auto">
-        {tabs.map((tabItem) => (
-          <button
-            key={tabItem.key}
-            onClick={() => setTab(tabItem.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-              tab === tabItem.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
-            }`}
-          >
-            <tabItem.icon className="h-4 w-4" />
-            {tabItem.label}
-          </button>
-        ))}
-      </div>
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="organizations" className="gap-1.5">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('companies')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="sponsors" className="gap-1.5">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('sponsors')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-1.5">
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('categories')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="gap-1.5">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('statistics')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="stripe" className="gap-1.5">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('stripe')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-1.5">
+              <ScrollText className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('audit')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="gap-1.5">
+              <Activity className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('sessions')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-1.5">
+              <Ticket className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('invitations')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="contracts" className="gap-1.5">
+              <PenLine className="h-4 w-4" />
+              <span className="hidden sm:inline">Contracts</span>
+            </TabsTrigger>
+            <TabsTrigger value="config" className="gap-1.5">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('config')}</span>
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Tab content */}
-      {tab === 'organizations' && <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} />}
-      {tab === 'sponsors' && (
-        <SponsorsTab
-          sponsors={sponsors}
-          setSponsors={setSponsors}
-          categories={categories}
-          onReload={() => loadData()}
-        />
-      )}
-      {tab === 'categories' && (
-        <CategoriesTab categories={categories} setCategories={setCategories} onReload={() => loadData()} />
-      )}
-      {tab === 'stats' && <StatsTab stats={stats} />}
-      {tab === 'stripe' && <StripeTab data={stripeData} />}
-      {tab === 'audit' && <AuditTab users={users} />}
-      {tab === 'sessions' && <SessionsTab users={users} />}
-      {tab === 'invitations' && <InvitationsTab />}
-      {tab === 'contracts' && <ContractsTab />}
-      {tab === 'config' && (
-        <ConfigTab
-          configValues={configValues}
-          setConfigValues={setConfigValues}
-          savingConfig={savingConfig}
-          onSave={handleSaveConfig}
-        />
-      )}
-    </div>
+          <TabsContent value="organizations" className="mt-4">
+            <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} />
+          </TabsContent>
+          <TabsContent value="sponsors" className="mt-4">
+            <SponsorsTab
+              sponsors={sponsors}
+              setSponsors={setSponsors}
+              categories={categories}
+              onReload={() => loadData()}
+            />
+          </TabsContent>
+          <TabsContent value="categories" className="mt-4">
+            <CategoriesTab categories={categories} setCategories={setCategories} onReload={() => loadData()} />
+          </TabsContent>
+          <TabsContent value="stats" className="mt-4">
+            <StatsTab stats={stats} />
+          </TabsContent>
+          <TabsContent value="stripe" className="mt-4">
+            <StripeTab data={stripeData} />
+          </TabsContent>
+          <TabsContent value="audit" className="mt-4">
+            <AuditTab users={users} />
+          </TabsContent>
+          <TabsContent value="sessions" className="mt-4">
+            <SessionsTab users={users} />
+          </TabsContent>
+          <TabsContent value="invitations" className="mt-4">
+            <InvitationsTab />
+          </TabsContent>
+          <TabsContent value="contracts" className="mt-4">
+            <ContractsTab />
+          </TabsContent>
+          <TabsContent value="config" className="mt-4">
+            <ConfigTab
+              configValues={configValues}
+              setConfigValues={setConfigValues}
+              savingConfig={savingConfig}
+              onSave={handleSaveConfig}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </PageTransition>
   )
 }

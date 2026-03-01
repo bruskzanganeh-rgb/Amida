@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Suspense } from 'react'
 import { useTranslations } from 'next-intl'
@@ -12,12 +12,15 @@ import { PageTransition } from '@/components/ui/page-transition'
 import dynamic from 'next/dynamic'
 
 const GigTypesTab = dynamic(() => import('@/components/settings/gig-types-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const PositionsTab = dynamic(() => import('@/components/settings/positions-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 const ClientsTab = dynamic(() => import('@/components/settings/clients-tab'), {
+  ssr: false,
   loading: () => <TabSkeleton />,
 })
 
@@ -49,62 +52,62 @@ export function ConfigPageContent() {
 
   return (
     <PageTransition>
-    <div className="space-y-6">
-      <Tabs value={currentTab} onValueChange={handleTabChange}>
-        <div className="flex items-center justify-between gap-2">
-          <TabsList>
-            <TabsTrigger value="gig-types" className="gap-2">
-              <Tag className="h-4 w-4" />
-              {t('gigTypes')}
-            </TabsTrigger>
-            <TabsTrigger value="positions" className="gap-2">
-              <Music className="h-4 w-4" />
-              {t('positions')}
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="gap-2">
-              <Users className="h-4 w-4" />
-              {t('clients')}
-            </TabsTrigger>
-          </TabsList>
-          {currentTab === 'gig-types' && (
-            <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-gig-type'))}>
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{tGigTypes('newGigType')}</span>
-            </Button>
-          )}
-          {currentTab === 'positions' && (
-            <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-position'))}>
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{tPositions('newPosition')}</span>
-            </Button>
-          )}
-          {currentTab === 'clients' && (
-            <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-client'))}>
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{tClient('newClient')}</span>
-            </Button>
-          )}
-        </div>
+      <div className="space-y-6">
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
+          <div className="flex items-center justify-between gap-2">
+            <TabsList>
+              <TabsTrigger value="gig-types" className="gap-2">
+                <Tag className="h-4 w-4" />
+                {t('gigTypes')}
+              </TabsTrigger>
+              <TabsTrigger value="positions" className="gap-2">
+                <Music className="h-4 w-4" />
+                {t('positions')}
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="gap-2">
+                <Users className="h-4 w-4" />
+                {t('clients')}
+              </TabsTrigger>
+            </TabsList>
+            {currentTab === 'gig-types' && (
+              <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-gig-type'))}>
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{tGigTypes('newGigType')}</span>
+              </Button>
+            )}
+            {currentTab === 'positions' && (
+              <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-position'))}>
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{tPositions('newPosition')}</span>
+              </Button>
+            )}
+            {currentTab === 'clients' && (
+              <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-client'))}>
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{tClient('newClient')}</span>
+              </Button>
+            )}
+          </div>
 
-        <TabsContent value="gig-types" className="mt-4">
-          <Suspense fallback={<TabSkeleton />}>
-            <GigTypesTab />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="gig-types" className="mt-4">
+            <Suspense fallback={<TabSkeleton />}>
+              <GigTypesTab />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="positions" className="mt-4">
-          <Suspense fallback={<TabSkeleton />}>
-            <PositionsTab />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="positions" className="mt-4">
+            <Suspense fallback={<TabSkeleton />}>
+              <PositionsTab />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="clients" className="mt-4">
-          <Suspense fallback={<TabSkeleton />}>
-            <ClientsTab />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="clients" className="mt-4">
+            <Suspense fallback={<TabSkeleton />}>
+              <ClientsTab />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+      </div>
     </PageTransition>
   )
 }
