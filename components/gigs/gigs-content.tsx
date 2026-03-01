@@ -1767,14 +1767,6 @@ export default function GigsPage() {
               </TabsContent>
             </Tabs>
 
-            {/* Mobile FAB */}
-            <Button
-              className="fixed bottom-20 right-4 z-30 h-14 w-14 rounded-full shadow-lg lg:hidden"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-
             <GigDialog
               gig={null}
               open={showCreateDialog}
