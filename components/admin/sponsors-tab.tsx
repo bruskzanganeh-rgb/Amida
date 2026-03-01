@@ -22,6 +22,7 @@ type Sponsor = {
   instrument_category_id: string
   active: boolean | null
   priority: number | null
+  display_prefix: string | null
   category_name?: string
 }
 
@@ -51,6 +52,7 @@ export function SponsorsTab({ sponsors, setSponsors, categories, onReload }: Pro
     website_url: '',
     instrument_category_id: '',
     priority: 0,
+    display_prefix: 'Sponsored by',
   })
   const [saving, setSaving] = useState(false)
 
@@ -68,6 +70,7 @@ export function SponsorsTab({ sponsors, setSponsors, categories, onReload }: Pro
       website_url: form.website_url || null,
       instrument_category_id: form.instrument_category_id,
       priority: form.priority,
+      display_prefix: form.display_prefix || 'Sponsored by',
       active: true,
     })
 
@@ -76,7 +79,15 @@ export function SponsorsTab({ sponsors, setSponsors, categories, onReload }: Pro
     } else {
       toast.success(tToast('sponsorCreated'))
       setDialogOpen(false)
-      setForm({ name: '', logo_url: '', tagline: '', website_url: '', instrument_category_id: '', priority: 0 })
+      setForm({
+        name: '',
+        logo_url: '',
+        tagline: '',
+        website_url: '',
+        instrument_category_id: '',
+        priority: 0,
+        display_prefix: 'Sponsored by',
+      })
       onReload()
     }
     setSaving(false)
@@ -127,6 +138,11 @@ export function SponsorsTab({ sponsors, setSponsors, categories, onReload }: Pro
                       </Badge>
                     )}
                   </div>
+                  {s.display_prefix && (
+                    <p className="text-xs text-muted-foreground">
+                      {s.display_prefix} {s.name}
+                    </p>
+                  )}
                   {s.tagline && <p className="text-xs text-muted-foreground">{s.tagline}</p>}
                 </div>
                 <div className="flex items-center gap-2">
@@ -211,6 +227,21 @@ export function SponsorsTab({ sponsors, setSponsors, categories, onReload }: Pro
                 value={form.priority}
                 onChange={(e) => setForm((f) => ({ ...f, priority: parseInt(e.target.value) || 0 }))}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('displayPrefix')}</Label>
+              <Select value={form.display_prefix} onValueChange={(v) => setForm((f) => ({ ...f, display_prefix: v }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sponsored by">Sponsored by</SelectItem>
+                  <SelectItem value="Powered by">Powered by</SelectItem>
+                  <SelectItem value="Presented by">Presented by</SelectItem>
+                  <SelectItem value="In partnership with">In partnership with</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t('displayPrefixHint')}</p>
             </div>
           </div>
           <DialogFooter>

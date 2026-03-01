@@ -616,7 +616,13 @@
     "settingsSaved": "Inställningar sparade",
     "testEmailError": "Kunde inte skicka testmail",
     "testEmailGenericError": "Testmail misslyckades",
-    "testEmailSent": "Testmail skickat"
+    "testEmailSent": "Testmail skickat",
+    "postalCode": "Postnummer",
+    "city": "Stad",
+    "yourInstruments": "Dina instrument",
+    "selectYourInstruments": "Välj dina instrument",
+    "otherInstruments": "Övriga instrument",
+    "otherInstrumentsHint": "Instrument som inte finns i listan ovan"
   },
   "team": {
     "title": "Team",
@@ -831,7 +837,12 @@
     "countryDesc": "Välj vilket land du är verksam i. Detta styr momssatser, valuta och fältetiketter.",
     "selectCountry": "Välj land",
     "yourName": "Ditt namn",
-    "yourNamePlaceholder": "För- och efternamn"
+    "yourNamePlaceholder": "För- och efternamn",
+    "postalCode": "Postnummer",
+    "city": "Stad",
+    "selectYourInstruments": "Välj dina instrument",
+    "otherInstruments": "Övriga instrument",
+    "otherInstrumentsHint": "Instrument som inte finns i listan ovan"
   },
   "subscription": {
     "yourPlan": "Din plan",
@@ -1066,7 +1077,21 @@
     "noCodes": "Inga inbjudningskoder",
     "codeCreated": "Kod skapad",
     "codeExists": "Koden finns redan",
-    "generateCode": "Generera"
+    "generateCode": "Generera",
+    "filterByCity": "Filtrera på stad",
+    "filterByCategory": "Instrumentkategori",
+    "filterByPlan": "Plan",
+    "matchingCompanies": "{count} av {total} företag",
+    "allPlans": "Alla planer",
+    "allCategories": "Alla kategorier",
+    "analyzeText": "Analysera fritext",
+    "analyzing": "Analyserar...",
+    "noUnmatchedText": "Inga omatchade fritext-instrument",
+    "suggestedMatch": "Föreslagen matchning",
+    "applyMatches": "Tillämpa matchningar",
+    "matchesApplied": "Matchningar tillämpade",
+    "displayPrefix": "Visningstext",
+    "displayPrefixHint": "Text som visas före sponsornamnet (t.ex. 'Sponsored by')"
   },
   "client": {
     "clients": "Kunder",

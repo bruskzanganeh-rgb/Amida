@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { full_name, company_info, instruments_text, gig_types, positions } = parsed.data
+  const { full_name, company_info, instruments_text, instrument_ids, gig_types, positions } = parsed.data
 
   // Use admin client for company/members/data creation (bypasses RLS)
   const admin = createAdminClient()
@@ -105,6 +105,21 @@ export async function POST(request: Request) {
   if (settingsError) {
     console.error('Onboarding settings error:', settingsError)
     return NextResponse.json({ error: 'Could not save settings' }, { status: 500 })
+  }
+
+  // Save structured instrument selections
+  if (instrument_ids && instrument_ids.length > 0) {
+    // Clear any existing selections first
+    await admin.from('user_instruments').delete().eq('user_id', user.id)
+    const { error: instrError } = await admin.from('user_instruments').insert(
+      instrument_ids.map((instrumentId) => ({
+        user_id: user.id,
+        instrument_id: instrumentId,
+      })),
+    )
+    if (instrError) {
+      console.error('Error saving user instruments:', instrError)
+    }
   }
 
   // Insert gig types (only for owners — members share the company's existing data)

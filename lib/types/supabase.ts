@@ -231,6 +231,8 @@ export type Database = {
           company_name: string
           org_number: string
           address: string
+          postal_code: string | null
+          city: string | null
           email: string
           phone: string
           bank_account: string
@@ -269,6 +271,8 @@ export type Database = {
           company_name?: string
           org_number?: string
           address?: string
+          postal_code?: string | null
+          city?: string | null
           email?: string
           phone?: string
           bank_account?: string
@@ -307,6 +311,8 @@ export type Database = {
           company_name?: string
           org_number?: string
           address?: string
+          postal_code?: string | null
+          city?: string | null
           email?: string
           phone?: string
           bank_account?: string
@@ -1397,21 +1403,24 @@ export type Database = {
           id: string
           sponsor_id: string
           user_id: string
-          invoice_id: string
+          invoice_id: string | null
+          impression_type: string | null
           created_at: string | null
         }
         Insert: {
           id?: string
           sponsor_id: string
           user_id: string
-          invoice_id: string
+          invoice_id?: string | null
+          impression_type?: string | null
           created_at?: string | null
         }
         Update: {
           id?: string
           sponsor_id?: string
           user_id?: string
-          invoice_id?: string
+          invoice_id?: string | null
+          impression_type?: string | null
           created_at?: string | null
         }
         Relationships: []
@@ -1426,6 +1435,7 @@ export type Database = {
           instrument_category_id: string
           active: boolean | null
           priority: number | null
+          display_prefix: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -1438,6 +1448,7 @@ export type Database = {
           instrument_category_id: string
           active?: boolean | null
           priority?: number | null
+          display_prefix?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -1450,6 +1461,7 @@ export type Database = {
           instrument_category_id?: string
           active?: boolean | null
           priority?: number | null
+          display_prefix?: string | null
           created_at?: string | null
           updated_at?: string | null
         }

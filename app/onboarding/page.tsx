@@ -105,14 +105,20 @@ export default function OnboardingPage() {
   const [companyName, setCompanyName] = useState('')
   const [orgNumber, setOrgNumber] = useState('')
   const [address, setAddress] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [city, setCity] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [bankgiro, setBankgiro] = useState('')
   const [iban, setIban] = useState('')
   const [bic, setBic] = useState('')
 
-  // Step 3: Instruments (free text)
+  // Step 3: Instruments (structured + free text)
   const [instrumentsText, setInstrumentsText] = useState('')
+  const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<Set<string>>(new Set())
+  const [allInstruments, setAllInstruments] = useState<
+    { id: string; name: string; category_name: string; category_sort: number; sort_order: number }[]
+  >([])
 
   // Step 4: Gig types (local state only — saved on complete)
   const [gigTypes, setGigTypes] = useState<GigTypeLocal[]>([])
@@ -152,6 +158,29 @@ export default function OnboardingPage() {
       setPhone(settings.phone || '')
       if (settings.country_code) setCountryCode(settings.country_code)
       setInstrumentsText(settings.instruments_text || '')
+    }
+
+    // Load instruments catalog
+    const { data: instruments } = await supabase
+      .from('instruments')
+      .select('id, name, sort_order, category:instrument_categories(name, sort_order)')
+      .order('sort_order')
+    if (instruments) {
+      setAllInstruments(
+        instruments.map((i) => ({
+          id: i.id,
+          name: i.name,
+          category_name: (i.category as unknown as { name: string; sort_order: number })?.name || '',
+          category_sort: (i.category as unknown as { name: string; sort_order: number })?.sort_order || 0,
+          sort_order: i.sort_order,
+        })),
+      )
+    }
+
+    // Load existing user_instruments
+    const { data: userInstr } = await supabase.from('user_instruments').select('instrument_id')
+    if (userInstr && userInstr.length > 0) {
+      setSelectedInstrumentIds(new Set(userInstr.map((ui) => ui.instrument_id)))
     }
   }
 
@@ -235,6 +264,8 @@ export default function OnboardingPage() {
             company_name: companyName,
             org_number: orgNumber,
             address,
+            postal_code: postalCode,
+            city,
             email,
             phone,
             bankgiro,
@@ -244,6 +275,7 @@ export default function OnboardingPage() {
             base_currency: countryConfig.currency,
           },
           instruments_text: instrumentsText,
+          instrument_ids: Array.from(selectedInstrumentIds),
           gig_types: gigTypes.map((gt) => ({
             name: gt.name,
             name_en: gt.name_en,
@@ -429,6 +461,26 @@ export default function OnboardingPage() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="postalCode">{t('postalCode')}</Label>
+                  <Input
+                    id="postalCode"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder={countryCode === 'SE' ? '123 45' : '10115'}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t('city')}</Label>
+                  <Input
+                    id="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder={countryCode === 'SE' ? 'Stockholm' : 'Berlin'}
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="email">{tSettings('email')}</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
@@ -465,7 +517,7 @@ export default function OnboardingPage() {
           </Card>
         )}
 
-        {/* Step 3: Instruments (free text) */}
+        {/* Step 3: Instruments (structured + free text) */}
         {step === 3 && (
           <Card>
             <CardHeader>
@@ -473,15 +525,69 @@ export default function OnboardingPage() {
                 <Guitar className="h-5 w-5" />
                 {t('yourInstruments')}
               </CardTitle>
-              <CardDescription>{t('selectInstruments')}</CardDescription>
+              <CardDescription>{t('selectYourInstruments')}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                rows={4}
-                value={instrumentsText}
-                onChange={(e) => setInstrumentsText(e.target.value)}
-                placeholder={locale === 'sv' ? 'T.ex. Violin, Viola, Piano' : 'E.g. Violin, Viola, Piano'}
-              />
+            <CardContent className="space-y-6">
+              {/* Grouped instrument chips */}
+              {(() => {
+                const grouped = allInstruments.reduce(
+                  (acc, i) => {
+                    const cat = i.category_name || 'Other'
+                    if (!acc[cat]) acc[cat] = { sort: i.category_sort, instruments: [] }
+                    acc[cat].instruments.push(i)
+                    return acc
+                  },
+                  {} as Record<string, { sort: number; instruments: typeof allInstruments }>,
+                )
+                const sortedCategories = Object.entries(grouped).sort(([, a], [, b]) => a.sort - b.sort)
+
+                return sortedCategories.map(([categoryName, { instruments }]) => (
+                  <div key={categoryName}>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">{categoryName}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {instruments
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .map((instr) => {
+                          const selected = selectedInstrumentIds.has(instr.id)
+                          return (
+                            <button
+                              key={instr.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedInstrumentIds((prev) => {
+                                  const next = new Set(prev)
+                                  if (next.has(instr.id)) next.delete(instr.id)
+                                  else next.add(instr.id)
+                                  return next
+                                })
+                              }}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                selected
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                              }`}
+                            >
+                              {selected && <Check className="h-3 w-3" />}
+                              {instr.name}
+                            </button>
+                          )
+                        })}
+                    </div>
+                  </div>
+                ))
+              })()}
+
+              {/* Free text for unlisted instruments */}
+              <div className="space-y-2">
+                <Label>{t('otherInstruments')}</Label>
+                <Textarea
+                  rows={2}
+                  value={instrumentsText}
+                  onChange={(e) => setInstrumentsText(e.target.value)}
+                  placeholder={locale === 'sv' ? 'T.ex. Barockviolin, Mandolin' : 'E.g. Baroque violin, Mandolin'}
+                />
+                <p className="text-xs text-muted-foreground">{t('otherInstrumentsHint')}</p>
+              </div>
             </CardContent>
           </Card>
         )}

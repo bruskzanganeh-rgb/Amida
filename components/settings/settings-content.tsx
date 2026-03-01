@@ -26,6 +26,7 @@ import {
   Globe,
   Key,
   Users,
+  Guitar,
 } from 'lucide-react'
 import { SubscriptionSettings } from '@/components/settings/subscription-settings'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
@@ -45,6 +46,8 @@ type CompanySettings = {
   company_name: string
   org_number: string
   address: string
+  postal_code: string
+  city: string
   email: string
   phone: string
   bank_account: string
@@ -85,6 +88,11 @@ export default function SettingsPage() {
   const [emailProvider, setEmailProvider] = useState<string>('platform')
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
+  const [instrumentsText, setInstrumentsText] = useState('')
+  const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<Set<string>>(new Set())
+  const [allInstruments, setAllInstruments] = useState<
+    { id: string; name: string; category_name: string; category_sort: number; sort_order: number }[]
+  >([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { isPro, isTeam } = useSubscription()
@@ -142,7 +150,7 @@ export default function SettingsPage() {
       // Load personal prefs from company_settings
       const { data: personalSettings, error: psError } = await supabase
         .from('company_settings')
-        .select('id, locale, calendar_token')
+        .select('id, locale, calendar_token, instruments_text')
         .limit(1)
         .single()
 
@@ -174,6 +182,8 @@ export default function SettingsPage() {
             company_name: company.company_name,
             org_number: company.org_number,
             address: company.address,
+            postal_code: company.postal_code || '',
+            city: company.city || '',
             email: company.email,
             phone: company.phone,
             bank_account: company.bank_account,
@@ -200,7 +210,31 @@ export default function SettingsPage() {
           setLogoPreview(company.logo_url || null)
           setEmailProvider(company.email_provider || 'platform')
           setCompanyId(membership.company_id)
+          setInstrumentsText(personalSettings.instruments_text || '')
         }
+      }
+
+      // Load instruments catalog
+      const { data: instruments } = await supabase
+        .from('instruments')
+        .select('id, name, sort_order, category:instrument_categories(name, sort_order)')
+        .order('sort_order')
+      if (instruments) {
+        setAllInstruments(
+          instruments.map((i) => ({
+            id: i.id,
+            name: i.name,
+            category_name: (i.category as unknown as { name: string; sort_order: number })?.name || '',
+            category_sort: (i.category as unknown as { name: string; sort_order: number })?.sort_order || 0,
+            sort_order: i.sort_order,
+          })),
+        )
+      }
+
+      // Load existing user_instruments
+      const { data: userInstr } = await supabase.from('user_instruments').select('instrument_id')
+      if (userInstr && userInstr.length > 0) {
+        setSelectedInstrumentIds(new Set(userInstr.map((ui) => ui.instrument_id)))
       }
 
       setLoading(false)
@@ -221,6 +255,8 @@ export default function SettingsPage() {
           company_name: settings.company_name,
           org_number: settings.org_number,
           address: settings.address,
+          postal_code: settings.postal_code,
+          city: settings.city,
           email: settings.email,
           phone: settings.phone,
           bank_account: settings.bank_account,
@@ -264,8 +300,22 @@ export default function SettingsPage() {
       .from('company_settings')
       .update({
         locale: settings.locale,
+        instruments_text: instrumentsText,
       })
       .eq('id', settings.id)
+
+    // Save user_instruments: delete old + insert new
+    if (userId) {
+      await supabase.from('user_instruments').delete().eq('user_id', userId)
+      if (selectedInstrumentIds.size > 0) {
+        await supabase.from('user_instruments').insert(
+          Array.from(selectedInstrumentIds).map((instrument_id) => ({
+            user_id: userId,
+            instrument_id,
+          })),
+        )
+      }
+    }
 
     setSaving(false)
 
@@ -484,6 +534,28 @@ export default function SettingsPage() {
                     onChange={(e) => setSettings((s) => (s ? { ...s, address: e.target.value } : null))}
                     className="resize-none"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="postal_code">{t('postalCode')}</Label>
+                    <Input
+                      id="postal_code"
+                      value={settings?.postal_code || ''}
+                      onChange={(e) => setSettings((s) => (s ? { ...s, postal_code: e.target.value } : null))}
+                      placeholder={settings?.country_code === 'SE' ? '123 45' : '10115'}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city">{t('city')}</Label>
+                    <Input
+                      id="city"
+                      value={settings?.city || ''}
+                      onChange={(e) => setSettings((s) => (s ? { ...s, city: e.target.value } : null))}
+                      placeholder={settings?.country_code === 'SE' ? 'Stockholm' : 'Berlin'}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -734,6 +806,80 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Instruments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Guitar className="h-5 w-5" />
+                {t('yourInstruments')}
+              </CardTitle>
+              <CardDescription>{t('selectYourInstruments')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Grouped instrument chips */}
+              {(() => {
+                const grouped = allInstruments.reduce(
+                  (acc, i) => {
+                    const cat = i.category_name || 'Other'
+                    if (!acc[cat]) acc[cat] = { sort: i.category_sort, instruments: [] }
+                    acc[cat].instruments.push(i)
+                    return acc
+                  },
+                  {} as Record<string, { sort: number; instruments: typeof allInstruments }>,
+                )
+                const sortedCategories = Object.entries(grouped).sort(([, a], [, b]) => a.sort - b.sort)
+
+                return sortedCategories.map(([categoryName, { instruments }]) => (
+                  <div key={categoryName}>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">{categoryName}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {instruments
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .map((instr) => {
+                          const selected = selectedInstrumentIds.has(instr.id)
+                          return (
+                            <button
+                              key={instr.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedInstrumentIds((prev) => {
+                                  const next = new Set(prev)
+                                  if (next.has(instr.id)) next.delete(instr.id)
+                                  else next.add(instr.id)
+                                  return next
+                                })
+                              }}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                selected
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                              }`}
+                            >
+                              {selected && <Check className="h-3 w-3" />}
+                              {instr.name}
+                            </button>
+                          )
+                        })}
+                    </div>
+                  </div>
+                ))
+              })()}
+
+              {/* Free text for unlisted instruments */}
+              <div className="space-y-2">
+                <Label>{t('otherInstruments')}</Label>
+                <Textarea
+                  rows={2}
+                  value={instrumentsText}
+                  onChange={(e) => setInstrumentsText(e.target.value)}
+                  placeholder={locale === 'sv' ? 'T.ex. Barockviolin, Mandolin' : 'E.g. Baroque violin, Mandolin'}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">{t('otherInstrumentsHint')}</p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Save button */}
           <div className="flex justify-end">

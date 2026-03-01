@@ -69,22 +69,37 @@ type User = {
   expense_count: number
   monthly_invoices: number
   monthly_scans: number
+  city: string | null
+  postal_code: string | null
+  country_code: string | null
+  instruments: { name: string; category_name: string }[]
   last_active?: string | null
   recent_activity_count?: number
   members?: Member[]
+}
+
+type InstrumentCategory = {
+  id: string
+  name: string
 }
 
 type Props = {
   users: User[]
   setUsers: React.Dispatch<React.SetStateAction<User[]>>
   onReload: () => void
+  categories: InstrumentCategory[]
 }
 
-export function OrganizationsTab({ users, setUsers, onReload }: Props) {
+export function OrganizationsTab({ users, setUsers, onReload, categories }: Props) {
   const t = useTranslations('admin')
   const tSub = useTranslations('subscription')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
+
+  // Filter states
+  const [cityFilter, setCityFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [planFilter, setPlanFilter] = useState('')
 
   const [expanded, setExpanded] = useState<string | null>(null)
   const [changingTier, setChangingTier] = useState<string | null>(null)
@@ -269,6 +284,22 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
     setInviteSaving(false)
   }
 
+  // Filter users
+  const filteredUsers = users.filter((u) => {
+    if (cityFilter) {
+      const cityMatch = u.city?.toLowerCase().includes(cityFilter.toLowerCase())
+      if (!cityMatch) return false
+    }
+    if (categoryFilter && categoryFilter !== 'all') {
+      const hasCategory = u.instruments?.some((i) => i.category_name === categoryFilter)
+      if (!hasCategory) return false
+    }
+    if (planFilter && planFilter !== 'all') {
+      if (u.plan !== planFilter) return false
+    }
+    return true
+  })
+
   return (
     <div className="space-y-4">
       <Card>
@@ -282,14 +313,51 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
           </Button>
         </CardHeader>
         <CardContent>
-          {users.length === 0 ? (
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <Input
+              className="w-48 h-8 text-xs"
+              placeholder={t('filterByCity')}
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+            />
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-48 h-8 text-xs">
+                <SelectValue placeholder={t('filterByCategory')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allCategories')}</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={planFilter} onValueChange={setPlanFilter}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue placeholder={t('filterByPlan')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allPlans')}</SelectItem>
+                <SelectItem value="free">{tSub('free')}</SelectItem>
+                <SelectItem value="pro">{tSub('pro')}</SelectItem>
+                <SelectItem value="team">{tSub('team')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">
+              {t('matchingCompanies', { count: filteredUsers.length, total: users.length })}
+            </span>
+          </div>
+
+          {filteredUsers.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <Building2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
               <p className="text-sm">{t('noCompanies')}</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {users.map((u) => (
+              {filteredUsers.map((u) => (
                 <div key={u.user_id} className="rounded-lg bg-secondary/50 overflow-hidden">
                   <div
                     className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-secondary/80 transition-colors"
@@ -349,7 +417,24 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                             {u.address}
                           </span>
                         )}
+                        {(u.city || u.postal_code) && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {[u.postal_code, u.city].filter(Boolean).join(' ')}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Instruments */}
+                      {u.instruments && u.instruments.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {u.instruments.map((inst) => (
+                            <Badge key={inst.name} variant="outline" className="text-[10px]">
+                              {inst.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Subscription details */}
                       {(u.plan === 'pro' || u.plan === 'team') && (

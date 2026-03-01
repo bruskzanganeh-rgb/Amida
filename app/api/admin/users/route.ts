@@ -9,7 +9,13 @@ export async function GET() {
   const { supabase } = auth
 
   // Fetch all data in parallel
-  const [{ data: subscriptions }, { data: settings }, { data: members }] = await Promise.all([
+  const [
+    { data: subscriptions },
+    { data: settings },
+    { data: members },
+    { data: companiesData },
+    { data: userInstrumentsData },
+  ] = await Promise.all([
     supabase
       .from('subscriptions')
       .select(
@@ -18,9 +24,34 @@ export async function GET() {
       .order('created_at', { ascending: false }),
     supabase.from('company_settings').select('user_id, company_name, org_number, email, address, phone'),
     supabase.from('company_members').select('user_id, company_id, role'),
+    supabase.from('companies').select('id, postal_code, city, country_code'),
+    supabase
+      .from('user_instruments')
+      .select('user_id, instrument:instruments(name, category:instrument_categories(name))'),
   ])
 
   const settingsMap = new Map((settings || []).map((s) => [s.user_id, s]))
+
+  // Build companies map (company_id -> company data)
+  const companiesDataMap = new Map<
+    string,
+    { postal_code: string | null; city: string | null; country_code: string | null }
+  >()
+  for (const c of companiesData || []) {
+    companiesDataMap.set(c.id, { postal_code: c.postal_code, city: c.city, country_code: c.country_code })
+  }
+
+  // Build instruments map (user_id -> instruments[])
+  const instrumentsMap = new Map<string, { name: string; category_name: string }[]>()
+  for (const ui of userInstrumentsData || []) {
+    const instrument = ui.instrument as unknown as { name: string; category: { name: string } | null } | null
+    if (!instrument) continue
+    if (!instrumentsMap.has(ui.user_id)) instrumentsMap.set(ui.user_id, [])
+    instrumentsMap.get(ui.user_id)!.push({
+      name: instrument.name,
+      category_name: instrument.category?.name || '',
+    })
+  }
 
   // Build membership maps
   const userToMembership = new Map<string, { company_id: string; role: string }>()
@@ -33,6 +64,18 @@ export async function GET() {
       role: m.role,
       email: settingsMap.get(m.user_id)?.email || null,
     })
+  }
+
+  // Build user -> company data map (via company_members -> companies)
+  const companiesMap = new Map<
+    string,
+    { postal_code: string | null; city: string | null; country_code: string | null }
+  >()
+  for (const m of members || []) {
+    const companyData = companiesDataMap.get(m.company_id)
+    if (companyData) {
+      companiesMap.set(m.user_id, companyData)
+    }
   }
 
   // Set of user_ids that are non-owner members (they'll be nested under their company's owner)
@@ -134,6 +177,10 @@ export async function GET() {
         expense_count: stats?.expense_count || 0,
         monthly_invoices: usageMap.get(sub.user_id)?.invoices || 0,
         monthly_scans: usageMap.get(sub.user_id)?.scans || 0,
+        city: companiesMap.get(sub.user_id)?.city || null,
+        postal_code: companiesMap.get(sub.user_id)?.postal_code || null,
+        country_code: companiesMap.get(sub.user_id)?.country_code || null,
+        instruments: instrumentsMap.get(sub.user_id) || [],
         members: enrichedMembers,
       }
     })

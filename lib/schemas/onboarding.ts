@@ -14,8 +14,11 @@ export const completeOnboardingSchema = z.object({
     bic: z.string().optional(),
     base_currency: z.string().optional(),
     country_code: z.string().optional(),
+    postal_code: z.string().optional(),
+    city: z.string().optional(),
   }),
   instruments_text: z.string().optional(),
+  instrument_ids: z.array(z.string()).optional(),
   gig_types: z
     .array(
       z.object({

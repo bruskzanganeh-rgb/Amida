@@ -616,7 +616,13 @@
     "settingsSaved": "Settings saved",
     "testEmailError": "Could not send test email",
     "testEmailGenericError": "Test email failed",
-    "testEmailSent": "Test email sent"
+    "testEmailSent": "Test email sent",
+    "postalCode": "Postal code",
+    "city": "City",
+    "yourInstruments": "Your instruments",
+    "selectYourInstruments": "Select your instruments",
+    "otherInstruments": "Other instruments",
+    "otherInstrumentsHint": "Instruments not listed above"
   },
   "team": {
     "title": "Team",
@@ -831,7 +837,12 @@
     "countryDesc": "Select the country you operate in. This controls VAT rates, currency and field labels.",
     "selectCountry": "Select country",
     "yourName": "Your name",
-    "yourNamePlaceholder": "First and last name"
+    "yourNamePlaceholder": "First and last name",
+    "postalCode": "Postal code",
+    "city": "City",
+    "selectYourInstruments": "Select your instruments",
+    "otherInstruments": "Other instruments",
+    "otherInstrumentsHint": "Instruments not listed above"
   },
   "subscription": {
     "yourPlan": "Your plan",
@@ -1066,7 +1077,21 @@
     "noCodes": "No invitation codes",
     "codeCreated": "Code created",
     "codeExists": "Code already exists",
-    "generateCode": "Generate"
+    "generateCode": "Generate",
+    "filterByCity": "Filter by city",
+    "filterByCategory": "Instrument category",
+    "filterByPlan": "Plan",
+    "matchingCompanies": "{count} of {total} companies",
+    "allPlans": "All plans",
+    "allCategories": "All categories",
+    "analyzeText": "Analyze free text",
+    "analyzing": "Analyzing...",
+    "noUnmatchedText": "No unmatched free text instruments",
+    "suggestedMatch": "Suggested match",
+    "applyMatches": "Apply matches",
+    "matchesApplied": "Matches applied",
+    "displayPrefix": "Display text",
+    "displayPrefixHint": "Text shown before sponsor name (e.g., 'Sponsored by')"
   },
   "client": {
     "clients": "Clients",

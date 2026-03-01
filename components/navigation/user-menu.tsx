@@ -16,6 +16,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+interface SponsorData {
+  id: string
+  name: string
+  display_prefix: string | null
+  website_url: string | null
+}
+
 export function UserMenu() {
   const t = useTranslations('nav')
   const router = useRouter()
@@ -25,6 +32,8 @@ export function UserMenu() {
   const [userEmail, setUserEmail] = useState('')
   const [plan, setPlan] = useState<string>('free')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [sponsor, setSponsor] = useState<SponsorData | null>(null)
+  const [impressionLogged, setImpressionLogged] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -55,10 +64,39 @@ export function UserMenu() {
         companyName = comp?.company_name || ''
       }
 
+      const currentPlan = sub?.plan || 'free'
+
       if (!cancelled) {
         setCompanyName(companyName)
-        setPlan(sub?.plan || 'free')
+        setPlan(currentPlan)
         setIsAdmin(!!admin)
+      }
+
+      // Load sponsor for free-tier users
+      if (currentPlan === 'free' && !cancelled) {
+        const { data: userInstr } = await supabase.from('user_instruments').select('instrument_id')
+
+        const instrumentIds = (userInstr || []).map((ui) => ui.instrument_id)
+
+        if (instrumentIds.length > 0) {
+          const { data: instruments } = await supabase.from('instruments').select('category_id').in('id', instrumentIds)
+
+          const categoryIds = (instruments || []).map((i) => i.category_id).filter(Boolean)
+
+          if (categoryIds.length > 0) {
+            const { data: sponsors } = await supabase
+              .from('sponsors')
+              .select('id, name, display_prefix, website_url')
+              .in('instrument_category_id', categoryIds)
+              .eq('active', true)
+              .order('priority', { ascending: false })
+              .limit(1)
+
+            if (!cancelled && sponsors && sponsors.length > 0) {
+              setSponsor(sponsors[0])
+            }
+          }
+        }
       }
     }
 
@@ -68,6 +106,20 @@ export function UserMenu() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Log impression once when sponsor becomes visible
+  useEffect(() => {
+    if (sponsor && !impressionLogged) {
+      setImpressionLogged(true)
+      fetch('/api/sponsor-impression', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sponsor_id: sponsor.id }),
+      }).catch(() => {
+        // Impression logging is best-effort; don't block UI
+      })
+    }
+  }, [sponsor, impressionLogged])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -93,6 +145,21 @@ export function UserMenu() {
             >
               {plan}
             </span>
+          )}
+          {plan === 'free' && sponsor && (
+            <a
+              href={sponsor.website_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
+              style={{
+                background: 'rgba(217,173,66,0.15)',
+                color: '#d4a843',
+              }}
+            >
+              {sponsor.display_prefix || 'Sponsored by'} {sponsor.name}
+            </a>
           )}
           <ChevronDown className="h-3 w-3" />
         </button>

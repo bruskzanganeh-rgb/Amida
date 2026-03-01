@@ -56,6 +56,10 @@ type User = {
   expense_count: number
   monthly_invoices: number
   monthly_scans: number
+  city: string | null
+  postal_code: string | null
+  country_code: string | null
+  instruments: { name: string; category_name: string }[]
   last_active?: string | null
   recent_activity_count?: number
   members?: {
@@ -77,6 +81,7 @@ type Sponsor = {
   instrument_category_id: string
   active: boolean | null
   priority: number | null
+  display_prefix: string | null
   category_name?: string
 }
 
@@ -208,7 +213,7 @@ export default function AdminPage() {
     const { data: sponsorData } = await supabase
       .from('sponsors')
       .select(
-        'id, name, logo_url, tagline, website_url, instrument_category_id, active, priority, category:instrument_categories(name)',
+        'id, name, logo_url, tagline, website_url, instrument_category_id, active, priority, display_prefix, category:instrument_categories(name)',
       )
       .order('priority', { ascending: false })
     if (sponsorData) {
@@ -222,6 +227,7 @@ export default function AdminPage() {
           instrument_category_id: s.instrument_category_id,
           active: s.active,
           priority: s.priority,
+          display_prefix: s.display_prefix,
           category_name: (s.category as unknown as { name: string } | null)?.name,
         })),
       )
@@ -340,7 +346,7 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="organizations" className="mt-4">
-            <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} />
+            <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} categories={categories} />
           </TabsContent>
           <TabsContent value="sponsors" className="mt-4">
             <SponsorsTab

@@ -120,6 +120,19 @@ type InvoicePreviewProps = {
   notes?: string
   reverseCharge?: boolean
   locale?: string
+  currency?: string
+}
+
+const CURRENCY_SUFFIX: Record<string, string> = {
+  SEK: 'kr',
+  NOK: 'NOK',
+  DKK: 'DKK',
+  EUR: 'EUR',
+  USD: 'USD',
+  GBP: 'GBP',
+  CHF: 'CHF',
+  CZK: 'CZK',
+  PLN: 'PLN',
 }
 
 export function InvoicePreview({
@@ -136,6 +149,7 @@ export function InvoicePreview({
   notes,
   reverseCharge,
   locale: localeProp,
+  currency: currencyProp = 'SEK',
 }: InvoicePreviewProps) {
   const t = useTranslations('invoice')
   const formatLocale = useFormatLocale()
@@ -144,7 +158,17 @@ export function InvoicePreview({
   const l = getLabels(localeProp || 'sv')
 
   function formatCurrency(amount: number): string {
-    return amount.toLocaleString(formatLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr'
+    const formatted = amount.toLocaleString(formatLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    if (currencyProp === 'EUR' || currencyProp === 'USD' || currencyProp === 'GBP') {
+      const prefix = currencyProp === 'EUR' ? '€' : currencyProp === 'GBP' ? '£' : '$'
+      return `${prefix}${formatted}`
+    }
+    const symbol = CURRENCY_SUFFIX[currencyProp] || currencyProp
+    return `${formatted} ${symbol}`
+  }
+
+  function formatCurrencyRaw(amount: number): string {
+    return amount.toLocaleString(formatLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   function formatDate(dateStr: string): string {
@@ -427,7 +451,7 @@ export function InvoicePreview({
                   }}
                 >
                   <span style={{ fontSize: '8px', color: colors.secondary }}>
-                    {l.vat} {rate}% ({l.basis} {formatCurrency(vatGroups[rate].underlag).replace(' kr', '')})
+                    {l.vat} {rate}% ({l.basis} {formatCurrencyRaw(vatGroups[rate].underlag)})
                   </span>
                   <span style={{ fontSize: '9px' }}>{formatCurrency(vatGroups[rate].vat)}</span>
                 </div>

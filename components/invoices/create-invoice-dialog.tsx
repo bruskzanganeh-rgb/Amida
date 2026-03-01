@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { InvoicePreview } from './invoice-preview'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
-import { shouldReverseCharge } from '@/lib/country-config'
+import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
 
 type GigExpense = {
   id: string
@@ -151,6 +151,15 @@ export function CreateInvoiceDialog({
   const selectedClient = useMemo(() => {
     return clients.find((c) => c.id === formData.client_id) || null
   }, [clients, formData.client_id])
+
+  // Derive currency from company's country
+  const companyCurrency = useMemo(() => {
+    const cc = companySettings?.country_code
+    if (!cc) return 'SEK'
+    return COUNTRY_CONFIGS[cc]?.currency || 'SEK'
+  }, [companySettings])
+
+  const currencyLabel = companyCurrency === 'SEK' ? 'kr' : companyCurrency
 
   // Auto-detect reverse charge
   const isReverseCharge = useMemo(() => {
@@ -430,7 +439,7 @@ export function CreateInvoiceDialog({
           vat_amount: vatAmount,
           total,
           total_base: total,
-          currency: 'SEK',
+          currency: companyCurrency,
           exchange_rate: 1.0,
           status: 'draft',
           reference_person_override: referencePersonOverride,
@@ -549,6 +558,7 @@ export function CreateInvoiceDialog({
                   notes={formData.notes}
                   reverseCharge={isReverseCharge}
                   locale={selectedClient?.invoice_language || undefined}
+                  currency={companyCurrency}
                 />
               </div>
             </div>
@@ -640,7 +650,7 @@ export function CreateInvoiceDialog({
                               <span className="text-muted-foreground ml-2">{dateStr}</span>
                             </div>
                             <span className="font-medium shrink-0">
-                              {gig.fee.toLocaleString(formatLocale)} {tc('kr')}
+                              {gig.fee.toLocaleString(formatLocale)} {currencyLabel}
                             </span>
                           </div>
                         )
@@ -653,7 +663,7 @@ export function CreateInvoiceDialog({
                               .filter((g) => selectedGigIds.has(g.id))
                               .reduce((sum, g) => sum + g.fee + (g.travel_expense || 0), 0)
                               .toLocaleString(formatLocale)}{' '}
-                            {tc('kr')}
+                            {currencyLabel}
                           </span>
                         </div>
                       )}
@@ -783,7 +793,7 @@ export function CreateInvoiceDialog({
                           {allExpenses
                             .reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
                             .toLocaleString(formatLocale)}{' '}
-                          {tc('kr')}
+                          {currencyLabel}
                         </span>
                       </div>
                       <div className="space-y-1.5">
@@ -826,7 +836,7 @@ export function CreateInvoiceDialog({
                                 </Badge>
                               )}
                               <span className="font-medium shrink-0">
-                                {(expense.amount_base || expense.amount).toLocaleString(formatLocale)} {tc('kr')}
+                                {(expense.amount_base || expense.amount).toLocaleString(formatLocale)} {currencyLabel}
                               </span>
                             </div>
                           )
