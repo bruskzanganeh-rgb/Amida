@@ -799,7 +799,7 @@
   "onboarding": {
     "companyInfo": "Company info",
     "instruments": "Instruments",
-    "gigTypes": "Gig types",
+    "gigTypes": "Types",
     "roles": "Roles",
     "welcome": "Welcome to Amida!",
     "setupDescription": "Let's set up your profile",
@@ -939,7 +939,7 @@
     "gigCount": "Gigs",
     "invoiceCount": "Invoices",
     "clientCount": "Clients",
-    "gigTypeCount": "Gig types",
+    "gigTypeCount": "Types",
     "positionCount": "Roles",
     "expenseCount": "Receipts",
     "monthlyScans": "Scans (month)",
@@ -1232,9 +1232,9 @@
     "suggestionsHint": "Click to quickly add"
   },
   "config": {
-    "title": "Gig Configuration",
-    "subtitle": "Manage gig types, roles, and clients",
-    "gigTypes": "Gig types",
+    "title": "Configuration",
+    "subtitle": "Manage types, roles, and clients",
+    "gigTypes": "Types",
     "positions": "Roles",
     "clients": "Clients",
     "tab": "tab"
