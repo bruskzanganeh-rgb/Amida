@@ -153,6 +153,9 @@ export function GigDialog({
       loadPositions()
       loadBaseCurrency()
 
+      // Always reset schedule file state when dialog opens (prevents re-upload on edit)
+      setScheduleFile(null)
+
       // Reset form for create mode
       if (!gig) {
         setFormData({
@@ -171,7 +174,6 @@ export function GigDialog({
         })
         setSelectedDates(initialDate ? [initialDate] : [])
         setScheduleTexts({})
-        setScheduleFile(null)
         setParsedSessions({})
         setParsingSessions({})
         createDraft()
@@ -403,10 +405,11 @@ export function GigDialog({
         toast.warning(tToast('gigDatesError'))
       }
 
-      // Upload schedule file if imported
+      // Upload schedule file if imported (only new imports, not re-saves)
       if (scheduleFile) {
         try {
           await uploadGigAttachment(gig.id, scheduleFile, 'schedule')
+          setScheduleFile(null)
         } catch (err) {
           console.error('Schedule file upload error:', err)
           toast.warning(tToast('scheduleUploadError'))
@@ -436,6 +439,7 @@ export function GigDialog({
         if (scheduleFile) {
           try {
             await uploadGigAttachment(draftGigId, scheduleFile, 'schedule')
+            setScheduleFile(null)
           } catch (err) {
             console.error('Schedule file upload error:', err)
             toast.warning(tToast('scheduleUploadError'))
@@ -467,6 +471,7 @@ export function GigDialog({
         if (scheduleFile) {
           try {
             await uploadGigAttachment(newGig.id, scheduleFile, 'schedule')
+            setScheduleFile(null)
           } catch (err) {
             console.error('Schedule file upload error:', err)
             toast.warning(tToast('scheduleUploadError'))
@@ -537,12 +542,23 @@ export function GigDialog({
 
       const result = await res.json()
 
-      // Set dates from scan result
+      // Set dates and sessions from scan result
       if (result.dates) {
         const dates = Object.keys(result.dates)
           .sort()
           .map((d) => new Date(d + 'T12:00:00'))
         setSelectedDates(dates)
+
+        // Store parsed sessions so they don't get re-parsed on save
+        const scannedSessions: Record<string, { start: string; end: string | null; label?: string }[]> = {}
+        for (const [date, sessions] of Object.entries(result.dates)) {
+          if (Array.isArray(sessions) && sessions.length > 0) {
+            scannedSessions[date] = sessions as { start: string; end: string | null; label?: string }[]
+          }
+        }
+        if (Object.keys(scannedSessions).length > 0) {
+          setParsedSessions((prev) => ({ ...prev, ...scannedSessions }))
+        }
       }
 
       // Set schedule texts

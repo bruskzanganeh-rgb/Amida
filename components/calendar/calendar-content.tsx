@@ -748,28 +748,59 @@ export default function CalendarPage() {
                             {tGig('date')} ({selectedGig.gig_dates?.length || selectedGig.total_days} {tc('days')})
                           </p>
                           {selectedGig.gig_dates && selectedGig.gig_dates.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {selectedGig.gig_dates
-                                .sort((a, b) => a.date.localeCompare(b.date))
-                                .map((gd, i) => {
-                                  const dateObj = new Date(gd.date + 'T12:00:00')
-                                  const dayName = format(dateObj, 'EEE', { locale: dateLocale })
-                                  const dayNum = format(dateObj, 'd', { locale: dateLocale })
-                                  const mon = format(dateObj, 'MMM', { locale: dateLocale })
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="flex flex-col items-center bg-card rounded px-1.5 py-0.5 border shadow-sm min-w-[38px]"
-                                    >
-                                      <span className="text-[7px] font-medium text-muted-foreground uppercase">
-                                        {dayName}
-                                      </span>
-                                      <span className="text-xs font-bold">{dayNum}</span>
-                                      <span className="text-[7px] font-medium text-muted-foreground">{mon}</span>
-                                    </div>
-                                  )
-                                })}
-                            </div>
+                            <>
+                              <div className="flex flex-wrap gap-1">
+                                {selectedGig.gig_dates
+                                  .sort((a, b) => a.date.localeCompare(b.date))
+                                  .map((gd, i) => {
+                                    const dateObj = new Date(gd.date + 'T12:00:00')
+                                    const dayName = format(dateObj, 'EEE', { locale: dateLocale })
+                                    const dayNum = format(dateObj, 'd', { locale: dateLocale })
+                                    const mon = format(dateObj, 'MMM', { locale: dateLocale })
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="flex flex-col items-center bg-card rounded px-1.5 py-0.5 border shadow-sm min-w-[38px]"
+                                      >
+                                        <span className="text-[7px] font-medium text-muted-foreground uppercase">
+                                          {dayName}
+                                        </span>
+                                        <span className="text-xs font-bold">{dayNum}</span>
+                                        <span className="text-[7px] font-medium text-muted-foreground">{mon}</span>
+                                      </div>
+                                    )
+                                  })}
+                              </div>
+                              {selectedGig.gig_dates.some((gd) => gd.sessions && gd.sessions.length > 0) && (
+                                <div className="space-y-0.5 pt-1.5">
+                                  {selectedGig.gig_dates
+                                    .sort((a, b) => a.date.localeCompare(b.date))
+                                    .filter((gd) => gd.sessions && gd.sessions.length > 0)
+                                    .map((gd, i) => {
+                                      const date = new Date(gd.date + 'T12:00:00')
+                                      return (
+                                        <div key={i} className="flex items-baseline gap-1.5 text-[10px]">
+                                          <span className="text-muted-foreground w-[55px] shrink-0">
+                                            {format(date, 'EEE d MMM', { locale: dateLocale })}
+                                          </span>
+                                          <span className="text-foreground/80">
+                                            {gd.sessions!.map((s, j) => (
+                                              <span key={j}>
+                                                {j > 0 && (
+                                                  <span className="text-muted-foreground/50 mx-0.5">&middot;</span>
+                                                )}
+                                                {s.label && <span className="font-medium">{s.label} </span>}
+                                                {s.start}
+                                                {s.end && `\u2013${s.end}`}
+                                              </span>
+                                            ))}
+                                          </span>
+                                        </div>
+                                      )
+                                    })}
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <p className="text-xs font-semibold">
                               {format(new Date(selectedGig.date), 'PPP', { locale: dateLocale })}
@@ -982,29 +1013,58 @@ export default function CalendarPage() {
                               {tGig('date')} ({selectedGig.gig_dates?.length || selectedGig.total_days} {tc('days')})
                             </p>
                             {selectedGig.gig_dates && selectedGig.gig_dates.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {selectedGig.gig_dates
-                                  .sort((a, b) => a.date.localeCompare(b.date))
-                                  .map((gd, i) => {
-                                    const dateObj = new Date(gd.date + 'T12:00:00')
-                                    return (
-                                      <div
-                                        key={i}
-                                        className="flex flex-col items-center bg-white rounded-lg px-2 py-1 border border-gray-200 shadow-sm min-w-[44px]"
-                                      >
-                                        <span className="text-[8px] font-medium text-gray-400 uppercase">
-                                          {format(dateObj, 'EEE', { locale: dateLocale })}
-                                        </span>
-                                        <span className="text-sm font-bold text-gray-900">
-                                          {format(dateObj, 'd', { locale: dateLocale })}
-                                        </span>
-                                        <span className="text-[8px] font-medium text-gray-500">
-                                          {format(dateObj, 'MMM', { locale: dateLocale })}
-                                        </span>
-                                      </div>
-                                    )
-                                  })}
-                              </div>
+                              <>
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedGig.gig_dates
+                                    .sort((a, b) => a.date.localeCompare(b.date))
+                                    .map((gd, i) => {
+                                      const dateObj = new Date(gd.date + 'T12:00:00')
+                                      return (
+                                        <div
+                                          key={i}
+                                          className="flex flex-col items-center bg-white rounded-lg px-2 py-1 border border-gray-200 shadow-sm min-w-[44px]"
+                                        >
+                                          <span className="text-[8px] font-medium text-gray-400 uppercase">
+                                            {format(dateObj, 'EEE', { locale: dateLocale })}
+                                          </span>
+                                          <span className="text-sm font-bold text-gray-900">
+                                            {format(dateObj, 'd', { locale: dateLocale })}
+                                          </span>
+                                          <span className="text-[8px] font-medium text-gray-500">
+                                            {format(dateObj, 'MMM', { locale: dateLocale })}
+                                          </span>
+                                        </div>
+                                      )
+                                    })}
+                                </div>
+                                {selectedGig.gig_dates.some((gd) => gd.sessions && gd.sessions.length > 0) && (
+                                  <div className="space-y-0.5 pt-1.5">
+                                    {selectedGig.gig_dates
+                                      .sort((a, b) => a.date.localeCompare(b.date))
+                                      .filter((gd) => gd.sessions && gd.sessions.length > 0)
+                                      .map((gd, i) => {
+                                        const date = new Date(gd.date + 'T12:00:00')
+                                        return (
+                                          <div key={i} className="flex items-baseline gap-1.5 text-[10px]">
+                                            <span className="text-gray-400 w-[55px] shrink-0">
+                                              {format(date, 'EEE d MMM', { locale: dateLocale })}
+                                            </span>
+                                            <span className="text-gray-700">
+                                              {gd.sessions!.map((s, j) => (
+                                                <span key={j}>
+                                                  {j > 0 && <span className="text-gray-300 mx-0.5">&middot;</span>}
+                                                  {s.label && <span className="font-medium">{s.label} </span>}
+                                                  {s.start}
+                                                  {s.end && `\u2013${s.end}`}
+                                                </span>
+                                              ))}
+                                            </span>
+                                          </div>
+                                        )
+                                      })}
+                                  </div>
+                                )}
+                              </>
                             ) : (
                               <p className="text-sm font-semibold text-gray-900">
                                 {format(new Date(selectedGig.date), 'PPP', { locale: dateLocale })}
