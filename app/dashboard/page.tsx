@@ -91,7 +91,6 @@ export default function DashboardPage() {
   const [upcomingDays, setUpcomingDays] = useState(0)
   const [pendingGigs, setPendingGigs] = useState<PendingGig[]>([])
   const [needsActionGigs, setNeedsActionGigs] = useState<NeedsActionGig[]>([])
-  const [toInvoiceCount, setToInvoiceCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showGigDialog, setShowGigDialog] = useState(false)
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
@@ -133,7 +132,7 @@ export default function DashboardPage() {
 
     const today = new Date().toISOString().split('T')[0]
 
-    const [upcomingRes, pendingRes, needsActionRes, completedRes] = await Promise.all([
+    const [upcomingRes, pendingRes, needsActionRes] = await Promise.all([
       userFilter(
         supabase
           .from('gigs')
@@ -157,9 +156,6 @@ export default function DashboardPage() {
           )
           .in('status', ['accepted', 'pending', 'tentative']),
       ).order('date', { ascending: false }),
-      userFilter(supabase.from('gigs').select('id').eq('status', 'completed'))
-        .not('fee', 'is', null)
-        .not('client_id', 'is', null),
     ])
 
     const upcomingList = (upcomingRes.data || []) as unknown as UpcomingGig[]
@@ -173,24 +169,17 @@ export default function DashboardPage() {
     )
     setNeedsActionGigs(pastNeedingAction)
 
-    const [gigDatesRes, invoicedRes] = await Promise.all([
-      upcomingList.length > 0
-        ? supabase
-            .from('gig_dates')
-            .select('date')
-            .in(
-              'gig_id',
-              upcomingList.map((g) => g.id),
-            )
-            .gte('date', today)
-        : Promise.resolve({ data: [] as { date: string }[] }),
-      supabase.from('invoice_gigs').select('gig_id'),
-    ])
-
-    setUpcomingDays(new Set(gigDatesRes.data?.map((d) => d.date) || []).size)
-
-    const invoicedSet = new Set((invoicedRes.data || []).map((g: { gig_id: string }) => g.gig_id))
-    setToInvoiceCount((completedRes.data || []).filter((g) => !invoicedSet.has(g.id)).length)
+    if (upcomingList.length > 0) {
+      const gigDatesRes = await supabase
+        .from('gig_dates')
+        .select('date')
+        .in(
+          'gig_id',
+          upcomingList.map((g) => g.id),
+        )
+        .gte('date', today)
+      setUpcomingDays(new Set(gigDatesRes.data?.map((d) => d.date) || []).size)
+    }
 
     setLoading(false)
   }
@@ -213,13 +202,8 @@ export default function DashboardPage() {
     loadDashboardData()
   }
 
-  const isEmpty =
-    !loading &&
-    upcomingGigs.length === 0 &&
-    pendingGigs.length === 0 &&
-    needsActionGigs.length === 0 &&
-    toInvoiceCount === 0
-  const actionCount = pendingGigs.length + needsActionGigs.length + toInvoiceCount
+  const isEmpty = !loading && upcomingGigs.length === 0 && pendingGigs.length === 0 && needsActionGigs.length === 0
+  const actionCount = pendingGigs.length + needsActionGigs.length
 
   // Greeting
   const greeting = getGreeting(t)
@@ -431,7 +415,6 @@ export default function DashboardPage() {
             <ActionRequiredCard
               pendingGigs={pendingGigs}
               needsActionGigs={needsActionGigs}
-              toInvoiceCount={toInvoiceCount}
               dateLocale={dateLocale}
               formatLocale={formatLocale}
               onStatusChange={updateGigStatus}

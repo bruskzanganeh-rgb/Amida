@@ -5,9 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useGigFilter } from './use-gig-filter'
 
 /**
- * Lightweight hook that counts gigs needing user attention:
- * 1. Pending/tentative gigs (need accept/decline)
- * 2. Past accepted gigs (need to be marked completed)
+ * Counts completed gigs that haven't been invoiced yet.
+ * Badge is shown on the Fakturor tab.
  */
 export function useActionCount() {
   const [count, setCount] = useState(0)
@@ -16,22 +15,19 @@ export function useActionCount() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const today = new Date().toISOString().split('T')[0]
 
       function applyFilter<T extends { eq: (col: string, val: string) => T }>(query: T): T {
         return shouldFilter && currentUserId ? query.eq('user_id', currentUserId) : query
       }
 
-      const [pendingRes, pastRes] = await Promise.all([
-        applyFilter(
-          supabase.from('gigs').select('id', { count: 'exact', head: true }).in('status', ['pending', 'tentative']),
-        ),
-        applyFilter(
-          supabase.from('gigs').select('id', { count: 'exact', head: true }).eq('status', 'accepted').lt('date', today),
-        ),
+      const [completedRes, invoicedRes] = await Promise.all([
+        applyFilter(supabase.from('gigs').select('id').eq('status', 'completed')),
+        supabase.from('invoice_gigs').select('gig_id'),
       ])
 
-      setCount((pendingRes.count ?? 0) + (pastRes.count ?? 0))
+      const invoicedSet = new Set((invoicedRes.data || []).map((g: { gig_id: string }) => g.gig_id))
+      const uninvoiced = (completedRes.data || []).filter((g) => !invoicedSet.has(g.id))
+      setCount(uninvoiced.length)
     }
 
     load()

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, ArrowUpRight, Check, X, FileText } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, Check, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { format, type Locale } from 'date-fns'
 import Link from 'next/link'
@@ -34,7 +34,6 @@ export type NeedsActionGig = {
 type Props = {
   pendingGigs: PendingGig[]
   needsActionGigs: NeedsActionGig[]
-  toInvoiceCount: number
   dateLocale: Locale
   formatLocale: string
   onStatusChange: (gigId: string, status: string) => void
@@ -60,7 +59,6 @@ function formatGigDate(gig: NeedsActionGig, locale: Locale): string {
 export function ActionRequiredCard({
   pendingGigs,
   needsActionGigs,
-  toInvoiceCount,
   dateLocale,
   formatLocale,
   onStatusChange,
@@ -68,10 +66,9 @@ export function ActionRequiredCard({
 }: Props) {
   const t = useTranslations('dashboard')
   const tGig = useTranslations('gig')
-  const tInvoice = useTranslations('invoice')
   const tc = useTranslations('common')
 
-  const totalCount = pendingGigs.length + needsActionGigs.length + toInvoiceCount
+  const totalCount = pendingGigs.length + needsActionGigs.length
   if (totalCount === 0) return null
 
   return (
@@ -215,23 +212,6 @@ export function ActionRequiredCard({
             </div>
           </div>
         )}
-
-        {toInvoiceCount > 0 && (
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                {tInvoice('toInvoiceCount', { count: toInvoiceCount })}
-              </span>
-              <Link
-                href="/finance"
-                className="text-xs text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
-              >
-                {t('viewAll')} <ArrowUpRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
@@ -244,15 +224,13 @@ export function ActionRequiredCard({
 type InlineProps = {
   pendingCount: number
   needsActionCount: number
-  toInvoiceCount: number
 }
 
-export function ActionRequiredInline({ pendingCount, needsActionCount, toInvoiceCount }: InlineProps) {
+export function ActionRequiredInline({ pendingCount, needsActionCount }: InlineProps) {
   const t = useTranslations('dashboard')
   const tGig = useTranslations('gig')
-  const tInvoice = useTranslations('invoice')
 
-  const total = pendingCount + needsActionCount + toInvoiceCount
+  const total = pendingCount + needsActionCount
   if (total === 0) return null
 
   const items: { label: string; count: number; href: string }[] = []
@@ -261,9 +239,6 @@ export function ActionRequiredInline({ pendingCount, needsActionCount, toInvoice
   }
   if (needsActionCount > 0) {
     items.push({ label: tGig('needsAction'), count: needsActionCount, href: '/gigs' })
-  }
-  if (toInvoiceCount > 0) {
-    items.push({ label: tInvoice('toInvoice'), count: toInvoiceCount, href: '/finance' })
   }
 
   return (

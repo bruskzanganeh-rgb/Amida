@@ -85,7 +85,7 @@ export default async function RootLayout({
                 <Header />
                 <SessionTracker />
                 <main className="flex-1 bg-background">
-                  <div className="p-4 pb-20 md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
+                  <div className="p-4 pb-24 md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
                 </main>
                 <BottomNav />
               </div>

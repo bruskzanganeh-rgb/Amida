@@ -54,14 +54,12 @@ export function Header() {
                 )}
                 style={{ color: isActive ? '#ffffff' : '#94a3b8' }}
               >
-                <span className="relative">
-                  <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: isActive ? '#F59E0B' : undefined }} />
-                  {item.nameKey === 'dashboard' && actionCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-destructive text-white text-[9px] font-bold leading-none px-0.5">
-                      {actionCount > 9 ? '9+' : actionCount}
-                    </span>
-                  )}
-                </span>
+                <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: isActive ? '#F59E0B' : undefined }} />
+                {item.nameKey === 'finance' && actionCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-destructive text-white text-[9px] font-bold leading-none px-0.5">
+                    {actionCount > 9 ? '9+' : actionCount}
+                  </span>
+                )}
                 <span className="hidden lg:inline">{t(item.nameKey)}</span>
                 {isActive && (
                   <motion.div
