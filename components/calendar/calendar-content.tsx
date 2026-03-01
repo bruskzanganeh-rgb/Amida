@@ -931,7 +931,7 @@ export default function CalendarPage() {
               className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 selectedGig ? 'translate-y-0' : 'translate-y-full'
               }`}
-              style={{ height: '50vh', minHeight: '320px' }}
+              style={{ height: '70vh', minHeight: '400px' }}
             >
               <div className="h-full bg-gradient-to-b from-background/95 to-background/98 backdrop-blur-xl border-t border-white/20 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.2)]">
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
@@ -1072,9 +1072,93 @@ export default function CalendarPage() {
                             )}
                           </div>
                         </div>
+
+                        {/* Notes */}
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                              {tGig('notes')}
+                            </p>
+                            {!editingNotes && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0"
+                                onClick={() => {
+                                  setNotesText(selectedGig.notes || '')
+                                  setEditingNotes(true)
+                                }}
+                              >
+                                <Pencil className="h-2.5 w-2.5 text-gray-400" />
+                              </Button>
+                            )}
+                          </div>
+                          {editingNotes ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={notesText}
+                                onChange={(e) => setNotesText(e.target.value)}
+                                className="text-xs min-h-[80px] resize-none"
+                                placeholder={tc('writeNotesHere')}
+                                autoFocus
+                              />
+                              <div className="flex gap-1.5 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => setEditingNotes(false)}
+                                >
+                                  {tc('cancel')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => saveNotes(selectedGig.id, notesText)}
+                                >
+                                  {tc('save')}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500 whitespace-pre-wrap leading-snug">
+                              {selectedGig.notes || <span className="italic">{tc('noNotes')}</span>}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Attachments */}
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                          <GigAttachments gigId={selectedGig.id} />
+                        </div>
+
+                        {/* Receipts */}
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                              <Receipt className="h-2.5 w-2.5" />
+                              {tGig('receipts')} ({gigExpenses.length})
+                            </p>
+                          </div>
+                          {gigExpenses.length === 0 ? (
+                            <p className="text-xs text-gray-400 italic">{tGig('noReceiptsLinked')}</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {gigExpenses.map((exp) => (
+                                <li key={exp.id} className="flex items-center justify-between text-xs">
+                                  <span className="truncate text-gray-700">{exp.supplier}</span>
+                                  <span className="font-medium shrink-0 ml-2 text-gray-900">
+                                    {exp.amount.toLocaleString(formatLocale)}{' '}
+                                    {exp.currency === 'SEK' ? tc('kr') : exp.currency}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="py-3 pb-5 border-t border-gray-100 flex items-center gap-2">
+                    <div className="py-3 pb-5 border-t border-gray-100 flex items-center gap-2 shrink-0">
                       <Button
                         className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg px-4 h-9 text-sm shadow-lg shadow-gray-900/10"
                         onClick={() => setEditingGig(selectedGig)}

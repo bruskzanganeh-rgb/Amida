@@ -817,44 +817,46 @@ export default function GigsPage() {
               <TabsContent value="upcoming" className="mt-4 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                 <Card className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                   <CardHeader>
-                    <div className="flex items-center justify-between gap-3">
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        {t('upcoming')} ({sortedUpcoming.length})
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        {isSharedMode && !gigFilter.shouldFilter && (
-                          <>
-                            <Button
-                              variant={memberFilter === 'all' ? 'default' : 'outline'}
-                              size="sm"
-                              className="h-8 text-xs"
-                              onClick={() => setMemberFilter('all')}
-                            >
-                              {tTeam('allMembers')}
-                            </Button>
-                            {members.map((m) => (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5" />
+                          {t('upcoming')} ({sortedUpcoming.length})
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {isSharedMode && !gigFilter.shouldFilter && (
+                            <>
                               <Button
-                                key={m.user_id}
-                                variant={memberFilter === m.user_id ? 'default' : 'outline'}
+                                variant={memberFilter === 'all' ? 'default' : 'outline'}
                                 size="sm"
                                 className="h-8 text-xs"
-                                onClick={() => setMemberFilter(m.user_id)}
+                                onClick={() => setMemberFilter('all')}
                               >
-                                {getMemberLabel(m.user_id)}
+                                {tTeam('allMembers')}
                               </Button>
-                            ))}
-                          </>
-                        )}
-                        <div className="relative w-full max-w-xs">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={`${tc('search')}...`}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                          />
+                              {members.map((m) => (
+                                <Button
+                                  key={m.user_id}
+                                  variant={memberFilter === m.user_id ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => setMemberFilter(m.user_id)}
+                                >
+                                  {getMemberLabel(m.user_id)}
+                                </Button>
+                              ))}
+                            </>
+                          )}
                         </div>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={`${tc('search')}...`}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
                       </div>
                     </div>
                   </CardHeader>
@@ -1183,49 +1185,51 @@ export default function GigsPage() {
               <TabsContent value="history" className="mt-4 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                 <Card className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                   <CardHeader>
-                    <div className="flex items-center justify-between gap-3">
-                      <CardTitle className="flex items-center gap-2">
-                        <History className="h-5 w-5" />
-                        {t('history')} ({sortedHistory.length})
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        {activeTab === 'history' && (
-                          <>
-                            {pipelineCounts.completed > 0 && (
-                              <Badge className="bg-blue-100 text-blue-800">
-                                <Check className="h-3 w-3 mr-1" />
-                                {pipelineCounts.completed} {t('completedPipeline')}
-                              </Badge>
-                            )}
-                            {pipelineCounts.completed > 0 && pipelineCounts.invoiced > 0 && (
-                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                            )}
-                            {pipelineCounts.invoiced > 0 && (
-                              <Badge className="bg-purple-100 text-purple-800">
-                                <FileText className="h-3 w-3 mr-1" />
-                                {pipelineCounts.invoiced} {t('invoicedPipeline')}
-                              </Badge>
-                            )}
-                            {pipelineCounts.invoiced > 0 && pipelineCounts.paid > 0 && (
-                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                            )}
-                            {pipelineCounts.paid > 0 && (
-                              <Badge className="bg-green-200 text-green-900">
-                                <DollarSign className="h-3 w-3 mr-1" />
-                                {pipelineCounts.paid} {t('paidPipeline')}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                        <div className="relative w-full max-w-xs">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={`${tc('search')}...`}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                          />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="flex items-center gap-2">
+                          <History className="h-5 w-5" />
+                          {t('history')} ({sortedHistory.length})
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {activeTab === 'history' && (
+                            <>
+                              {pipelineCounts.completed > 0 && (
+                                <Badge className="bg-blue-100 text-blue-800">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  {pipelineCounts.completed} {t('completedPipeline')}
+                                </Badge>
+                              )}
+                              {pipelineCounts.completed > 0 && pipelineCounts.invoiced > 0 && (
+                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                              )}
+                              {pipelineCounts.invoiced > 0 && (
+                                <Badge className="bg-purple-100 text-purple-800">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  {pipelineCounts.invoiced} {t('invoicedPipeline')}
+                                </Badge>
+                              )}
+                              {pipelineCounts.invoiced > 0 && pipelineCounts.paid > 0 && (
+                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                              )}
+                              {pipelineCounts.paid > 0 && (
+                                <Badge className="bg-green-200 text-green-900">
+                                  <DollarSign className="h-3 w-3 mr-1" />
+                                  {pipelineCounts.paid} {t('paidPipeline')}
+                                </Badge>
+                              )}
+                            </>
+                          )}
                         </div>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={`${tc('search')}...`}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
                       </div>
                     </div>
                   </CardHeader>
@@ -1500,30 +1504,32 @@ export default function GigsPage() {
               <TabsContent value="declined" className="mt-4 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                 <Card className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
                   <CardHeader>
-                    <div className="flex items-center justify-between gap-3">
-                      <CardTitle className="flex items-center gap-2">
-                        <Ban className="h-5 w-5" />
-                        {t('declined')} ({sortedDeclined.length})
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        {activeTab === 'declined' && sortedDeclined.length > 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            {tc('total')}:{' '}
-                            {sortedDeclined
-                              .reduce((sum, g) => sum + (g.fee_base || g.fee || 0), 0)
-                              .toLocaleString(formatLocale)}{' '}
-                            {tc('kr')}
-                          </p>
-                        )}
-                        <div className="relative w-full max-w-xs">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={`${tc('search')}...`}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                          />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="flex items-center gap-2">
+                          <Ban className="h-5 w-5" />
+                          {t('declined')} ({sortedDeclined.length})
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {activeTab === 'declined' && sortedDeclined.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {tc('total')}:{' '}
+                              {sortedDeclined
+                                .reduce((sum, g) => sum + (g.fee_base || g.fee || 0), 0)
+                                .toLocaleString(formatLocale)}{' '}
+                              {tc('kr')}
+                            </p>
+                          )}
                         </div>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={`${tc('search')}...`}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
                       </div>
                     </div>
                   </CardHeader>
