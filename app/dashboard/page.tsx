@@ -18,6 +18,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { ListSkeleton } from '@/components/skeletons/list-skeleton'
 import { PageTransition } from '@/components/ui/page-transition'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
 
@@ -224,209 +225,211 @@ export default function DashboardPage() {
   const nextGigText = getNextGigText()
 
   return (
-    <PageTransition>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate={allReady ? 'visible' : 'hidden'}
-        className="space-y-3"
-        style={
-          gridHeight
-            ? {
-                display: 'grid',
-                gridTemplateRows: 'auto auto auto',
-                gap: '12px',
-                maxHeight: gridHeight,
-                overflow: 'hidden',
-              }
-            : undefined
-        }
-      >
-        {/* ── Top section: Mobile actions + Greeting ── */}
-        <div>
-          {/* Mobile Quick Actions */}
-          <div className="lg:hidden mb-3">
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setShowGigDialog(true)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
-              >
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Plus className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-xs font-medium">{t('newGig')}</span>
-              </button>
-              <button
-                onClick={() => setShowReceiptDialog(true)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
-              >
-                <div className="h-9 w-9 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Receipt className="h-4 w-4 text-emerald-500" />
-                </div>
-                <span className="text-xs font-medium">{t('uploadReceipt')}</span>
-              </button>
-              <Link
-                href="/calendar"
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
-              >
-                <div className="h-9 w-9 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <CalendarDays className="h-4 w-4 text-blue-500" />
-                </div>
-                <span className="text-xs font-medium">{t('viewCalendar')}</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Greeting */}
-          <motion.div variants={itemVariants}>
-            {isEmpty ? (
-              <div className="py-4">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                  {t('welcome', { name: company?.company_name || '' })}
-                </h1>
-                <p className="text-muted-foreground mt-1 text-sm">{t('welcomeHint')}</p>
-                <div className="hidden lg:grid grid-cols-3 gap-3 mt-5">
-                  <button
-                    onClick={() => setShowGigDialog(true)}
-                    className="group flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Plus className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <span className="text-sm font-medium block">{t('newGig')}</span>
-                      <span className="text-xs text-muted-foreground">{t('startHere')}</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setShowReceiptDialog(true)}
-                    className="group flex flex-col items-center gap-2 p-4 rounded-xl border hover:bg-accent transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                      <Receipt className="h-5 w-5 text-emerald-500" />
-                    </div>
-                    <span className="text-sm font-medium">{t('uploadReceipt')}</span>
-                  </button>
-                  <Link
-                    href="/calendar"
-                    className="group flex flex-col items-center gap-2 p-4 rounded-xl border hover:bg-accent transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                      <CalendarDays className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <span className="text-sm font-medium">{t('viewCalendar')}</span>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="py-4 md:py-5 px-1">
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">{greetingName}</h1>
-                {nextGigText && (
-                  <p className="text-muted-foreground mt-1.5 text-[13px] leading-relaxed">{nextGigText}</p>
-                )}
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* ── Main Grid: Gigs | Invoices | Week View ── */}
+    <PullToRefresh onRefresh={loadDashboardData}>
+      <PageTransition>
         <motion.div
-          variants={itemVariants}
-          className="grid gap-3"
-          style={{
-            gridTemplateColumns: gridHeight ? (isDesktop ? '1fr 1fr 1fr' : '1fr 1fr') : undefined,
-          }}
+          variants={containerVariants}
+          initial="hidden"
+          animate={allReady ? 'visible' : 'hidden'}
+          className="space-y-3"
+          style={
+            gridHeight
+              ? {
+                  display: 'grid',
+                  gridTemplateRows: 'auto auto auto',
+                  gap: '12px',
+                  maxHeight: gridHeight,
+                  overflow: 'hidden',
+                }
+              : undefined
+          }
         >
-          {/* Column 1: Upcoming Gigs — overflow-hidden makes grid min-height:0 so calendar determines row height */}
-          <Card className="overflow-hidden flex flex-col">
-            <CardHeader className="pb-2 pt-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  {t('upcoming')}
-                </CardTitle>
-                <span className="text-sm font-semibold tabular-nums">
-                  {loading ? '—' : upcomingRevenue.toLocaleString(formatLocale)} {tc('kr')}
-                </span>
+          {/* ── Top section: Mobile actions + Greeting ── */}
+          <div>
+            {/* Mobile Quick Actions */}
+            <div className="lg:hidden mb-3">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setShowGigDialog(true)}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Plus className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-xs font-medium">{t('newGig')}</span>
+                </button>
+                <button
+                  onClick={() => setShowReceiptDialog(true)}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Receipt className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <span className="text-xs font-medium">{t('uploadReceipt')}</span>
+                </button>
+                <Link
+                  href="/calendar"
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card border hover:bg-accent transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <CalendarDays className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <span className="text-xs font-medium">{t('viewCalendar')}</span>
+                </Link>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {upcomingGigs.length} {t('gigs')} · {upcomingDays} {tc('days')}
-              </p>
-            </CardHeader>
-            <CardContent className="pb-4 flex-1 flex flex-col" style={{ minHeight: 0 }}>
-              {loading ? (
-                <ListSkeleton items={4} />
-              ) : upcomingGigs.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Music className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                  <p className="text-xs">{tGig('noUpcoming')}</p>
-                </div>
-              ) : (
-                <div className="flex-1 relative" style={{ minHeight: 0 }}>
-                  <div className="absolute inset-0 space-y-0.5 overflow-y-auto pr-1">
-                    {upcomingGigs.map((gig) => (
-                      <Link
-                        key={gig.id}
-                        href="/gigs"
-                        className="group flex items-center gap-3 py-2 px-3 rounded-lg text-xs hover:bg-secondary/80 transition-all duration-150"
-                      >
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" />
-                        <span className="font-mono text-muted-foreground shrink-0 w-14">
-                          {format(new Date(gig.date), 'd MMM', { locale: dateLocale })}
-                        </span>
-                        <span className="font-medium truncate flex-1">
-                          {gig.project_name || gig.client?.name || gig.gig_type?.name || '—'}
-                        </span>
-                        {gig.fee && (
-                          <span className="text-muted-foreground shrink-0 tabular-nums">
-                            {gig.fee.toLocaleString(formatLocale)} {tc('kr')}
-                          </span>
-                        )}
-                      </Link>
-                    ))}
+            </div>
+
+            {/* Greeting */}
+            <motion.div variants={itemVariants}>
+              {isEmpty ? (
+                <div className="py-4">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                    {t('welcome', { name: company?.company_name || '' })}
+                  </h1>
+                  <p className="text-muted-foreground mt-1 text-sm">{t('welcomeHint')}</p>
+                  <div className="hidden lg:grid grid-cols-3 gap-3 mt-5">
+                    <button
+                      onClick={() => setShowGigDialog(true)}
+                      className="group flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 transition-all duration-200 hover:-translate-y-0.5"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Plus className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-medium block">{t('newGig')}</span>
+                        <span className="text-xs text-muted-foreground">{t('startHere')}</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setShowReceiptDialog(true)}
+                      className="group flex flex-col items-center gap-2 p-4 rounded-xl border hover:bg-accent transition-all duration-200 hover:-translate-y-0.5"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <Receipt className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <span className="text-sm font-medium">{t('uploadReceipt')}</span>
+                    </button>
+                    <Link
+                      href="/calendar"
+                      className="group flex flex-col items-center gap-2 p-4 rounded-xl border hover:bg-accent transition-all duration-200 hover:-translate-y-0.5"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <CalendarDays className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <span className="text-sm font-medium">{t('viewCalendar')}</span>
+                    </Link>
                   </div>
                 </div>
+              ) : (
+                <div className="py-4 md:py-5 px-1">
+                  <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">{greetingName}</h1>
+                  {nextGigText && (
+                    <p className="text-muted-foreground mt-1.5 text-[13px] leading-relaxed">{nextGigText}</p>
+                  )}
+                </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Column 2: Unpaid Invoices — overflow-hidden makes grid min-height:0 */}
-          <div className="overflow-hidden">
-            <ErrorBoundary>
-              <UpcomingPayments className="h-full flex flex-col min-h-0" />
-            </ErrorBoundary>
+            </motion.div>
           </div>
 
-          {/* Column 3: Week View — NO overflow-hidden so it determines the grid row height */}
-          <div className="md:col-span-2 xl:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <ErrorBoundary>
-                  <WeekView />
-                </ErrorBoundary>
+          {/* ── Main Grid: Gigs | Invoices | Week View ── */}
+          <motion.div
+            variants={itemVariants}
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: gridHeight ? (isDesktop ? '1fr 1fr 1fr' : '1fr 1fr') : undefined,
+            }}
+          >
+            {/* Column 1: Upcoming Gigs — overflow-hidden makes grid min-height:0 so calendar determines row height */}
+            <Card className="overflow-hidden flex flex-col">
+              <CardHeader className="pb-2 pt-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    {t('upcoming')}
+                  </CardTitle>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {loading ? '—' : upcomingRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {upcomingGigs.length} {t('gigs')} · {upcomingDays} {tc('days')}
+                </p>
+              </CardHeader>
+              <CardContent className="pb-4 flex-1 flex flex-col" style={{ minHeight: 0 }}>
+                {loading ? (
+                  <ListSkeleton items={4} />
+                ) : upcomingGigs.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Music className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                    <p className="text-xs">{tGig('noUpcoming')}</p>
+                  </div>
+                ) : (
+                  <div className="flex-1 relative" style={{ minHeight: 0 }}>
+                    <div className="absolute inset-0 space-y-0.5 overflow-y-auto pr-1">
+                      {upcomingGigs.map((gig) => (
+                        <Link
+                          key={gig.id}
+                          href="/gigs"
+                          className="group flex items-center gap-3 py-2 px-3 rounded-lg text-xs hover:bg-secondary/80 transition-all duration-150"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" />
+                          <span className="font-mono text-muted-foreground shrink-0 w-14">
+                            {format(new Date(gig.date), 'd MMM', { locale: dateLocale })}
+                          </span>
+                          <span className="font-medium truncate flex-1">
+                            {gig.project_name || gig.client?.name || gig.gig_type?.name || '—'}
+                          </span>
+                          {gig.fee && (
+                            <span className="text-muted-foreground shrink-0 tabular-nums">
+                              {gig.fee.toLocaleString(formatLocale)} {tc('kr')}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
+
+            {/* Column 2: Unpaid Invoices — overflow-hidden makes grid min-height:0 */}
+            <div className="overflow-hidden">
+              <ErrorBoundary>
+                <UpcomingPayments className="h-full flex flex-col min-h-0" />
+              </ErrorBoundary>
+            </div>
+
+            {/* Column 3: Week View — NO overflow-hidden so it determines the grid row height */}
+            <div className="md:col-span-2 xl:col-span-1">
+              <Card>
+                <CardContent className="p-4">
+                  <ErrorBoundary>
+                    <WeekView />
+                  </ErrorBoundary>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+
+          {/* ── Action Required (full width, detailed, below grid) ── */}
+          <motion.div variants={itemVariants}>
+            {actionCount > 0 && (
+              <ActionRequiredCard
+                pendingGigs={pendingGigs}
+                needsActionGigs={needsActionGigs}
+                dateLocale={dateLocale}
+                formatLocale={formatLocale}
+                onStatusChange={updateGigStatus}
+                getDeadlineInfo={(deadline) => getDeadlineInfo(deadline, dateLocale)}
+              />
+            )}
+          </motion.div>
         </motion.div>
 
-        {/* ── Action Required (full width, detailed, below grid) ── */}
-        <motion.div variants={itemVariants}>
-          {actionCount > 0 && (
-            <ActionRequiredCard
-              pendingGigs={pendingGigs}
-              needsActionGigs={needsActionGigs}
-              dateLocale={dateLocale}
-              formatLocale={formatLocale}
-              onStatusChange={updateGigStatus}
-              getDeadlineInfo={(deadline) => getDeadlineInfo(deadline, dateLocale)}
-            />
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* Quick Action Dialogs — outside grid container */}
-      <GigDialog gig={null} open={showGigDialog} onOpenChange={setShowGigDialog} onSuccess={loadDashboardData} />
-      <UploadReceiptDialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog} onSuccess={() => {}} />
-    </PageTransition>
+        {/* Quick Action Dialogs — outside grid container */}
+        <GigDialog gig={null} open={showGigDialog} onOpenChange={setShowGigDialog} onSuccess={loadDashboardData} />
+        <UploadReceiptDialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog} onSuccess={() => {}} />
+      </PageTransition>
+    </PullToRefresh>
   )
 }
