@@ -12,6 +12,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { AuthHashHandler } from '@/components/auth-hash-handler'
 import { BottomNav } from '@/components/navigation/bottom-nav'
+import { SwRegister } from '@/components/sw-register'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -97,6 +98,7 @@ export default async function RootLayout({
             <AuthHashHandler />
           </ThemeProvider>
         </NextIntlClientProvider>
+        <SwRegister />
         <Analytics />
         <SpeedInsights />
       </body>
