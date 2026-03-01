@@ -18,7 +18,8 @@ export function SubscriptionSettings() {
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
 
-  const { subscription, usage, isPro, isTeam, limits, loading, refresh, storageQuota, tierConfig } = useSubscription()
+  const { subscription, usage, isPro, isTeam, limits, loading, refresh, syncWithStripe, storageQuota, tierConfig } =
+    useSubscription()
   const { isOwner } = useCompany()
   const [upgrading, setUpgrading] = useState(false)
   const [changingPlan, setChangingPlan] = useState(false)
@@ -31,9 +32,9 @@ export function SubscriptionSettings() {
   // Sync subscription from Stripe after successful checkout
   useEffect(() => {
     if (searchParams.get('upgrade') === 'success') {
-      fetch('/api/stripe/sync', { method: 'POST' }).then(() => refresh())
+      syncWithStripe()
     }
-  }, [searchParams, refresh])
+  }, [searchParams, syncWithStripe])
 
   async function handleUpgrade(priceId: string, plan: 'pro' | 'team' = 'pro') {
     setUpgrading(true)

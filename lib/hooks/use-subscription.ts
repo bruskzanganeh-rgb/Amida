@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 type Subscription = {
@@ -77,14 +77,17 @@ export function useSubscription() {
   const supabase = createClient()
 
   const [refreshKey, setRefreshKey] = useState(0)
+  const lastSyncRef = useRef(0)
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadTierConfig() {
       try {
         const res = await fetch('/api/config/tiers')
         if (res.ok) {
           const data = await res.json()
-          setTierConfig(data)
+          if (!cancelled) setTierConfig(data)
         }
       } catch {
         // Use defaults on failure
@@ -96,7 +99,7 @@ export function useSubscription() {
         const res = await fetch('/api/storage/quota')
         if (res.ok) {
           const data = await res.json()
-          setStorageQuota(data)
+          if (!cancelled) setStorageQuota(data)
         }
       } catch {
         // Ignore - storage quota is non-critical
@@ -105,24 +108,9 @@ export function useSubscription() {
 
     async function loadSubscription() {
       const { data: sub } = await supabase.from('subscriptions').select('*').limit(1).single()
+      if (cancelled) return
 
-      // Sync with Stripe if user has a Stripe customer ID
-      if (sub?.stripe_customer_id) {
-        try {
-          await fetch('/api/stripe/sync', { method: 'POST' })
-          // Re-fetch after sync to get updated data
-          const { data: refreshed } = await supabase.from('subscriptions').select('*').limit(1).single()
-          if (refreshed) {
-            setSubscription(refreshed)
-          } else {
-            setSubscription(sub)
-          }
-        } catch {
-          setSubscription(sub)
-        }
-      } else {
-        setSubscription(sub)
-      }
+      setSubscription(sub)
 
       const now = new Date()
       const { data: usageData } = await supabase
@@ -133,14 +121,36 @@ export function useSubscription() {
         .limit(1)
         .single()
 
-      setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0 })
-      setLoading(false)
+      if (!cancelled) {
+        setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0 })
+        setLoading(false)
+      }
     }
 
     loadSubscription()
     loadTierConfig()
     loadStorageQuota()
+
+    return () => {
+      cancelled = true
+    }
   }, [supabase, refreshKey])
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
+
+  const syncWithStripe = useCallback(async () => {
+    const now = Date.now()
+    // Debounce: skip if last sync was less than 10 seconds ago
+    if (now - lastSyncRef.current < 10_000) return
+    lastSyncRef.current = now
+
+    try {
+      await fetch('/api/stripe/sync', { method: 'POST' })
+      refresh()
+    } catch {
+      // Ignore sync errors
+    }
+  }, [refresh])
 
   const isPro = (subscription?.plan === 'pro' || subscription?.plan === 'team') && subscription?.status === 'active'
   const isTeam = subscription?.plan === 'team' && subscription?.status === 'active'
@@ -167,6 +177,7 @@ export function useSubscription() {
     canScanReceipt,
     storageQuota,
     tierConfig,
-    refresh: () => setRefreshKey((k) => k + 1),
+    refresh,
+    syncWithStripe,
   }
 }
