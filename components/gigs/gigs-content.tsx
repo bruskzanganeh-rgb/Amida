@@ -630,7 +630,8 @@ export default function GigsPage() {
                       return (
                         <div
                           key={gig.id}
-                          className="p-3 rounded-lg border border-amber-200/50 bg-white/60 dark:bg-white/5 cursor-pointer hover:bg-amber-100/30 transition-colors"
+                          className="py-2.5 pr-3 pl-3 rounded-lg border border-amber-200/50 border-l-4 bg-white/60 dark:bg-white/5 cursor-pointer hover:bg-amber-100/30 transition-colors"
+                          style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                           onClick={() => {
                             setSelectedGig(gig)
                             setEditingNotes(false)
@@ -663,41 +664,17 @@ export default function GigsPage() {
                                   {tStatus(gig.status)}
                                 </Badge>
                               </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between mt-2" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-1.5">
-                              <div
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: gig.gig_type.color || '#9ca3af' }}
-                              />
-                              <span className="text-xs text-muted-foreground">{gig.gig_type.name}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {gig.status === 'accepted' ? (
-                                <Button size="sm" onClick={() => updateStatus(gig.id, 'completed')}>
-                                  <Check className="h-3.5 w-3.5 mr-1" />
-                                  {t('markCompleted')}
-                                </Button>
-                              ) : (
-                                <>
+                              {gig.status === 'accepted' && (
+                                <div className="mt-1" onClick={(e) => e.stopPropagation()}>
                                   <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9"
-                                    onClick={() => updateStatus(gig.id, 'accepted')}
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => updateStatus(gig.id, 'completed')}
                                   >
-                                    <Check className="h-3.5 w-3.5 text-green-600" />
+                                    <Check className="h-3 w-3 mr-1" />
+                                    {t('markCompleted')}
                                   </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9"
-                                    onClick={() => setConfirmDeclineGig(gig.id)}
-                                  >
-                                    <X className="h-3.5 w-3.5 text-red-600" />
-                                  </Button>
-                                </>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -902,7 +879,8 @@ export default function GigsPage() {
                             return (
                               <div
                                 key={gig.id}
-                                className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
                                   setSelectedGig(gig)
                                   setEditingNotes(false)
@@ -935,57 +913,6 @@ export default function GigsPage() {
                                         {tStatus(gig.status)}
                                       </Badge>
                                     </div>
-                                  </div>
-                                </div>
-                                <div
-                                  className="flex items-center justify-between mt-2"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <div
-                                      className="w-2.5 h-2.5 rounded-full"
-                                      style={{ backgroundColor: gig.gig_type.color || '#9ca3af' }}
-                                    />
-                                    <span className="text-xs text-muted-foreground">{gig.gig_type.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    {gig.status === 'pending' && (
-                                      <>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-9 w-9"
-                                          onClick={() => updateStatus(gig.id, 'accepted')}
-                                        >
-                                          <Check className="h-3.5 w-3.5 text-green-600" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-9 w-9"
-                                          onClick={() => setConfirmDeclineGig(gig.id)}
-                                        >
-                                          <X className="h-3.5 w-3.5 text-red-600" />
-                                        </Button>
-                                      </>
-                                    )}
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => handleDuplicate(gig)}
-                                      title={t('duplicateGig')}
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => setEditingGig(gig)}
-                                    >
-                                      <Edit className="h-3.5 w-3.5" />
-                                    </Button>
                                   </div>
                                 </div>
                               </div>
@@ -1308,7 +1235,8 @@ export default function GigsPage() {
                             return (
                               <div
                                 key={gig.id}
-                                className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
                                   setSelectedGig(gig)
                                   setEditingNotes(false)
@@ -1338,37 +1266,6 @@ export default function GigsPage() {
                                         {tStatus(gig.status)}
                                       </Badge>
                                     </div>
-                                  </div>
-                                </div>
-                                <div
-                                  className="flex items-center justify-between mt-2"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <div
-                                      className="w-2.5 h-2.5 rounded-full"
-                                      style={{ backgroundColor: gig.gig_type.color || '#9ca3af' }}
-                                    />
-                                    <span className="text-xs text-muted-foreground">{gig.gig_type.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => handleDuplicate(gig)}
-                                      title={t('duplicateGig')}
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => setEditingGig(gig)}
-                                    >
-                                      <Edit className="h-3.5 w-3.5" />
-                                    </Button>
                                   </div>
                                 </div>
                               </div>
@@ -1627,7 +1524,8 @@ export default function GigsPage() {
                             return (
                               <div
                                 key={gig.id}
-                                className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
                                   setSelectedGig(gig)
                                   setEditingNotes(false)
@@ -1657,37 +1555,6 @@ export default function GigsPage() {
                                         {tStatus(gig.status)}
                                       </Badge>
                                     </div>
-                                  </div>
-                                </div>
-                                <div
-                                  className="flex items-center justify-between mt-2"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <div
-                                      className="w-2.5 h-2.5 rounded-full"
-                                      style={{ backgroundColor: gig.gig_type.color || '#9ca3af' }}
-                                    />
-                                    <span className="text-xs text-muted-foreground">{gig.gig_type.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => handleDuplicate(gig)}
-                                      title={t('duplicateGig')}
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-9 w-9"
-                                      onClick={() => setEditingGig(gig)}
-                                    >
-                                      <Edit className="h-3.5 w-3.5" />
-                                    </Button>
                                   </div>
                                 </div>
                               </div>
