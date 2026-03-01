@@ -619,10 +619,10 @@
     "testEmailSent": "Test email sent",
     "postalCode": "Postal code",
     "city": "City",
-    "yourInstruments": "Your instruments",
-    "selectYourInstruments": "Select your instruments",
-    "otherInstruments": "Other instruments",
-    "otherInstrumentsHint": "Instruments not listed above"
+    "yourCategories": "Your specialties",
+    "selectYourCategories": "Select the categories that match your work",
+    "otherSkills": "Other skills",
+    "otherSkillsHint": "Describe skills or specialties not listed above"
   },
   "team": {
     "title": "Team",
@@ -807,7 +807,7 @@
   },
   "onboarding": {
     "companyInfo": "Company info",
-    "instruments": "Instruments",
+    "categories": "Categories",
     "gigTypes": "Types",
     "roles": "Roles",
     "welcome": "Welcome to Amida!",
@@ -820,8 +820,8 @@
     "language": "Language",
     "languageDesc": "Choose your preferred language. This affects the entire app.",
     "companyInfoDesc": "Fill in your company information",
-    "yourInstruments": "Your instruments",
-    "instrumentsSelected": "{count} instruments selected",
+    "yourCategories": "Your specialties",
+    "categoriesSelected": "{count} categories selected",
     "gigTypesDesc": "Add the types of gigs you typically do",
     "rolesPositions": "Roles",
     "rolesDesc": "Add the roles you typically have",
@@ -840,9 +840,9 @@
     "yourNamePlaceholder": "First and last name",
     "postalCode": "Postal code",
     "city": "City",
-    "selectYourInstruments": "Select your instruments",
-    "otherInstruments": "Other instruments",
-    "otherInstrumentsHint": "Instruments not listed above"
+    "selectYourCategories": "Select the categories that match your work",
+    "otherSkills": "Other skills",
+    "otherSkillsHint": "Describe skills or specialties not listed above"
   },
   "subscription": {
     "yourPlan": "Your plan",
@@ -1023,6 +1023,14 @@
     "noSessions": "No sessions",
     "activeNow": "Active now",
     "sessionDuration": "Duration",
+    "dateToday": "Today",
+    "dateLast7d": "Last 7 days",
+    "dateLast30d": "Last 30 days",
+    "dateLast90d": "Last 90 days",
+    "dateAll": "All time",
+    "started": "Started",
+    "lastActivity": "Last activity",
+    "device": "Device",
     "resendEmail": "Resend Email",
     "resendApiKey": "Resend API key",
     "resendFromEmail": "From email (Resend)",

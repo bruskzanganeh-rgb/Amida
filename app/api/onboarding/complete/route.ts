@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { full_name, company_info, instruments_text, instrument_ids, gig_types, positions } = parsed.data
+  const { full_name, company_info, instruments_text, category_ids, gig_types, positions } = parsed.data
 
   // Use admin client for company/members/data creation (bypasses RLS)
   const admin = createAdminClient()
@@ -107,18 +107,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not save settings' }, { status: 500 })
   }
 
-  // Save structured instrument selections
-  if (instrument_ids && instrument_ids.length > 0) {
-    // Clear any existing selections first
-    await admin.from('user_instruments').delete().eq('user_id', user.id)
-    const { error: instrError } = await admin.from('user_instruments').insert(
-      instrument_ids.map((instrumentId) => ({
+  // Save structured category selections
+  if (category_ids && category_ids.length > 0) {
+    await admin.from('user_categories').delete().eq('user_id', user.id)
+    const { error: catError } = await admin.from('user_categories').insert(
+      category_ids.map((categoryId) => ({
         user_id: user.id,
-        instrument_id: instrumentId,
+        category_id: categoryId,
       })),
     )
-    if (instrError) {
-      console.error('Error saving user instruments:', instrError)
+    if (catError) {
+      console.error('Error saving user categories:', catError)
     }
   }
 

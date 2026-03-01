@@ -11,7 +11,6 @@ import {
   Award,
   TrendingUp,
   Settings,
-  Music,
   Building2,
   ScrollText,
   Activity,
@@ -22,8 +21,7 @@ import {
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 
-import { SponsorsTab } from '@/components/admin/sponsors-tab'
-import { CategoriesTab } from '@/components/admin/categories-tab'
+import { SponsorsHub } from '@/components/admin/sponsors-hub'
 import { StatsTab } from '@/components/admin/stats-tab'
 import { ConfigTab } from '@/components/admin/config-tab'
 import { OrganizationsTab } from '@/components/admin/organizations-tab'
@@ -59,7 +57,7 @@ type User = {
   city: string | null
   postal_code: string | null
   country_code: string | null
-  instruments: { name: string; category_name: string }[]
+  categories: string[]
   last_active?: string | null
   recent_activity_count?: number
   members?: {
@@ -311,10 +309,6 @@ export default function AdminPage() {
               <Award className="h-4 w-4" />
               <span className="hidden sm:inline">{t('sponsors')}</span>
             </TabsTrigger>
-            <TabsTrigger value="categories" className="gap-1.5">
-              <Music className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('categories')}</span>
-            </TabsTrigger>
             <TabsTrigger value="stats" className="gap-1.5">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">{t('statistics')}</span>
@@ -346,18 +340,17 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="organizations" className="mt-4">
-            <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} categories={categories} />
+            <OrganizationsTab users={users} setUsers={setUsers} onReload={() => loadData()} />
           </TabsContent>
           <TabsContent value="sponsors" className="mt-4">
-            <SponsorsTab
+            <SponsorsHub
               sponsors={sponsors}
               setSponsors={setSponsors}
               categories={categories}
+              setCategories={setCategories}
+              users={users}
               onReload={() => loadData()}
             />
-          </TabsContent>
-          <TabsContent value="categories" className="mt-4">
-            <CategoriesTab categories={categories} setCategories={setCategories} onReload={() => loadData()} />
           </TabsContent>
           <TabsContent value="stats" className="mt-4">
             <StatsTab stats={stats} />

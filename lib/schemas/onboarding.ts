@@ -18,7 +18,7 @@ export const completeOnboardingSchema = z.object({
     city: z.string().optional(),
   }),
   instruments_text: z.string().optional(),
-  instrument_ids: z.array(z.string()).optional(),
+  category_ids: z.array(z.string()).optional(),
   gig_types: z
     .array(
       z.object({

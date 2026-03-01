@@ -103,13 +103,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Find sponsor if free user
     if (!isPro) {
-      const { data: userInstruments } = await supabase
-        .from('user_instruments')
-        .select('instrument_id, instrument:instruments(category_id)')
-        .eq('user_id', user.id)
+      const { data: userCats } = await supabase.from('user_categories').select('category_id').eq('user_id', user.id)
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const categoryIds = (userInstruments || []).map((ui: any) => ui.instrument?.category_id).filter(Boolean)
+      const categoryIds = (userCats || []).map((uc) => uc.category_id).filter(Boolean)
 
       if (categoryIds.length > 0) {
         const { data: sponsors } = await supabase

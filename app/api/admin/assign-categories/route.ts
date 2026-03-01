@@ -2,13 +2,9 @@ import { NextResponse } from 'next/server'
 import { verifyAdmin } from '@/lib/admin'
 import { z } from 'zod'
 
-const applySchema = z.object({
-  matches: z.array(
-    z.object({
-      user_id: z.string().uuid(),
-      category_id: z.string().uuid(),
-    }),
-  ),
+const assignSchema = z.object({
+  user_id: z.string().uuid(),
+  category_ids: z.array(z.string().uuid()).min(1),
 })
 
 export async function POST(request: Request) {
@@ -17,30 +13,25 @@ export async function POST(request: Request) {
   const { supabase } = auth
 
   const body = await request.json()
-  const parsed = applySchema.safeParse(body)
+  const parsed = assignSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
   }
 
-  const { matches } = parsed.data
+  const { user_id, category_ids } = parsed.data
 
-  if (matches.length === 0) {
-    return NextResponse.json({ applied: 0 })
-  }
-
-  // Insert user_categories, ignoring duplicates
   const { error } = await supabase.from('user_categories').upsert(
-    matches.map((m) => ({
-      user_id: m.user_id,
-      category_id: m.category_id,
+    category_ids.map((category_id) => ({
+      user_id,
+      category_id,
     })),
     { onConflict: 'user_id,category_id', ignoreDuplicates: true },
   )
 
   if (error) {
-    console.error('Error applying category matches:', error)
+    console.error('Error assigning categories:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ applied: matches.length })
+  return NextResponse.json({ assigned: category_ids.length })
 }

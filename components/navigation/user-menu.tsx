@@ -74,27 +74,21 @@ export function UserMenu() {
 
       // Load sponsor for free-tier users
       if (currentPlan === 'free' && !cancelled) {
-        const { data: userInstr } = await supabase.from('user_instruments').select('instrument_id')
+        const { data: userCats } = await supabase.from('user_categories').select('category_id')
 
-        const instrumentIds = (userInstr || []).map((ui) => ui.instrument_id)
+        const categoryIds = (userCats || []).map((uc) => uc.category_id).filter(Boolean)
 
-        if (instrumentIds.length > 0) {
-          const { data: instruments } = await supabase.from('instruments').select('category_id').in('id', instrumentIds)
+        if (categoryIds.length > 0) {
+          const { data: sponsors } = await supabase
+            .from('sponsors')
+            .select('id, name, display_prefix, website_url')
+            .in('instrument_category_id', categoryIds)
+            .eq('active', true)
+            .order('priority', { ascending: false })
+            .limit(1)
 
-          const categoryIds = (instruments || []).map((i) => i.category_id).filter(Boolean)
-
-          if (categoryIds.length > 0) {
-            const { data: sponsors } = await supabase
-              .from('sponsors')
-              .select('id, name, display_prefix, website_url')
-              .in('instrument_category_id', categoryIds)
-              .eq('active', true)
-              .order('priority', { ascending: false })
-              .limit(1)
-
-            if (!cancelled && sponsors && sponsors.length > 0) {
-              setSponsor(sponsors[0])
-            }
+          if (!cancelled && sponsors && sponsors.length > 0) {
+            setSponsor(sponsors[0])
           }
         }
       }

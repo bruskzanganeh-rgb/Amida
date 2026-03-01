@@ -34,26 +34,40 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Enrich with company info
-  const userIds = [...new Set((data || []).map(s => s.user_id))]
-  const { data: settings } = await supabase
-    .from('company_settings')
-    .select('user_id, company_name, email')
-    .in('user_id', userIds)
+  // Filter out ghost sessions (duration < 1 second)
+  const filteredData = (data || []).filter((s) => {
+    if (!s.started_at || !s.last_active_at) return false
+    const start = new Date(s.started_at).getTime()
+    const lastActive = new Date(s.last_active_at).getTime()
+    return lastActive - start >= 1000
+  })
 
-  const settingsMap = new Map((settings || []).map(s => [s.user_id, s]))
+  // Enrich with company info + full_name
+  const userIds = [...new Set(filteredData.map((s) => s.user_id))]
 
-  const sessions = (data || []).map(s => ({
+  const [{ data: settings }, { data: members }] = await Promise.all([
+    supabase.from('company_settings').select('user_id, company_name, email').in('user_id', userIds),
+    supabase.from('company_members').select('user_id, full_name').in('user_id', userIds),
+  ])
+
+  const settingsMap = new Map((settings || []).map((s) => [s.user_id, s]))
+  const namesMap = new Map((members || []).map((m) => [m.user_id, m.full_name]))
+
+  const sessions = filteredData.map((s) => ({
     ...s,
+    full_name: namesMap.get(s.user_id) || null,
     company_name: settingsMap.get(s.user_id)?.company_name || null,
     email: settingsMap.get(s.user_id)?.email || null,
   }))
 
+  const ghostCount = (data || []).length - filteredData.length
+  const adjustedTotal = Math.max((count || 0) - ghostCount, 0)
+
   return NextResponse.json({
     sessions,
-    total: count || 0,
+    total: adjustedTotal,
     page,
     limit,
-    totalPages: Math.ceil((count || 0) / limit),
+    totalPages: Math.ceil(adjustedTotal / limit),
   })
 }

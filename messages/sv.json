@@ -619,10 +619,10 @@
     "testEmailSent": "Testmail skickat",
     "postalCode": "Postnummer",
     "city": "Stad",
-    "yourInstruments": "Dina instrument",
-    "selectYourInstruments": "Välj dina instrument",
-    "otherInstruments": "Övriga instrument",
-    "otherInstrumentsHint": "Instrument som inte finns i listan ovan"
+    "yourCategories": "Dina specialiteter",
+    "selectYourCategories": "Välj kategorier som matchar ditt arbete",
+    "otherSkills": "Övriga kompetenser",
+    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan"
   },
   "team": {
     "title": "Team",
@@ -807,7 +807,7 @@
   },
   "onboarding": {
     "companyInfo": "Företagsinfo",
-    "instruments": "Instrument",
+    "categories": "Kategorier",
     "gigTypes": "Typer",
     "roles": "Roller",
     "welcome": "Välkommen till Amida!",
@@ -820,8 +820,8 @@
     "language": "Språk / Language",
     "languageDesc": "Välj ditt språk. Detta påverkar hela appen.",
     "companyInfoDesc": "Fyll i din företagsinformation",
-    "yourInstruments": "Dina instrument",
-    "instrumentsSelected": "{count} instrument valda",
+    "yourCategories": "Dina specialiteter",
+    "categoriesSelected": "{count} kategorier valda",
     "gigTypesDesc": "Lägg till de typer av uppdrag du vanligtvis gör",
     "rolesPositions": "Roller",
     "rolesDesc": "Lägg till roller du brukar ha",
@@ -840,9 +840,9 @@
     "yourNamePlaceholder": "För- och efternamn",
     "postalCode": "Postnummer",
     "city": "Stad",
-    "selectYourInstruments": "Välj dina instrument",
-    "otherInstruments": "Övriga instrument",
-    "otherInstrumentsHint": "Instrument som inte finns i listan ovan"
+    "selectYourCategories": "Välj kategorier som matchar ditt arbete",
+    "otherSkills": "Övriga kompetenser",
+    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan"
   },
   "subscription": {
     "yourPlan": "Din plan",
@@ -1023,6 +1023,14 @@
     "noSessions": "Inga sessioner",
     "activeNow": "Aktiv nu",
     "sessionDuration": "Längd",
+    "dateToday": "Idag",
+    "dateLast7d": "Senaste 7 dagar",
+    "dateLast30d": "Senaste 30 dagar",
+    "dateLast90d": "Senaste 90 dagar",
+    "dateAll": "All tid",
+    "started": "Startad",
+    "lastActivity": "Senaste aktivitet",
+    "device": "Enhet",
     "resendEmail": "Resend E-post",
     "resendApiKey": "Resend API-nyckel",
     "resendFromEmail": "Avsändaradress (Resend)",

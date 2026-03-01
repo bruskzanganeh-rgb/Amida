@@ -89,10 +89,8 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
   const [instrumentsText, setInstrumentsText] = useState('')
-  const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<Set<string>>(new Set())
-  const [allInstruments, setAllInstruments] = useState<
-    { id: string; name: string; category_name: string; category_sort: number; sort_order: number }[]
-  >([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set())
+  const [allCategories, setAllCategories] = useState<{ id: string; name: string; sort_order: number }[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { isPro, isTeam } = useSubscription()
@@ -214,27 +212,19 @@ export default function SettingsPage() {
         }
       }
 
-      // Load instruments catalog
-      const { data: instruments } = await supabase
-        .from('instruments')
-        .select('id, name, sort_order, category:instrument_categories(name, sort_order)')
+      // Load categories catalog
+      const { data: cats } = await supabase
+        .from('instrument_categories')
+        .select('id, name, sort_order')
         .order('sort_order')
-      if (instruments) {
-        setAllInstruments(
-          instruments.map((i) => ({
-            id: i.id,
-            name: i.name,
-            category_name: (i.category as unknown as { name: string; sort_order: number })?.name || '',
-            category_sort: (i.category as unknown as { name: string; sort_order: number })?.sort_order || 0,
-            sort_order: i.sort_order,
-          })),
-        )
+      if (cats) {
+        setAllCategories(cats)
       }
 
-      // Load existing user_instruments
-      const { data: userInstr } = await supabase.from('user_instruments').select('instrument_id')
-      if (userInstr && userInstr.length > 0) {
-        setSelectedInstrumentIds(new Set(userInstr.map((ui) => ui.instrument_id)))
+      // Load existing user_categories
+      const { data: userCats } = await supabase.from('user_categories').select('category_id')
+      if (userCats && userCats.length > 0) {
+        setSelectedCategoryIds(new Set(userCats.map((uc) => uc.category_id)))
       }
 
       setLoading(false)
@@ -304,14 +294,14 @@ export default function SettingsPage() {
       })
       .eq('id', settings.id)
 
-    // Save user_instruments: delete old + insert new
+    // Save user_categories: delete old + insert new
     if (userId) {
-      await supabase.from('user_instruments').delete().eq('user_id', userId)
-      if (selectedInstrumentIds.size > 0) {
-        await supabase.from('user_instruments').insert(
-          Array.from(selectedInstrumentIds).map((instrument_id) => ({
+      await supabase.from('user_categories').delete().eq('user_id', userId)
+      if (selectedCategoryIds.size > 0) {
+        await supabase.from('user_categories').insert(
+          Array.from(selectedCategoryIds).map((category_id) => ({
             user_id: userId,
-            instrument_id,
+            category_id,
           })),
         )
       }
@@ -807,76 +797,60 @@ export default function SettingsPage() {
             </Card>
           </div>
 
-          {/* Instruments */}
+          {/* Categories */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Guitar className="h-5 w-5" />
-                {t('yourInstruments')}
+                {t('yourCategories')}
               </CardTitle>
-              <CardDescription>{t('selectYourInstruments')}</CardDescription>
+              <CardDescription>{t('selectYourCategories')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Grouped instrument chips */}
-              {(() => {
-                const grouped = allInstruments.reduce(
-                  (acc, i) => {
-                    const cat = i.category_name || 'Other'
-                    if (!acc[cat]) acc[cat] = { sort: i.category_sort, instruments: [] }
-                    acc[cat].instruments.push(i)
-                    return acc
-                  },
-                  {} as Record<string, { sort: number; instruments: typeof allInstruments }>,
-                )
-                const sortedCategories = Object.entries(grouped).sort(([, a], [, b]) => a.sort - b.sort)
+              {/* Category chips */}
+              <div className="flex flex-wrap gap-1.5">
+                {allCategories.map((cat) => {
+                  const selected = selectedCategoryIds.has(cat.id)
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategoryIds((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(cat.id)) next.delete(cat.id)
+                          else next.add(cat.id)
+                          return next
+                        })
+                      }}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        selected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      {selected && <Check className="h-3 w-3" />}
+                      {cat.name}
+                    </button>
+                  )
+                })}
+              </div>
 
-                return sortedCategories.map(([categoryName, { instruments }]) => (
-                  <div key={categoryName}>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">{categoryName}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {instruments
-                        .sort((a, b) => a.sort_order - b.sort_order)
-                        .map((instr) => {
-                          const selected = selectedInstrumentIds.has(instr.id)
-                          return (
-                            <button
-                              key={instr.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedInstrumentIds((prev) => {
-                                  const next = new Set(prev)
-                                  if (next.has(instr.id)) next.delete(instr.id)
-                                  else next.add(instr.id)
-                                  return next
-                                })
-                              }}
-                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                selected
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                              }`}
-                            >
-                              {selected && <Check className="h-3 w-3" />}
-                              {instr.name}
-                            </button>
-                          )
-                        })}
-                    </div>
-                  </div>
-                ))
-              })()}
-
-              {/* Free text for unlisted instruments */}
+              {/* Free text for unlisted skills */}
               <div className="space-y-2">
-                <Label>{t('otherInstruments')}</Label>
+                <Label>{t('otherSkills')}</Label>
                 <Textarea
                   rows={2}
                   value={instrumentsText}
                   onChange={(e) => setInstrumentsText(e.target.value)}
-                  placeholder={locale === 'sv' ? 'T.ex. Barockviolin, Mandolin' : 'E.g. Baroque violin, Mandolin'}
+                  placeholder={
+                    locale === 'sv'
+                      ? 'T.ex. Barockviolin, Fotografi, Ljudteknik'
+                      : 'E.g. Baroque violin, Photography, Sound engineering'
+                  }
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground">{t('otherInstrumentsHint')}</p>
+                <p className="text-xs text-muted-foreground">{t('otherSkillsHint')}</p>
               </div>
             </CardContent>
           </Card>

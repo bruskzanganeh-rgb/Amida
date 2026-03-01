@@ -1575,6 +1575,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_categories: {
+        Row: {
+          id: string
+          user_id: string
+          category_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category_id?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           id: string

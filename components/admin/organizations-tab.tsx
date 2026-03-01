@@ -72,33 +72,25 @@ type User = {
   city: string | null
   postal_code: string | null
   country_code: string | null
-  instruments: { name: string; category_name: string }[]
+  categories: string[]
   last_active?: string | null
   recent_activity_count?: number
   members?: Member[]
-}
-
-type InstrumentCategory = {
-  id: string
-  name: string
 }
 
 type Props = {
   users: User[]
   setUsers: React.Dispatch<React.SetStateAction<User[]>>
   onReload: () => void
-  categories: InstrumentCategory[]
 }
 
-export function OrganizationsTab({ users, setUsers, onReload, categories }: Props) {
+export function OrganizationsTab({ users, setUsers, onReload }: Props) {
   const t = useTranslations('admin')
   const tSub = useTranslations('subscription')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
 
   // Filter states
-  const [cityFilter, setCityFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
   const [planFilter, setPlanFilter] = useState('')
 
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -286,14 +278,6 @@ export function OrganizationsTab({ users, setUsers, onReload, categories }: Prop
 
   // Filter users
   const filteredUsers = users.filter((u) => {
-    if (cityFilter) {
-      const cityMatch = u.city?.toLowerCase().includes(cityFilter.toLowerCase())
-      if (!cityMatch) return false
-    }
-    if (categoryFilter && categoryFilter !== 'all') {
-      const hasCategory = u.instruments?.some((i) => i.category_name === categoryFilter)
-      if (!hasCategory) return false
-    }
     if (planFilter && planFilter !== 'all') {
       if (u.plan !== planFilter) return false
     }
@@ -315,25 +299,6 @@ export function OrganizationsTab({ users, setUsers, onReload, categories }: Prop
         <CardContent>
           {/* Filter bar */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <Input
-              className="w-48 h-8 text-xs"
-              placeholder={t('filterByCity')}
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-            />
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48 h-8 text-xs">
-                <SelectValue placeholder={t('filterByCategory')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allCategories')}</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={planFilter} onValueChange={setPlanFilter}>
               <SelectTrigger className="w-40 h-8 text-xs">
                 <SelectValue placeholder={t('filterByPlan')} />
@@ -425,12 +390,12 @@ export function OrganizationsTab({ users, setUsers, onReload, categories }: Prop
                         )}
                       </div>
 
-                      {/* Instruments */}
-                      {u.instruments && u.instruments.length > 0 && (
+                      {/* Categories */}
+                      {u.categories && u.categories.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {u.instruments.map((inst) => (
-                            <Badge key={inst.name} variant="outline" className="text-[10px]">
-                              {inst.name}
+                          {u.categories.map((cat) => (
+                            <Badge key={cat} variant="outline" className="text-[10px]">
+                              {cat}
                             </Badge>
                           ))}
                         </div>

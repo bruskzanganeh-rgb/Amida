@@ -14,7 +14,7 @@ export async function GET() {
     { data: settings },
     { data: members },
     { data: companiesData },
-    { data: userInstrumentsData },
+    { data: userCategoriesData },
   ] = await Promise.all([
     supabase
       .from('subscriptions')
@@ -25,9 +25,7 @@ export async function GET() {
     supabase.from('company_settings').select('user_id, company_name, org_number, email, address, phone'),
     supabase.from('company_members').select('user_id, company_id, role'),
     supabase.from('companies').select('id, postal_code, city, country_code'),
-    supabase
-      .from('user_instruments')
-      .select('user_id, instrument:instruments(name, category:instrument_categories(name))'),
+    supabase.from('user_categories').select('user_id, category:instrument_categories(name)'),
   ])
 
   const settingsMap = new Map((settings || []).map((s) => [s.user_id, s]))
@@ -41,16 +39,14 @@ export async function GET() {
     companiesDataMap.set(c.id, { postal_code: c.postal_code, city: c.city, country_code: c.country_code })
   }
 
-  // Build instruments map (user_id -> instruments[])
-  const instrumentsMap = new Map<string, { name: string; category_name: string }[]>()
-  for (const ui of userInstrumentsData || []) {
-    const instrument = ui.instrument as unknown as { name: string; category: { name: string } | null } | null
-    if (!instrument) continue
-    if (!instrumentsMap.has(ui.user_id)) instrumentsMap.set(ui.user_id, [])
-    instrumentsMap.get(ui.user_id)!.push({
-      name: instrument.name,
-      category_name: instrument.category?.name || '',
-    })
+  // Build categories map (user_id -> category names[])
+  const categoriesMap = new Map<string, string[]>()
+  for (const uc of userCategoriesData || []) {
+    const category = uc.category as unknown as { name: string } | null
+    if (!category) continue
+    if (!categoriesMap.has(uc.user_id)) categoriesMap.set(uc.user_id, [])
+    const list = categoriesMap.get(uc.user_id)!
+    if (!list.includes(category.name)) list.push(category.name)
   }
 
   // Build membership maps
@@ -180,7 +176,7 @@ export async function GET() {
         city: companiesMap.get(sub.user_id)?.city || null,
         postal_code: companiesMap.get(sub.user_id)?.postal_code || null,
         country_code: companiesMap.get(sub.user_id)?.country_code || null,
-        instruments: instrumentsMap.get(sub.user_id) || [],
+        categories: categoriesMap.get(sub.user_id) || [],
         members: enrichedMembers,
       }
     })
