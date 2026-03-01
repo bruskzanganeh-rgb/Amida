@@ -116,12 +116,16 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
   const [assignCategoryId, setAssignCategoryId] = useState('')
   const [savingAssign, setSavingAssign] = useState(false)
 
+  // Global tier filter for dashboard + categories
+  const [tierFilter, setTierFilter] = useState('')
+
   // --- Computed values ---
-  const categorizedUsers = users.filter((u) => u.categories.length > 0)
-  const uncategorizedUsers = users.filter((u) => u.categories.length === 0)
+  const tierUsers = tierFilter && tierFilter !== 'all' ? users.filter((u) => u.plan === tierFilter) : users
+  const categorizedUsers = tierUsers.filter((u) => u.categories.length > 0)
+  const uncategorizedUsers = tierUsers.filter((u) => u.categories.length === 0)
 
   function getCategoryUserCount(categoryName: string) {
-    return users.filter((u) => u.categories.includes(categoryName)).length
+    return tierUsers.filter((u) => u.categories.includes(categoryName)).length
   }
 
   function getCategorySponsor(categoryId: string) {
@@ -319,9 +323,29 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
 
   return (
     <div className="space-y-4">
+      {/* Tier filter */}
+      <div className="flex items-center gap-1.5">
+        {['all', 'free', 'pro', 'team'].map((tier) => (
+          <button
+            key={tier}
+            onClick={() => setTierFilter(tier)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              (tierFilter || 'all') === tier
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+            }`}
+          >
+            {tier === 'all' ? t('allPlans') : tier.charAt(0).toUpperCase() + tier.slice(1)}
+            <span className="ml-1 opacity-70">
+              ({tier === 'all' ? users.length : users.filter((u) => u.plan === tier).length})
+            </span>
+          </button>
+        ))}
+      </div>
+
       {/* Dashboard */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <DashCard label={t('totalFreelancers')} value={users.length} icon={<Users className="h-4 w-4" />} />
+        <DashCard label={t('totalFreelancers')} value={tierUsers.length} icon={<Users className="h-4 w-4" />} />
         <DashCard label={t('categorized')} value={categorizedUsers.length} icon={<Tag className="h-4 w-4" />} />
         <DashCard
           label={t('uncategorized')}
