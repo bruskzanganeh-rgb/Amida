@@ -82,6 +82,8 @@ type Sponsor = {
   priority: number | null
   display_prefix: string | null
   target_city: string | null
+  target_country: string | null
+  target_cities: string[] | null
   category_name?: string
 }
 
@@ -225,6 +227,13 @@ export default function AdminPage() {
       )
       .order('priority', { ascending: false })
     if (sponsorData) {
+      // Fetch geo columns not in generated types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: geoData } = await (supabase.from('sponsors') as any).select('id, target_country, target_cities')
+      const geoMap = new Map<string, { target_country: string | null; target_cities: string[] | null }>()
+      if (geoData)
+        for (const g of geoData as { id: string; target_country: string | null; target_cities: string[] | null }[])
+          geoMap.set(g.id, g)
       setSponsors(
         sponsorData.map((s) => ({
           id: s.id,
@@ -237,6 +246,8 @@ export default function AdminPage() {
           priority: s.priority,
           display_prefix: s.display_prefix,
           target_city: s.target_city,
+          target_country: geoMap.get(s.id)?.target_country || null,
+          target_cities: geoMap.get(s.id)?.target_cities || null,
           category_name: (s.category as unknown as { name: string } | null)?.name,
         })),
       )

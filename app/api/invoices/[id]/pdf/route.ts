@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select(
-        'company_name, org_number, address, city, email, phone, bank_account, bankgiro, iban, bic, logo_url, vat_registration_number, late_payment_interest_text, show_logo_on_invoice, our_reference',
+        'company_name, org_number, address, city, country_code, email, phone, bank_account, bankgiro, iban, bic, logo_url, vat_registration_number, late_payment_interest_text, show_logo_on_invoice, our_reference',
       )
       .eq('id', membership.company_id)
       .single()
@@ -109,20 +109,33 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
       if (categoryIds.length > 0) {
         const userCity = company?.city || ''
-        const { data: sponsors } = await supabase
-          .from('sponsors')
-          .select('id, name, logo_url, tagline, target_city')
+        const userCountry = company?.country_code || ''
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: sponsors } = await (supabase.from('sponsors') as any)
+          .select('id, name, logo_url, tagline, target_city, target_country, target_cities')
           .in('instrument_category_id', categoryIds)
           .eq('active', true)
           .order('priority', { ascending: false })
 
         if (sponsors && sponsors.length > 0) {
-          // Prefer city-specific sponsor, fall back to global (no target_city)
+          const lowerCity = userCity.toLowerCase()
+          // Prefer city match > country match > global > first
           const cityMatch = userCity
-            ? sponsors.find((s) => s.target_city?.toLowerCase() === userCity.toLowerCase())
+            ? sponsors.find((s: { target_cities?: string[] | null }) =>
+                s.target_cities?.some((c: string) => c.toLowerCase() === lowerCity),
+              )
             : null
-          const globalMatch = sponsors.find((s) => !s.target_city)
-          sponsor = cityMatch || globalMatch || sponsors[0]
+          const countryMatch = userCountry
+            ? sponsors.find(
+                (s: { target_country?: string | null; target_cities?: string[] | null }) =>
+                  s.target_country === userCountry && !s.target_cities?.length,
+              )
+            : null
+          const globalMatch = sponsors.find(
+            (s: { target_country?: string | null; target_cities?: string[] | null }) =>
+              !s.target_country && !s.target_cities?.length,
+          )
+          sponsor = cityMatch || countryMatch || globalMatch || sponsors[0]
 
           // Track impression
           await supabase.from('sponsor_impressions').insert({

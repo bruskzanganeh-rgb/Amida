@@ -56,14 +56,16 @@ export function UserMenu() {
 
       let companyName = ''
       let userCity = ''
+      let userCountry = ''
       if (membership) {
         const { data: comp } = await supabase
           .from('companies')
-          .select('company_name, city')
+          .select('company_name, city, country_code')
           .eq('id', membership.company_id)
           .single()
         companyName = comp?.company_name || ''
         userCity = comp?.city || ''
+        userCountry = comp?.country_code || ''
       }
 
       const currentPlan = sub?.plan || 'free'
@@ -81,20 +83,32 @@ export function UserMenu() {
         const categoryIds = (userCats || []).map((uc) => uc.category_id).filter(Boolean)
 
         if (categoryIds.length > 0) {
-          const { data: sponsors } = await supabase
-            .from('sponsors')
-            .select('id, name, display_prefix, website_url, target_city')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: sponsors } = await (supabase.from('sponsors') as any)
+            .select('id, name, display_prefix, website_url, target_city, target_country, target_cities')
             .in('instrument_category_id', categoryIds)
             .eq('active', true)
             .order('priority', { ascending: false })
 
           if (!cancelled && sponsors && sponsors.length > 0) {
-            // Prefer city-specific sponsor, fall back to global (no target_city)
+            const lowerCity = userCity.toLowerCase()
+            // Prefer city match > country match > global > first
             const cityMatch = userCity
-              ? sponsors.find((s) => s.target_city?.toLowerCase() === userCity.toLowerCase())
+              ? sponsors.find((s: { target_cities?: string[] | null }) =>
+                  s.target_cities?.some((c: string) => c.toLowerCase() === lowerCity),
+                )
               : null
-            const globalMatch = sponsors.find((s) => !s.target_city)
-            const best = cityMatch || globalMatch || sponsors[0]
+            const countryMatch = userCountry
+              ? sponsors.find(
+                  (s: { target_country?: string | null; target_cities?: string[] | null }) =>
+                    s.target_country === userCountry && !s.target_cities?.length,
+                )
+              : null
+            const globalMatch = sponsors.find(
+              (s: { target_country?: string | null; target_cities?: string[] | null }) =>
+                !s.target_country && !s.target_cities?.length,
+            )
+            const best = cityMatch || countryMatch || globalMatch || sponsors[0]
             setSponsor(best)
           }
         }

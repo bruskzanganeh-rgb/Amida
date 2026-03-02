@@ -48,6 +48,8 @@ type Sponsor = {
   priority: number | null
   display_prefix: string | null
   target_city: string | null
+  target_country: string | null
+  target_cities: string[] | null
   category_name?: string
 }
 
@@ -58,6 +60,7 @@ type User = {
   company_name: string | null
   city: string | null
   postal_code: string | null
+  country_code: string | null
   categories: { id: string; name: string }[]
   instruments_text: string | null
 }
@@ -139,7 +142,8 @@ export function SponsorsHub({
     instrument_category_id: '',
     priority: 0,
     display_prefix: 'Sponsored by',
-    target_city: '',
+    target_country: '',
+    target_cities: [] as string[],
   })
   const [savingSponsor, setSavingSponsor] = useState(false)
 
@@ -161,6 +165,16 @@ export function SponsorsHub({
   const [tierFilter, setTierFilter] = useState('')
 
   // --- Computed values ---
+  // Unique cities with user counts (for sponsor geo targeting)
+  const cityCounts = users.reduce(
+    (acc, u) => {
+      if (u.city) acc[u.city] = (acc[u.city] || 0) + 1
+      return acc
+    },
+    {} as Record<string, number>,
+  )
+  const uniqueCities = Object.entries(cityCounts).sort((a, b) => b[1] - a[1])
+
   const tierUsers = tierFilter && tierFilter !== 'all' ? users.filter((u) => u.plan === tierFilter) : users
   const categorizedUsers = tierUsers.filter((u) => u.categories.length > 0)
   const uncategorizedUsers = tierUsers.filter((u) => u.categories.length === 0)
@@ -337,9 +351,11 @@ export function SponsorsHub({
       instrument_category_id: sponsorForm.instrument_category_id,
       priority: sponsorForm.priority,
       display_prefix: sponsorForm.display_prefix || 'Sponsored by',
-      target_city: sponsorForm.target_city || null,
+      target_city: sponsorForm.target_cities[0] || null,
+      target_country: sponsorForm.target_country || null,
+      target_cities: sponsorForm.target_cities.length > 0 ? sponsorForm.target_cities : null,
       active: true,
-    })
+    } as never)
     if (error) {
       toast.error(tToast('sponsorCreateError'))
     } else {
@@ -353,7 +369,8 @@ export function SponsorsHub({
         instrument_category_id: '',
         priority: 0,
         display_prefix: 'Sponsored by',
-        target_city: '',
+        target_country: '',
+        target_cities: [],
       })
       onReload()
     }
@@ -621,11 +638,22 @@ export function SponsorsHub({
                           <Badge variant="secondary" className="text-[10px]">
                             {s.category_name}
                           </Badge>
-                          {s.target_city && (
+                          {s.target_country && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {s.target_country}
+                            </Badge>
+                          )}
+                          {s.target_cities && s.target_cities.length > 0 ? (
+                            s.target_cities.map((city) => (
+                              <Badge key={city} variant="outline" className="text-[10px]">
+                                {city}
+                              </Badge>
+                            ))
+                          ) : s.target_city ? (
                             <Badge variant="outline" className="text-[10px]">
                               {s.target_city}
                             </Badge>
-                          )}
+                          ) : null}
                           <span className="text-xs text-muted-foreground">
                             {reach} {t('freelancers')}
                           </span>
@@ -637,7 +665,11 @@ export function SponsorsHub({
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {s.display_prefix} {s.name}
-                          {s.target_city ? ` (${s.target_city})` : ` (${t('allCities')})`}
+                          {s.target_cities && s.target_cities.length > 0
+                            ? ` (${s.target_cities.join(', ')})`
+                            : s.target_country
+                              ? ` (${s.target_country})`
+                              : ` (${t('allCities')})`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1177,13 +1209,59 @@ export function SponsorsHub({
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('targetCity')}</Label>
-              <Input
-                value={sponsorForm.target_city}
-                onChange={(e) => setSponsorForm((f) => ({ ...f, target_city: e.target.value }))}
-                placeholder={t('targetCityPlaceholder')}
-              />
-              <p className="text-[11px] text-muted-foreground">{t('targetCityHint')}</p>
+              <Label>{t('targetCountry')}</Label>
+              <Select
+                value={sponsorForm.target_country || 'all'}
+                onValueChange={(v) => setSponsorForm((f) => ({ ...f, target_country: v === 'all' ? '' : v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allCountries')}</SelectItem>
+                  <SelectItem value="SE">Sverige (SE)</SelectItem>
+                  <SelectItem value="NO">Norge (NO)</SelectItem>
+                  <SelectItem value="DK">Danmark (DK)</SelectItem>
+                  <SelectItem value="FI">Finland (FI)</SelectItem>
+                  <SelectItem value="DE">Tyskland (DE)</SelectItem>
+                  <SelectItem value="GB">Storbritannien (GB)</SelectItem>
+                  <SelectItem value="US">USA (US)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('targetCities')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('targetCitiesHint')}</p>
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                {uniqueCities.map(([city, count]) => {
+                  const selected = sponsorForm.target_cities.includes(city)
+                  return (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() =>
+                        setSponsorForm((f) => ({
+                          ...f,
+                          target_cities: selected
+                            ? f.target_cities.filter((c) => c !== city)
+                            : [...f.target_cities, city],
+                        }))
+                      }
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                        selected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      {city}
+                      <span className="opacity-70">({count})</span>
+                    </button>
+                  )
+                })}
+                {uniqueCities.length === 0 && (
+                  <span className="text-xs text-muted-foreground">{t('noCitiesFound')}</span>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t('displayPrefix')}</Label>
