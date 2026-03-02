@@ -622,7 +622,13 @@
     "yourCategories": "Dina specialiteter",
     "selectYourCategories": "Välj kategorier som matchar ditt arbete",
     "otherSkills": "Övriga kompetenser",
-    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan"
+    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan",
+    "changePassword": "Byt lösenord",
+    "changePasswordDesc": "Uppdatera ditt kontolösenord",
+    "newPassword": "Nytt lösenord",
+    "confirmPassword": "Bekräfta lösenord",
+    "passwordMinLength": "Minst 6 tecken",
+    "passwordMismatch": "Lösenorden matchar inte"
   },
   "team": {
     "title": "Team",
@@ -1216,6 +1222,8 @@
     "genericError": "Ett fel uppstod",
     "gigCreateError": "Kunde inte skapa uppdrag",
     "gigUpdateError": "Kunde inte uppdatera uppdrag",
+    "passwordChanged": "Lösenordet ändrat",
+    "passwordChangeError": "Kunde inte ändra lösenord",
     "onboardingComplete": "Konfiguration klar!",
     "onboardingCompleteError": "Kunde inte slutföra konfiguration",
     "onboardingGigTypeError": "Kunde inte spara uppdragstyp",

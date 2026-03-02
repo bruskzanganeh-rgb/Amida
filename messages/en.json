@@ -622,7 +622,13 @@
     "yourCategories": "Your specialties",
     "selectYourCategories": "Select the categories that match your work",
     "otherSkills": "Other skills",
-    "otherSkillsHint": "Describe skills or specialties not listed above"
+    "otherSkillsHint": "Describe skills or specialties not listed above",
+    "changePassword": "Change password",
+    "changePasswordDesc": "Update your account password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordMinLength": "At least 6 characters",
+    "passwordMismatch": "Passwords do not match"
   },
   "team": {
     "title": "Team",
@@ -1216,6 +1222,8 @@
     "genericError": "An error occurred",
     "gigCreateError": "Could not create gig",
     "gigUpdateError": "Could not update gig",
+    "passwordChanged": "Password changed",
+    "passwordChangeError": "Could not change password",
     "onboardingComplete": "Setup complete!",
     "onboardingCompleteError": "Could not complete setup",
     "onboardingGigTypeError": "Could not save gig type",

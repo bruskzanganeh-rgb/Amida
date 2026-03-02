@@ -25,6 +25,7 @@ import {
   Crown,
   Globe,
   Key,
+  Lock,
   Users,
   Guitar,
 } from 'lucide-react'
@@ -90,6 +91,9 @@ export default function SettingsPage() {
   const [companyId, setCompanyId] = useState<string>('')
   const [instrumentsText, setInstrumentsText] = useState('')
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set())
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
   const [allCategories, setAllCategories] = useState<{ id: string; name: string; sort_order: number }[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -851,6 +855,66 @@ export default function SettingsPage() {
                   className="resize-none"
                 />
                 <p className="text-xs text-muted-foreground">{t('otherSkillsHint')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Change password */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                {t('changePassword')}
+              </CardTitle>
+              <CardDescription>{t('changePasswordDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">{t('newPassword')}</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={t('passwordMinLength')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">{t('passwordMismatch')}</p>
+              )}
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  disabled={
+                    changingPassword || !newPassword || newPassword.length < 6 || newPassword !== confirmPassword
+                  }
+                  onClick={async () => {
+                    setChangingPassword(true)
+                    const { error } = await supabase.auth.updateUser({ password: newPassword })
+                    setChangingPassword(false)
+                    if (error) {
+                      toast.error(tToast('passwordChangeError'))
+                    } else {
+                      toast.success(tToast('passwordChanged'))
+                      setNewPassword('')
+                      setConfirmPassword('')
+                    }
+                  }}
+                >
+                  {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('changePassword')}
+                </Button>
               </div>
             </CardContent>
           </Card>
