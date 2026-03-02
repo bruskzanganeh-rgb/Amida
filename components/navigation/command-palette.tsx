@@ -28,6 +28,7 @@ type GigResult = {
 }
 
 type ClientResult = { id: string; name: string }
+type ExpenseResult = { id: string; supplier: string; category: string | null; amount: number }
 type InvoiceResult = {
   id: string
   invoice_number: number
@@ -41,6 +42,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const [gigs, setGigs] = useState<GigResult[]>([])
   const [clients, setClients] = useState<ClientResult[]>([])
   const [invoices, setInvoices] = useState<InvoiceResult[]>([])
+  const [expenses, setExpenses] = useState<ExpenseResult[]>([])
   const supabase = createClient()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
@@ -60,6 +62,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       setGigs([])
       setClients([])
       setInvoices([])
+      setExpenses([])
     }
   }, [open])
 
@@ -72,34 +75,98 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       setGigs([])
       setClients([])
       setInvoices([])
+      setExpenses([])
       return
     }
 
     debounceRef.current = setTimeout(async () => {
       const searchPattern = `%${q}%`
 
-      const [gigRes, clientRes, invoiceRes] = await Promise.all([
-        supabase
-          .from('gigs')
-          .select('id, project_name, venue, client:clients(name)')
-          .or(`project_name.ilike.${searchPattern},venue.ilike.${searchPattern}`)
-          .neq('status', 'draft')
-          .limit(5),
-        supabase.from('clients').select('id, name').ilike('name', searchPattern).limit(5),
-        !isNaN(parseInt(q, 10))
-          ? supabase
-              .from('invoices')
-              .select('id, invoice_number, client:clients(name)')
-              .eq('invoice_number', parseInt(q, 10))
-              .limit(5)
-          : Promise.resolve({ data: [] }),
-      ])
+      // Escape commas in search pattern for .or() safety
+      const safeQ = q.replace(/,/g, '')
+      const safePattern = `%${safeQ}%`
 
+      const [gigByName, gigByVenue, gigByClient, clientRes, invoiceByNum, invoiceByClient, expenseBySup, expenseByCat] =
+        await Promise.all([
+          supabase
+            .from('gigs')
+            .select('id, project_name, venue, client:clients(name)')
+            .ilike('project_name', safePattern)
+            .neq('status', 'draft')
+            .limit(5),
+          supabase
+            .from('gigs')
+            .select('id, project_name, venue, client:clients(name)')
+            .ilike('venue', safePattern)
+            .neq('status', 'draft')
+            .limit(5),
+          supabase
+            .from('gigs')
+            .select('id, project_name, venue, client:clients!inner(name)')
+            .ilike('clients.name' as never, safePattern)
+            .neq('status', 'draft')
+            .limit(5),
+          supabase.from('clients').select('id, name').ilike('name', searchPattern).limit(5),
+          !isNaN(parseInt(q, 10))
+            ? supabase
+                .from('invoices')
+                .select('id, invoice_number, client:clients(name)')
+                .eq('invoice_number', parseInt(q, 10))
+                .limit(5)
+            : Promise.resolve({ data: [] }),
+          supabase
+            .from('invoices')
+            .select('id, invoice_number, client:clients!inner(name)')
+            .ilike('clients.name' as never, searchPattern)
+            .limit(5),
+          supabase.from('expenses').select('id, supplier, category, amount').ilike('supplier', searchPattern).limit(5),
+          supabase.from('expenses').select('id, supplier, category, amount').ilike('category', searchPattern).limit(5),
+        ])
+
+      // Merge and deduplicate gig results
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const allGigs = [
+        ...((gigByName.data as any) || []),
+        ...((gigByVenue.data as any) || []),
+        ...((gigByClient.data as any) || []),
+      ]
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+      const gigSeen = new Set<string>()
+      const uniqueGigs = allGigs
+        .filter((g: GigResult) => {
+          if (gigSeen.has(g.id)) return false
+          gigSeen.add(g.id)
+          return true
+        })
+        .slice(0, 5)
+
+      // Merge and deduplicate invoice results
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setGigs((gigRes.data as any) || [])
+      const allInvoices = [...((invoiceByNum.data as any) || []), ...((invoiceByClient.data as any) || [])]
+      const invSeen = new Set<string>()
+      const uniqueInvoices = allInvoices
+        .filter((inv: InvoiceResult) => {
+          if (invSeen.has(inv.id)) return false
+          invSeen.add(inv.id)
+          return true
+        })
+        .slice(0, 5)
+
+      // Merge and deduplicate expense results
+      const allExpenses = [...(expenseBySup.data || []), ...(expenseByCat.data || [])]
+      const expSeen = new Set<string>()
+      const uniqueExpenses = allExpenses
+        .filter((e: ExpenseResult) => {
+          if (expSeen.has(e.id)) return false
+          expSeen.add(e.id)
+          return true
+        })
+        .slice(0, 5)
+
+      setGigs(uniqueGigs)
       setClients(clientRes.data || [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setInvoices((invoiceRes.data as any) || [])
+      setInvoices(uniqueInvoices)
+      setExpenses(uniqueExpenses)
     }, 300)
 
     return () => {
@@ -108,7 +175,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
-  const hasResults = gigs.length > 0 || clients.length > 0 || invoices.length > 0
+  const hasResults = gigs.length > 0 || clients.length > 0 || invoices.length > 0 || expenses.length > 0
   const isSearching = query.trim().length >= 2
 
   return (
@@ -118,6 +185,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       title={t('searchPlaceholder')}
       description={t('searchPlaceholder')}
       showCloseButton={false}
+      shouldFilter={false}
     >
       <CommandInput placeholder={t('searchPlaceholder')} value={query} onValueChange={setQuery} />
       <CommandList>
@@ -159,7 +227,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {gigs.length > 0 && (
               <CommandGroup heading={t('gigs')}>
                 {gigs.map((g) => (
-                  <CommandItem key={g.id} onSelect={() => navigate('/gigs')}>
+                  <CommandItem key={g.id} value={g.id} onSelect={() => navigate('/gigs')}>
                     <Music className="h-4 w-4" />
                     <span>{g.project_name || g.client?.name || '-'}</span>
                     {g.venue && <span className="ml-auto text-xs text-muted-foreground">{g.venue}</span>}
@@ -172,7 +240,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandSeparator />
                 <CommandGroup heading={t('clients')}>
                   {clients.map((c) => (
-                    <CommandItem key={c.id} onSelect={() => navigate(`/clients/${c.id}`)}>
+                    <CommandItem key={c.id} value={c.id} onSelect={() => navigate(`/clients/${c.id}`)}>
                       <Building2 className="h-4 w-4" />
                       {c.name}
                     </CommandItem>
@@ -185,12 +253,26 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandSeparator />
                 <CommandGroup heading={t('finance')}>
                   {invoices.map((inv) => (
-                    <CommandItem key={inv.id} onSelect={() => navigate('/finance')}>
+                    <CommandItem key={inv.id} value={inv.id} onSelect={() => navigate('/finance')}>
                       <FileText className="h-4 w-4" />
                       <span>#{inv.invoice_number}</span>
                       {inv.client?.name && (
                         <span className="ml-auto text-xs text-muted-foreground">{inv.client.name}</span>
                       )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
+            {expenses.length > 0 && (
+              <>
+                <CommandSeparator />
+                <CommandGroup heading={t('expenses')}>
+                  {expenses.map((e) => (
+                    <CommandItem key={e.id} value={e.id} onSelect={() => navigate('/expenses')}>
+                      <Receipt className="h-4 w-4" />
+                      <span>{e.supplier}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{e.amount} kr</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
