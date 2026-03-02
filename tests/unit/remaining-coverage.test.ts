@@ -462,9 +462,9 @@ describe('lib/usage.ts', () => {
       expect(result.plan).toBe('free')
     })
 
-    it('returns allowed=false when over free quota (10MB)', async () => {
-      const tenMb = 10 * 1024 * 1024
-      vi.mocked(createAdminClient).mockReturnValue(buildStorageMock('free', 'active', [tenMb], [100]) as never)
+    it('returns allowed=false when over free quota (50MB)', async () => {
+      const fiftyMb = 50 * 1024 * 1024
+      vi.mocked(createAdminClient).mockReturnValue(buildStorageMock('free', 'active', [fiftyMb], [100]) as never)
       const result = await checkStorageQuota('user-1')
       expect(result.allowed).toBe(false)
     })

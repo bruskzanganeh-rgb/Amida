@@ -1208,7 +1208,7 @@ describe('subscription-utils (supplemental)', () => {
       expect(tiers.pro.storageMb).toBe(2048)
       expect(tiers.team.priceMonthly).toBe(20)
       // Unchanged defaults
-      expect(tiers.free.storageMb).toBe(10)
+      expect(tiers.free.storageMb).toBe(50)
       expect(tiers.pro.invoiceLimit).toBe(0)
       expect(tiers.team.storageMb).toBe(5120)
     })

@@ -14,7 +14,7 @@ describe('Tier defaults', () => {
   it('free tier has correct limits', () => {
     expect(TIER_DEFAULTS.free.invoiceLimit).toBe(5)
     expect(TIER_DEFAULTS.free.receiptScanLimit).toBe(3)
-    expect(TIER_DEFAULTS.free.storageMb).toBe(10)
+    expect(TIER_DEFAULTS.free.storageMb).toBe(50)
     expect(TIER_DEFAULTS.free.priceMonthly).toBe(0)
   })
 
@@ -46,7 +46,7 @@ describe('buildTier', () => {
     const tier = buildTier('free', config, TIER_DEFAULTS.free)
     expect(tier.invoiceLimit).toBe(10)
     expect(tier.receiptScanLimit).toBe(5)
-    expect(tier.storageMb).toBe(10) // unchanged default
+    expect(tier.storageMb).toBe(50) // unchanged default
   })
 
   it('overrides features with valid JSON array', () => {
