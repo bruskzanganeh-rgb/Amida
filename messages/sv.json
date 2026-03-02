@@ -639,6 +639,8 @@
     "emailOptional": "E-post (valfritt)",
     "createInvite": "Skapa inbjudan",
     "inviteCreated": "Inbjudan skapad!",
+    "inviteEmailSent": "Inbjudan skickad till {email}",
+    "inviteCreatedNoEmail": "Inbjudningslänk skapad — kopiera och dela",
     "inviteError": "Kunde inte skapa inbjudan",
     "removeMemberError": "Kunde inte ta bort medlem",
     "memberRemoved": "Medlem borttagen",
@@ -1133,7 +1135,11 @@
     "targetCity": "Målstad",
     "targetCityPlaceholder": "t.ex. Stockholm, Göteborg",
     "targetCityHint": "Lämna tomt för global (alla städer)",
-    "allCities": "alla städer"
+    "allCities": "alla städer",
+    "impersonate": "Logga in som",
+    "impersonateLink": "Inloggningslänk",
+    "impersonateLinkDesc": "Öppna denna länk i ett incognito-fönster för att logga in som denna användare. Länken fungerar bara en gång.",
+    "impersonateError": "Kunde inte generera länk"
   },
   "client": {
     "clients": "Kunder",

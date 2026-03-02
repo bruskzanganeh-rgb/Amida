@@ -639,6 +639,8 @@
     "emailOptional": "Email (optional)",
     "createInvite": "Create invite",
     "inviteCreated": "Invite created!",
+    "inviteEmailSent": "Invitation sent to {email}",
+    "inviteCreatedNoEmail": "Invite link created — copy and share it",
     "inviteError": "Could not create invite",
     "removeMemberError": "Could not remove member",
     "memberRemoved": "Member removed",
@@ -1133,7 +1135,11 @@
     "targetCity": "Target city",
     "targetCityPlaceholder": "e.g. Stockholm, Gothenburg",
     "targetCityHint": "Leave empty for global (all cities)",
-    "allCities": "all cities"
+    "allCities": "all cities",
+    "impersonate": "Log in as",
+    "impersonateLink": "Impersonation link",
+    "impersonateLinkDesc": "Open this link in an incognito window to log in as this user. The link expires after one use.",
+    "impersonateError": "Could not generate link"
   },
   "client": {
     "clients": "Clients",

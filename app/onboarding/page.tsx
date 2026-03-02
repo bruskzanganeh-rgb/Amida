@@ -722,7 +722,10 @@ export default function OnboardingPage() {
           </Button>
 
           {step < STEPS.length - 1 ? (
-            <Button onClick={() => setStep((s) => s + 1)}>
+            <Button
+              onClick={() => setStep((s) => s + 1)}
+              disabled={step === 3 && selectedCategoryIds.size === 0 && !instrumentsText.trim()}
+            >
               {tc('next')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>

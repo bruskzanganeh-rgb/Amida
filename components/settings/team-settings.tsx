@@ -134,8 +134,13 @@ export function TeamSettings() {
       }
 
       setInviteUrl(data.url)
+      const sentEmail = inviteEmail
       setInviteEmail('')
-      toast.success(t('inviteCreated'))
+      if (data.emailSent) {
+        toast.success(t('inviteEmailSent', { email: sentEmail }))
+      } else {
+        toast.success(sentEmail ? t('inviteCreated') : t('inviteCreatedNoEmail'))
+      }
     } catch {
       toast.error(t('inviteError'))
     } finally {

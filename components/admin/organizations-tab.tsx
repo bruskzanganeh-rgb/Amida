@@ -32,6 +32,9 @@ import {
   UserPlus,
   X,
   Pencil,
+  LogIn,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -109,6 +112,11 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
   const [inviteMode, setInviteMode] = useState<'invite' | 'create'>('invite')
   const [inviteForm, setInviteForm] = useState({ email: '', password: '' })
   const [inviteSaving, setInviteSaving] = useState(false)
+
+  // Impersonate
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null)
+  const [impersonateUrl, setImpersonateUrl] = useState('')
+  const [impersonateCopied, setImpersonateCopied] = useState(false)
 
   // Edit user dialog
   const [editUserId, setEditUserId] = useState<string | null>(null)
@@ -274,6 +282,38 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       toast.error(data.error || 'Failed')
     }
     setInviteSaving(false)
+  }
+
+  async function handleImpersonate(userId: string) {
+    setImpersonatingId(userId)
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      if (res.ok) {
+        const { url } = await res.json()
+        setImpersonateUrl(url)
+      } else {
+        const data = await res.json()
+        toast.error(data.error || t('impersonateError'))
+        setImpersonatingId(null)
+      }
+    } catch {
+      toast.error(t('impersonateError'))
+      setImpersonatingId(null)
+    }
+  }
+
+  async function copyImpersonateUrl() {
+    try {
+      await navigator.clipboard.writeText(impersonateUrl)
+      setImpersonateCopied(true)
+      setTimeout(() => setImpersonateCopied(false), 2000)
+    } catch {
+      toast.error('Could not copy')
+    }
   }
 
   // Filter users
@@ -540,6 +580,20 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                           <UserPlus className="h-3 w-3 mr-1" />
                           {t('inviteMember')}
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => handleImpersonate(u.user_id)}
+                          disabled={impersonatingId === u.user_id}
+                        >
+                          {impersonatingId === u.user_id ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          ) : (
+                            <LogIn className="h-3 w-3 mr-1" />
+                          )}
+                          {t('impersonate')}
+                        </Button>
                       </div>
 
                       {/* Delete company */}
@@ -788,6 +842,41 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
             >
               {inviteSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {inviteMode === 'invite' ? t('inviteUser') : t('createAccount')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Impersonate link dialog */}
+      <Dialog
+        open={!!impersonateUrl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImpersonateUrl('')
+            setImpersonatingId(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('impersonateLink')}</DialogTitle>
+            <DialogDescription>{t('impersonateLinkDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Input value={impersonateUrl} readOnly className="text-xs" />
+            <Button variant="outline" size="sm" onClick={copyImpersonateUrl}>
+              {impersonateCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImpersonateUrl('')
+                setImpersonatingId(null)
+              }}
+            >
+              {tc('close')}
             </Button>
           </DialogFooter>
         </DialogContent>

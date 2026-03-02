@@ -27,6 +27,7 @@ export type ActivityEventType =
   | 'user_deleted'
   | 'user_updated'
   | 'invoice_reminder_sent'
+  | 'impersonation_started'
 
 export type LogActivityParams = {
   userId: string
