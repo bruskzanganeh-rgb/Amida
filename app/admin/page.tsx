@@ -80,6 +80,7 @@ type Sponsor = {
   active: boolean | null
   priority: number | null
   display_prefix: string | null
+  target_city: string | null
   category_name?: string
 }
 
@@ -211,7 +212,7 @@ export default function AdminPage() {
     const { data: sponsorData } = await supabase
       .from('sponsors')
       .select(
-        'id, name, logo_url, tagline, website_url, instrument_category_id, active, priority, display_prefix, category:instrument_categories(name)',
+        'id, name, logo_url, tagline, website_url, instrument_category_id, active, priority, display_prefix, target_city, category:instrument_categories(name)',
       )
       .order('priority', { ascending: false })
     if (sponsorData) {
@@ -226,6 +227,7 @@ export default function AdminPage() {
           active: s.active,
           priority: s.priority,
           display_prefix: s.display_prefix,
+          target_city: s.target_city,
           category_name: (s.category as unknown as { name: string } | null)?.name,
         })),
       )

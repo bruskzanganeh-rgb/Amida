@@ -55,13 +55,15 @@ export function UserMenu() {
       ])
 
       let companyName = ''
+      let userCity = ''
       if (membership) {
         const { data: comp } = await supabase
           .from('companies')
-          .select('company_name')
+          .select('company_name, city')
           .eq('id', membership.company_id)
           .single()
         companyName = comp?.company_name || ''
+        userCity = comp?.city || ''
       }
 
       const currentPlan = sub?.plan || 'free'
@@ -81,14 +83,19 @@ export function UserMenu() {
         if (categoryIds.length > 0) {
           const { data: sponsors } = await supabase
             .from('sponsors')
-            .select('id, name, display_prefix, website_url')
+            .select('id, name, display_prefix, website_url, target_city')
             .in('instrument_category_id', categoryIds)
             .eq('active', true)
             .order('priority', { ascending: false })
-            .limit(1)
 
           if (!cancelled && sponsors && sponsors.length > 0) {
-            setSponsor(sponsors[0])
+            // Prefer city-specific sponsor, fall back to global (no target_city)
+            const cityMatch = userCity
+              ? sponsors.find((s) => s.target_city?.toLowerCase() === userCity.toLowerCase())
+              : null
+            const globalMatch = sponsors.find((s) => !s.target_city)
+            const best = cityMatch || globalMatch || sponsors[0]
+            setSponsor(best)
           }
         }
       }

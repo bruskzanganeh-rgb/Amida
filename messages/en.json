@@ -1111,7 +1111,11 @@
     "applyMatches": "Apply matches",
     "matchesApplied": "Matches applied",
     "displayPrefix": "Display text",
-    "displayPrefixHint": "Text shown before sponsor name (e.g., 'Sponsored by')"
+    "displayPrefixHint": "Text shown before sponsor name (e.g., 'Sponsored by')",
+    "targetCity": "Target city",
+    "targetCityPlaceholder": "e.g. Stockholm, Gothenburg",
+    "targetCityHint": "Leave empty for global (all cities)",
+    "allCities": "all cities"
   },
   "client": {
     "clients": "Clients",

@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select(
-        'company_name, org_number, address, email, phone, bank_account, bankgiro, iban, bic, logo_url, vat_registration_number, late_payment_interest_text, show_logo_on_invoice, our_reference',
+        'company_name, org_number, address, city, email, phone, bank_account, bankgiro, iban, bic, logo_url, vat_registration_number, late_payment_interest_text, show_logo_on_invoice, our_reference',
       )
       .eq('id', membership.company_id)
       .single()
@@ -108,16 +108,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const categoryIds = (userCats || []).map((uc) => uc.category_id).filter(Boolean)
 
       if (categoryIds.length > 0) {
+        const userCity = company?.city || ''
         const { data: sponsors } = await supabase
           .from('sponsors')
-          .select('id, name, logo_url, tagline')
+          .select('id, name, logo_url, tagline, target_city')
           .in('instrument_category_id', categoryIds)
           .eq('active', true)
           .order('priority', { ascending: false })
-          .limit(1)
 
         if (sponsors && sponsors.length > 0) {
-          sponsor = sponsors[0]
+          // Prefer city-specific sponsor, fall back to global (no target_city)
+          const cityMatch = userCity
+            ? sponsors.find((s) => s.target_city?.toLowerCase() === userCity.toLowerCase())
+            : null
+          const globalMatch = sponsors.find((s) => !s.target_city)
+          sponsor = cityMatch || globalMatch || sponsors[0]
 
           // Track impression
           await supabase.from('sponsor_impressions').insert({

@@ -1436,6 +1436,7 @@ export type Database = {
           active: boolean | null
           priority: number | null
           display_prefix: string | null
+          target_city: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -1449,6 +1450,7 @@ export type Database = {
           active?: boolean | null
           priority?: number | null
           display_prefix?: string | null
+          target_city?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -1462,6 +1464,7 @@ export type Database = {
           active?: boolean | null
           priority?: number | null
           display_prefix?: string | null
+          target_city?: string | null
           created_at?: string | null
           updated_at?: string | null
         }

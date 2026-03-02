@@ -1111,7 +1111,11 @@
     "applyMatches": "Tillämpa matchningar",
     "matchesApplied": "Matchningar tillämpade",
     "displayPrefix": "Visningstext",
-    "displayPrefixHint": "Text som visas före sponsornamnet (t.ex. 'Sponsored by')"
+    "displayPrefixHint": "Text som visas före sponsornamnet (t.ex. 'Sponsored by')",
+    "targetCity": "Målstad",
+    "targetCityPlaceholder": "t.ex. Stockholm, Göteborg",
+    "targetCityHint": "Lämna tomt för global (alla städer)",
+    "allCities": "alla städer"
   },
   "client": {
     "clients": "Kunder",

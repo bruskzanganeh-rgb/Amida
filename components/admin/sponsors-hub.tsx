@@ -32,6 +32,7 @@ type Sponsor = {
   active: boolean | null
   priority: number | null
   display_prefix: string | null
+  target_city: string | null
   category_name?: string
 }
 
@@ -103,6 +104,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
     instrument_category_id: '',
     priority: 0,
     display_prefix: 'Sponsored by',
+    target_city: '',
   })
   const [savingSponsor, setSavingSponsor] = useState(false)
 
@@ -185,6 +187,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
       instrument_category_id: sponsorForm.instrument_category_id,
       priority: sponsorForm.priority,
       display_prefix: sponsorForm.display_prefix || 'Sponsored by',
+      target_city: sponsorForm.target_city || null,
       active: true,
     })
     if (error) {
@@ -200,6 +203,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
         instrument_category_id: '',
         priority: 0,
         display_prefix: 'Sponsored by',
+        target_city: '',
       })
       onReload()
     }
@@ -452,11 +456,16 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                   return (
                     <div key={s.id} className="flex items-center justify-between py-2 px-3 rounded bg-secondary/30">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium">{s.name}</p>
                           <Badge variant="secondary" className="text-[10px]">
                             {s.category_name}
                           </Badge>
+                          {s.target_city && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {s.target_city}
+                            </Badge>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {reach} {t('freelancers')}
                           </span>
@@ -466,11 +475,10 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                             </Badge>
                           )}
                         </div>
-                        {s.display_prefix && (
-                          <p className="text-xs text-muted-foreground">
-                            {s.display_prefix} {s.name}
-                          </p>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {s.display_prefix} {s.name}
+                          {s.target_city ? ` (${s.target_city})` : ` (${t('allCities')})`}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -914,6 +922,15 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                 onChange={(e) => setSponsorForm((f) => ({ ...f, logo_url: e.target.value }))}
                 placeholder="https://..."
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('targetCity')}</Label>
+              <Input
+                value={sponsorForm.target_city}
+                onChange={(e) => setSponsorForm((f) => ({ ...f, target_city: e.target.value }))}
+                placeholder={t('targetCityPlaceholder')}
+              />
+              <p className="text-[11px] text-muted-foreground">{t('targetCityHint')}</p>
             </div>
             <div className="space-y-2">
               <Label>{t('displayPrefix')}</Label>
