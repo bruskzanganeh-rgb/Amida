@@ -76,17 +76,20 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex-1 md:hidden" />
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {isSharedMode && (
-            <button
-              onClick={toggleShowOnlyMine}
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-white/10"
-              style={{ color: showOnlyMine ? '#c4b5fd' : '#94a3b8' }}
-              title={showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}
-            >
-              {showOnlyMine ? <User className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}</span>
-            </button>
+            <>
+              <button
+                onClick={toggleShowOnlyMine}
+                className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-white/10"
+                style={{ color: showOnlyMine ? '#c4b5fd' : '#94a3b8' }}
+                title={showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}
+              >
+                {showOnlyMine ? <User className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
+                <span className="hidden sm:inline">{showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}</span>
+              </button>
+              <div className="h-5 border-l border-white/10" />
+            </>
           )}
           <UserMenu />
         </div>

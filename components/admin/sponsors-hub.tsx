@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +26,7 @@ import {
   X,
   Upload,
   ImageIcon,
+  BarChart3,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -167,6 +169,18 @@ export function SponsorsHub({
 
   // Global tier filter for dashboard + categories
   const [tierFilter, setTierFilter] = useState('')
+
+  // Sponsor stats expand
+  const [expandedSponsorId, setExpandedSponsorId] = useState<string | null>(null)
+  const [sponsorStats, setSponsorStats] = useState<{
+    app: number
+    pdf: number
+    click: number
+    total: number
+    byCity: { city: string; country: string; app: number; pdf: number; click: number; total: number }[]
+  } | null>(null)
+  const [sponsorStatsPeriod, setSponsorStatsPeriod] = useState('all')
+  const [loadingSponsorStats, setLoadingSponsorStats] = useState(false)
 
   // --- Computed values ---
   // Unique cities with user counts (for sponsor geo targeting)
@@ -424,6 +438,60 @@ export function SponsorsHub({
     setSponsors((prev) => prev.map((s) => (s.id === id ? { ...s, active: !active } : s)))
   }
 
+  // Month options for period filter (last 6 months)
+  // Year options (current year + previous years back to 2024)
+  const currentYear = new Date().getFullYear()
+  const sponsorYearOptions = Array.from({ length: currentYear - 2023 }, (_, i) => {
+    const year = currentYear - i
+    const from = new Date(year, 0, 1).toISOString()
+    const to = new Date(year, 11, 31, 23, 59, 59).toISOString()
+    return { value: `${from}|${to}`, label: `${year}` }
+  })
+
+  // Month options (last 6 months)
+  const sponsorMonthOptions = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
+    const to = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString()
+    const label = d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })
+    return { value: `${from}|${to}`, label }
+  })
+
+  // --- Sponsor Stats ---
+  async function fetchSponsorStats(sponsorId: string, periodValue?: string) {
+    setLoadingSponsorStats(true)
+    const params = new URLSearchParams()
+    const p = periodValue ?? sponsorStatsPeriod
+    if (p !== 'all') {
+      const [from, to] = p.split('|')
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+    }
+    const res = await fetch(`/api/admin/sponsor-stats/${sponsorId}?${params.toString()}`)
+    if (res.ok) {
+      const data = await res.json()
+      setSponsorStats(data)
+    }
+    setLoadingSponsorStats(false)
+  }
+
+  function handleToggleSponsorStats(sponsorId: string) {
+    if (expandedSponsorId === sponsorId) {
+      setExpandedSponsorId(null)
+      setSponsorStats(null)
+    } else {
+      setExpandedSponsorId(sponsorId)
+      setSponsorStatsPeriod('all')
+      fetchSponsorStats(sponsorId, 'all')
+    }
+  }
+
+  function handleSponsorStatsPeriodChange(value: string, sponsorId: string) {
+    setSponsorStatsPeriod(value)
+    fetchSponsorStats(sponsorId, value)
+  }
+
   // --- AI Analysis ---
   async function handleAnalyze() {
     setAnalyzing(true)
@@ -666,75 +734,179 @@ export function SponsorsHub({
               ) : (
                 sponsors.map((s) => {
                   const reach = getCategoryUserCount(s.category_name || '')
+                  const isExpanded = expandedSponsorId === s.id
                   return (
-                    <div key={s.id} className="flex items-center justify-between py-2 px-3 rounded bg-secondary/30">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium">{s.name}</p>
-                          <Badge variant="secondary" className="text-[10px]">
-                            {s.category_name}
-                          </Badge>
-                          {s.target_country && (
-                            <Badge variant="outline" className="text-[10px]">
-                              {s.target_country}
+                    <div key={s.id} className="rounded bg-secondary/30 overflow-hidden">
+                      <div className="flex items-center justify-between py-2 px-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleToggleSponsorStats(s.id)}
+                              className="text-sm font-medium hover:underline flex items-center gap-1"
+                            >
+                              <BarChart3 className="h-3 w-3" />
+                              {s.name}
+                            </button>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {s.category_name}
                             </Badge>
-                          )}
-                          {s.target_cities && s.target_cities.length > 0 ? (
-                            s.target_cities.map((city) => (
-                              <Badge key={city} variant="outline" className="text-[10px]">
-                                {city}
+                            {s.target_country && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {s.target_country}
                               </Badge>
-                            ))
-                          ) : s.target_city ? (
-                            <Badge variant="outline" className="text-[10px]">
-                              {s.target_city}
-                            </Badge>
-                          ) : null}
-                          <span className="text-xs text-muted-foreground">
-                            {reach} {t('freelancers')}
-                          </span>
-                          {!s.active && (
-                            <Badge variant="destructive" className="text-[10px]">
-                              {t('inactive')}
-                            </Badge>
+                            )}
+                            {s.target_cities && s.target_cities.length > 0 ? (
+                              s.target_cities.map((city) => (
+                                <Badge key={city} variant="outline" className="text-[10px]">
+                                  {city}
+                                </Badge>
+                              ))
+                            ) : s.target_city ? (
+                              <Badge variant="outline" className="text-[10px]">
+                                {s.target_city}
+                              </Badge>
+                            ) : null}
+                            <span className="text-xs text-muted-foreground">
+                              {reach} {t('freelancers')}
+                            </span>
+                            {!s.active && (
+                              <Badge variant="destructive" className="text-[10px]">
+                                {t('inactive')}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {s.display_prefix} {s.name}
+                            {s.target_cities && s.target_cities.length > 0
+                              ? ` (${s.target_cities.join(', ')})`
+                              : s.target_country
+                                ? ` (${s.target_country})`
+                                : ` (${t('allCities')})`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleToggleSponsorStats(s.id)}
+                            title={t('sponsorStats')}
+                          >
+                            <BarChart3 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => openEditSponsor(s)}
+                            title={t('editSponsor')}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => handleToggleSponsor(s.id, s.active)}
+                          >
+                            {s.active ? t('deactivate') : t('activate')}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSponsor(s.id)}
+                            className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Expanded sponsor stats panel */}
+                      {isExpanded && (
+                        <div className="border-t px-3 py-3 space-y-3 bg-background/50">
+                          {loadingSponsorStats ? (
+                            <div className="flex items-center gap-2 py-4 justify-center">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-xs text-muted-foreground">{tc('loading')}</span>
+                            </div>
+                          ) : sponsorStats ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="text-center px-4 py-2 rounded bg-secondary/50">
+                                    <p className="text-lg font-bold">{sponsorStats.app}</p>
+                                    <p className="text-[10px] text-muted-foreground">{t('appImpressions')}</p>
+                                  </div>
+                                  <div className="text-center px-4 py-2 rounded bg-secondary/50">
+                                    <p className="text-lg font-bold">{sponsorStats.pdf}</p>
+                                    <p className="text-[10px] text-muted-foreground">{t('pdfImpressions')}</p>
+                                  </div>
+                                  <div className="text-center px-4 py-2 rounded bg-secondary/50">
+                                    <p className="text-lg font-bold">{sponsorStats.click}</p>
+                                    <p className="text-[10px] text-muted-foreground">{t('clicks')}</p>
+                                  </div>
+                                </div>
+                                <Select
+                                  value={sponsorStatsPeriod}
+                                  onValueChange={(v) => handleSponsorStatsPeriodChange(v, s.id)}
+                                >
+                                  <SelectTrigger className="w-[160px] h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="all">{t('allTime')}</SelectItem>
+                                    {sponsorYearOptions.map((y) => (
+                                      <SelectItem key={y.value} value={y.value}>
+                                        {y.label}
+                                      </SelectItem>
+                                    ))}
+                                    {sponsorMonthOptions.map((m) => (
+                                      <SelectItem key={m.value} value={m.value}>
+                                        {m.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {sponsorStats.byCity.length > 0 ? (
+                                <div>
+                                  <p className="text-xs font-medium mb-1">{t('perCity')}</p>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="text-xs">{t('city')}</TableHead>
+                                        <TableHead className="text-xs">{t('country')}</TableHead>
+                                        <TableHead className="text-xs text-right">{t('appImpressions')}</TableHead>
+                                        <TableHead className="text-xs text-right">{t('pdfImpressions')}</TableHead>
+                                        <TableHead className="text-xs text-right">{t('clicks')}</TableHead>
+                                        <TableHead className="text-xs text-right">{t('total')}</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {sponsorStats.byCity.map((row) => (
+                                        <TableRow key={`${row.city}-${row.country}`}>
+                                          <TableCell className="text-xs">{row.city}</TableCell>
+                                          <TableCell className="text-xs">{row.country}</TableCell>
+                                          <TableCell className="text-xs text-right">{row.app}</TableCell>
+                                          <TableCell className="text-xs text-right">{row.pdf}</TableCell>
+                                          <TableCell className="text-xs text-right">{row.click}</TableCell>
+                                          <TableCell className="text-xs text-right font-medium">{row.total}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground text-center py-2">{t('noImpressions')}</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-xs text-muted-foreground text-center py-2">{t('noImpressions')}</p>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {s.display_prefix} {s.name}
-                          {s.target_cities && s.target_cities.length > 0
-                            ? ` (${s.target_cities.join(', ')})`
-                            : s.target_country
-                              ? ` (${s.target_country})`
-                              : ` (${t('allCities')})`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={() => openEditSponsor(s)}
-                          title={t('editSponsor')}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => handleToggleSponsor(s.id, s.active)}
-                        >
-                          {s.active ? t('deactivate') : t('activate')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSponsor(s.id)}
-                          className="text-destructive hover:text-destructive h-7 w-7 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      )}
                     </div>
                   )
                 })

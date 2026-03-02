@@ -38,6 +38,15 @@ export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
   const [stats, setStats] = useState(initialStats)
   const [period, setPeriod] = useState('all')
 
+  // Generate year options (current year back to 2024)
+  const currentYear = new Date().getFullYear()
+  const yearOptions = Array.from({ length: currentYear - 2023 }, (_, i) => {
+    const year = currentYear - i
+    const from = new Date(year, 0, 1).toISOString()
+    const to = new Date(year, 11, 31, 23, 59, 59).toISOString()
+    return { value: `${from}|${to}`, label: `${year}` }
+  })
+
   // Generate month options (last 6 months)
   const monthOptions = Array.from({ length: 6 }, (_, i) => {
     const date = subMonths(new Date(), i)
@@ -147,6 +156,11 @@ export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('allTime')}</SelectItem>
+                {yearOptions.map((y) => (
+                  <SelectItem key={y.value} value={y.value}>
+                    {y.label}
+                  </SelectItem>
+                ))}
                 {monthOptions.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
                     {m.label}

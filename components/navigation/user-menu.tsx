@@ -148,26 +148,28 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="header-nav-link flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-medium"
-          style={{ color: '#C7D2FE', background: 'none', border: 'none', cursor: 'pointer' }}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-white/5"
+          style={{ color: '#C7D2FE', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer' }}
         >
           <span className="flex flex-col items-end leading-tight">
-            <span className="max-w-[100px] sm:max-w-[180px] truncate">{companyName || userEmail}</span>
+            <span className="flex items-center gap-1.5">
+              <span className="max-w-[100px] sm:max-w-[180px] truncate text-[12px]">{companyName || userEmail}</span>
+              {plan !== 'free' && (
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none shrink-0"
+                  style={{
+                    background: plan === 'team' ? 'rgba(139,92,246,0.25)' : 'rgba(99,102,241,0.25)',
+                    color: plan === 'team' ? '#c4b5fd' : '#a5b4fc',
+                  }}
+                >
+                  {plan}
+                </span>
+              )}
+            </span>
             {companyName && userName && (
-              <span className="max-w-[100px] sm:max-w-[180px] truncate text-[10px] opacity-70">{userName}</span>
+              <span className="max-w-[100px] sm:max-w-[180px] truncate text-[10px] opacity-60">{userName}</span>
             )}
           </span>
-          {plan !== 'free' && (
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none"
-              style={{
-                background: plan === 'team' ? 'rgba(139,92,246,0.25)' : 'rgba(99,102,241,0.25)',
-                color: plan === 'team' ? '#c4b5fd' : '#a5b4fc',
-              }}
-            >
-              {plan}
-            </span>
-          )}
           {plan === 'free' && sponsor && (
             <a
               href={
