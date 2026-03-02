@@ -208,5 +208,15 @@ export default defineConfig({
         storageState: 'tests/.auth/state.json',
       },
     },
+
+    // Invite flow tests (owner + member auth, tests create/accept API + team UI)
+    {
+      name: 'invite-flow',
+      testMatch: /invite-flow\.spec\.ts/,
+      dependencies: ['setup', 'member-setup'],
+      use: {
+        viewport: { width: 1440, height: 900 },
+      },
+    },
   ],
 })

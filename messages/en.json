@@ -842,7 +842,10 @@
     "fullName": "Full name",
     "phone": "Phone",
     "completeSetup": "Complete setup",
-    "setupComplete": "Account setup complete!"
+    "setupComplete": "Account setup complete!",
+    "joiningCompany": "You've been invited to join {company}",
+    "inviteExpired": "This invitation has expired",
+    "inviteInvalid": "This invitation is no longer valid"
   },
   "onboarding": {
     "companyInfo": "Company info",

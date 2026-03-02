@@ -29,10 +29,11 @@ export async function POST(request: Request) {
     .from('subscriptions')
     .select('plan, status')
     .eq('company_id', membership.company_id)
+    .limit(1)
     .single()
 
   if (!subscription || subscription.plan !== 'team' || subscription.status !== 'active') {
-    return NextResponse.json({ error: 'Team plan required to invite members' }, { status: 403 })
+    return NextResponse.json({ error: 'Business plan required to invite members' }, { status: 403 })
   }
 
   const body = await request.json().catch(() => ({}))

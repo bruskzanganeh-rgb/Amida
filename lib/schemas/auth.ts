@@ -4,6 +4,7 @@ export const authSetupSchema = z.object({
   user_id: z.string().uuid(),
   company_name: z.string().optional(),
   invitation_code: z.string().optional(),
+  invitation_token: z.string().optional(),
 })
 
 export const validateCodeSchema = z.object({

@@ -27,6 +27,9 @@ import {
   Key,
   Lock,
   Users,
+  User,
+  MessageSquare,
+  AlertTriangle,
 } from 'lucide-react'
 import { SubscriptionSettings } from '@/components/settings/subscription-settings'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
@@ -36,6 +39,16 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useTranslations, useLocale } from 'next-intl'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { COUNTRY_CONFIGS, getCountryConfig } from '@/lib/country-config'
 import { PageTransition } from '@/components/ui/page-transition'
@@ -92,6 +105,9 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -375,7 +391,7 @@ export default function SettingsPage() {
     return (
       <div className="space-y-6">
         <div className="flex gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="h-9 w-20 rounded-md" />
           ))}
         </div>
@@ -422,6 +438,10 @@ export default function SettingsPage() {
           <TabsTrigger value="subscription" className="gap-2" title={t('tabSubscription')}>
             <Crown className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t('tabSubscription')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="account" className="gap-2" title={t('tabAccount')}>
+            <User className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">{t('tabAccount')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1139,6 +1159,99 @@ export default function SettingsPage() {
         {/* Subscription Tab */}
         <TabsContent value="subscription">
           <SubscriptionSettings />
+        </TabsContent>
+
+        {/* Account Tab */}
+        <TabsContent value="account" className="space-y-6">
+          {/* Feedback */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                {t('feedbackTitle')}
+              </CardTitle>
+              <CardDescription>{t('feedbackDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="mailto:support@babalisk.com" className="inline-block">
+                <Button variant="outline">
+                  <Send className="h-4 w-4 mr-2" />
+                  {t('sendFeedback')}
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+
+          {/* Delete account */}
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                {t('deleteAccountTitle')}
+              </CardTitle>
+              <CardDescription>{t('deleteAccountDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+                {t('deleteAccountButton')}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Delete confirmation dialog */}
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={(open) => {
+              setDeleteDialogOpen(open)
+              if (!open) setDeleteConfirmText('')
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('deleteAccountTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>{t('deleteAccountDesc')}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                <Label htmlFor="delete-confirm">{t('deleteAccountConfirm')}</Label>
+                <Input
+                  id="delete-confirm"
+                  className="mt-2"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async (e) => {
+                    e.preventDefault()
+                    setDeleting(true)
+                    try {
+                      const res = await fetch('/api/account', { method: 'DELETE' })
+                      if (!res.ok) {
+                        const data = await res.json()
+                        toast.error(data.error || 'Failed to delete account')
+                        setDeleting(false)
+                        return
+                      }
+                      await supabase.auth.signOut()
+                      window.location.href = '/login'
+                    } catch {
+                      toast.error('Failed to delete account')
+                      setDeleting(false)
+                    }
+                  }}
+                >
+                  {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('deleteAccountButton')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </TabsContent>
       </Tabs>
     </PageTransition>

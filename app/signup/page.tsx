@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Building2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -23,31 +23,78 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Company invite token from URL
+  const inviteToken = searchParams.get('invite') || ''
+  const [inviteCompanyName, setInviteCompanyName] = useState<string | null>(null)
+  const [inviteValid, setInviteValid] = useState<boolean | null>(null)
+  const [inviteLoading, setInviteLoading] = useState(!!inviteToken)
+  const [inviteError, setInviteError] = useState('')
+
+  // Validate invite token on mount
+  useEffect(() => {
+    if (!inviteToken) return
+
+    async function validateToken() {
+      try {
+        const res = await fetch('/api/invitations/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: inviteToken }),
+        })
+        const data = await res.json()
+
+        if (data.valid) {
+          setInviteValid(true)
+          setInviteCompanyName(data.company_name)
+        } else {
+          setInviteValid(false)
+          if (data.reason === 'expired') {
+            setInviteError(t('inviteExpired'))
+          } else {
+            setInviteError(t('inviteInvalid'))
+          }
+        }
+      } catch {
+        setInviteValid(false)
+        setInviteError(t('inviteInvalid'))
+      } finally {
+        setInviteLoading(false)
+      }
+    }
+
+    validateToken()
+  }, [inviteToken, t])
+
+  const isInviteFlow = inviteToken && inviteValid === true
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Validate invitation code
-    if (!invitationCode.trim()) {
-      setError(t('invitationCodeRequired'))
-      setLoading(false)
-      return
-    }
+    // For normal signup (not invite), validate invitation code
+    if (!isInviteFlow) {
+      if (!invitationCode.trim()) {
+        setError(t('invitationCodeRequired'))
+        setLoading(false)
+        return
+      }
 
-    const codeRes = await fetch('/api/auth/validate-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: invitationCode }),
-    })
-    const codeData = await codeRes.json()
+      const codeRes = await fetch('/api/auth/validate-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: invitationCode }),
+      })
+      const codeData = await codeRes.json()
 
-    if (!codeData.valid) {
-      setError(codeData.reason === 'expired' ? t('codeExpired') : t('invalidCode'))
-      setLoading(false)
-      return
+      if (!codeData.valid) {
+        setError(codeData.reason === 'expired' ? t('codeExpired') : t('invalidCode'))
+        setLoading(false)
+        return
+      }
     }
 
     const { data, error: signupError } = await supabase.auth.signUp({
@@ -67,7 +114,12 @@ export default function SignupPage() {
       await fetch('/api/auth/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: data.user.id, company_name: companyName, invitation_code: invitationCode }),
+        body: JSON.stringify({
+          user_id: data.user.id,
+          company_name: isInviteFlow ? '' : companyName,
+          invitation_code: isInviteFlow ? undefined : invitationCode,
+          invitation_token: isInviteFlow ? inviteToken : undefined,
+        }),
       })
     }
 
@@ -108,37 +160,74 @@ export default function SignupPage() {
     )
   }
 
+  // Show loading while validating invite token
+  if (inviteLoading) {
+    return (
+      <div className="dark min-h-screen flex items-center justify-center bg-[#0B1E3A] p-4">
+        <Card className="w-full max-w-md bg-[#102544] border-[#1a3a5c]">
+          <CardHeader className="text-center">
+            <Image src="/logo.png" alt="Amida" width={64} height={64} className="mx-auto mb-4" />
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="dark min-h-screen flex items-center justify-center bg-[#0B1E3A] p-4">
       <Card className="w-full max-w-md bg-[#102544] border-[#1a3a5c]">
         <CardHeader className="text-center">
           <Image src="/logo.png" alt="Amida" width={64} height={64} className="mx-auto mb-4" />
           <CardTitle className="text-2xl">{t('signup')}</CardTitle>
-          <CardDescription>{t('signupFree')}</CardDescription>
+          {isInviteFlow ? (
+            <div className="flex items-center justify-center gap-2 mt-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                {t('joiningCompany', { company: inviteCompanyName || '' })}
+              </span>
+            </div>
+          ) : (
+            <CardDescription>{t('signupFree')}</CardDescription>
+          )}
         </CardHeader>
         <CardContent>
+          {/* Invalid invite warning */}
+          {inviteToken && inviteValid === false && (
+            <div className="p-3 text-sm text-red-400 bg-red-950/50 rounded-lg mb-4">{inviteError}</div>
+          )}
+
           <form onSubmit={handleSignup} className="space-y-4">
             {error && <div className="p-3 text-sm text-red-400 bg-red-950/50 rounded-lg">{error}</div>}
-            <div className="space-y-2">
-              <Label htmlFor="invitationCode">{t('invitationCode')}</Label>
-              <Input
-                id="invitationCode"
-                value={invitationCode}
-                onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
-                placeholder="ABC123"
-                required
-                className="uppercase tracking-widest font-mono"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyName">{t('companyName')}</Label>
-              <Input
-                id="companyName"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Your Company AB"
-              />
-            </div>
+
+            {/* Invitation code — only for normal signup */}
+            {!isInviteFlow && (
+              <div className="space-y-2">
+                <Label htmlFor="invitationCode">{t('invitationCode')}</Label>
+                <Input
+                  id="invitationCode"
+                  value={invitationCode}
+                  onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                  placeholder="ABC123"
+                  required={!isInviteFlow}
+                  className="uppercase tracking-widest font-mono"
+                />
+              </div>
+            )}
+
+            {/* Company name — only for normal signup */}
+            {!isInviteFlow && (
+              <div className="space-y-2">
+                <Label htmlFor="companyName">{t('companyName')}</Label>
+                <Input
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Your Company AB"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">{t('email')}</Label>
               <Input

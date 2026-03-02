@@ -842,7 +842,10 @@
     "fullName": "Fullständigt namn",
     "phone": "Telefon",
     "completeSetup": "Slutför",
-    "setupComplete": "Kontot är klart!"
+    "setupComplete": "Kontot är klart!",
+    "joiningCompany": "Du har blivit inbjuden till {company}",
+    "inviteExpired": "Denna inbjudan har gått ut",
+    "inviteInvalid": "Denna inbjudan är inte längre giltig"
   },
   "onboarding": {
     "companyInfo": "Företagsinfo",
