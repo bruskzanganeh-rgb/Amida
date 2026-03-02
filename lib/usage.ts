@@ -1,15 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const DEFAULT_TIER_LIMITS = {
-  free: { invoices: 5, receiptScans: 3, emailSends: 2, storageMb: 50 },
-  pro: { invoices: 0, receiptScans: 0, emailSends: 0, storageMb: 1024 },
-  team: { invoices: 0, receiptScans: 0, emailSends: 0, storageMb: 5120 },
-} as const
-
 type Plan = 'free' | 'pro' | 'team'
 
 async function getTierLimits(supabaseAdmin: ReturnType<typeof createAdminClient>, plan: Plan) {
-  const defaults = DEFAULT_TIER_LIMITS[plan]
   const { data } = await supabaseAdmin
     .from('platform_config')
     .select('key, value')
@@ -20,15 +13,16 @@ async function getTierLimits(supabaseAdmin: ReturnType<typeof createAdminClient>
       `${plan}_storage_mb`,
     ])
 
-  if (!data || data.length === 0) return defaults
+  const config: Record<string, string> = {}
+  data?.forEach((d) => {
+    config[d.key] = d.value
+  })
 
   return {
-    invoices: parseInt(data.find((d) => d.key === `${plan}_invoice_limit`)?.value ?? String(defaults.invoices)),
-    receiptScans: parseInt(
-      data.find((d) => d.key === `${plan}_receipt_scan_limit`)?.value ?? String(defaults.receiptScans),
-    ),
-    emailSends: parseInt(data.find((d) => d.key === `${plan}_email_send_limit`)?.value ?? String(defaults.emailSends)),
-    storageMb: parseInt(data.find((d) => d.key === `${plan}_storage_mb`)?.value ?? String(defaults.storageMb)),
+    invoices: parseInt(config[`${plan}_invoice_limit`] || '0'),
+    receiptScans: parseInt(config[`${plan}_receipt_scan_limit`] || '0'),
+    emailSends: parseInt(config[`${plan}_email_send_limit`] || '0'),
+    storageMb: parseInt(config[`${plan}_storage_mb`] || '0'),
   }
 }
 

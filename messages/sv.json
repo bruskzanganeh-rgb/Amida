@@ -1018,6 +1018,7 @@
     "tierTeam": "Team",
     "invoiceLimitLabel": "Fakturagräns / månad",
     "receiptScanLimitLabel": "Skanningsgräns / månad",
+    "emailSendLimitLabel": "E-post / månad",
     "storageMbLabel": "Lagring (MB)",
     "displayPriceMonthly": "Visningspris / månad (kr)",
     "displayPriceYearly": "Visningspris / år (kr)",

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TIER_DEFAULTS,
   buildTier,
   buildAllTiers,
   isPro,
@@ -10,64 +9,69 @@ import {
   canScanReceipt,
 } from '@/lib/subscription-utils'
 
-describe('Tier defaults', () => {
-  it('free tier has correct limits', () => {
-    expect(TIER_DEFAULTS.free.invoiceLimit).toBe(5)
-    expect(TIER_DEFAULTS.free.receiptScanLimit).toBe(3)
-    expect(TIER_DEFAULTS.free.storageMb).toBe(50)
-    expect(TIER_DEFAULTS.free.priceMonthly).toBe(0)
-  })
-
-  it('pro tier has unlimited invoices and scans (0)', () => {
-    expect(TIER_DEFAULTS.pro.invoiceLimit).toBe(0)
-    expect(TIER_DEFAULTS.pro.receiptScanLimit).toBe(0)
-    expect(TIER_DEFAULTS.pro.storageMb).toBe(1024)
-  })
-
-  it('team tier has same limits as pro plus team features', () => {
-    expect(TIER_DEFAULTS.team.invoiceLimit).toBe(0)
-    expect(TIER_DEFAULTS.team.receiptScanLimit).toBe(0)
-    expect(TIER_DEFAULTS.team.storageMb).toBe(5120)
-    expect(TIER_DEFAULTS.team.features).toContain('inviteMembers')
-    expect(TIER_DEFAULTS.team.features).toContain('sharedCalendar')
-  })
-})
-
 describe('buildTier', () => {
-  it('returns defaults when config is empty', () => {
-    const tier = buildTier('free', {}, TIER_DEFAULTS.free)
+  it('returns zeros when config is empty', () => {
+    const tier = buildTier('free', {})
+    expect(tier.invoiceLimit).toBe(0)
+    expect(tier.receiptScanLimit).toBe(0)
+    expect(tier.storageMb).toBe(0)
+    expect(tier.features).toEqual([])
+  })
+
+  it('parses config values correctly', () => {
+    const config = {
+      free_invoice_limit: '5',
+      free_receipt_scan_limit: '3',
+      free_storage_mb: '50',
+      free_price_monthly: '0',
+      free_price_yearly: '0',
+      free_features: '["unlimitedGigs","basicInvoicing","calendarView"]',
+    }
+    const tier = buildTier('free', config)
     expect(tier.invoiceLimit).toBe(5)
     expect(tier.receiptScanLimit).toBe(3)
+    expect(tier.storageMb).toBe(50)
+    expect(tier.priceMonthly).toBe(0)
     expect(tier.features).toEqual(['unlimitedGigs', 'basicInvoicing', 'calendarView'])
   })
 
-  it('overrides with platform_config values', () => {
+  it('overrides specific fields while others stay at zero', () => {
     const config = { free_invoice_limit: '10', free_receipt_scan_limit: '5' }
-    const tier = buildTier('free', config, TIER_DEFAULTS.free)
+    const tier = buildTier('free', config)
     expect(tier.invoiceLimit).toBe(10)
     expect(tier.receiptScanLimit).toBe(5)
-    expect(tier.storageMb).toBe(50) // unchanged default
+    expect(tier.storageMb).toBe(0) // not in config
   })
 
-  it('overrides features with valid JSON array', () => {
+  it('parses features from valid JSON array', () => {
     const config = { pro_features: '["custom1","custom2"]' }
-    const tier = buildTier('pro', config, TIER_DEFAULTS.pro)
+    const tier = buildTier('pro', config)
     expect(tier.features).toEqual(['custom1', 'custom2'])
   })
 
-  it('falls back to default features on invalid JSON', () => {
+  it('falls back to empty features on invalid JSON', () => {
     const config = { pro_features: 'not-json' }
-    const tier = buildTier('pro', config, TIER_DEFAULTS.pro)
-    expect(tier.features).toEqual(['unlimitedInvoices', 'unlimitedScans', 'noBranding'])
+    const tier = buildTier('pro', config)
+    expect(tier.features).toEqual([])
   })
 })
 
 describe('buildAllTiers', () => {
-  it('returns all three tiers with defaults', () => {
-    const tiers = buildAllTiers({})
+  it('returns all three tiers from config', () => {
+    const config = {
+      free_invoice_limit: '5',
+      pro_invoice_limit: '0',
+      team_invoice_limit: '0',
+    }
+    const tiers = buildAllTiers(config)
     expect(tiers.free.invoiceLimit).toBe(5)
     expect(tiers.pro.invoiceLimit).toBe(0)
     expect(tiers.team.invoiceLimit).toBe(0)
+  })
+
+  it('returns object with exactly three keys', () => {
+    const tiers = buildAllTiers({})
+    expect(Object.keys(tiers)).toEqual(['free', 'pro', 'team'])
   })
 })
 
@@ -104,8 +108,14 @@ describe('isPro / isTeam / resolvePlan', () => {
 })
 
 describe('canCreateInvoice / canScanReceipt', () => {
-  const freeTier = buildTier('free', {}, TIER_DEFAULTS.free)
-  const proTier = buildTier('pro', {}, TIER_DEFAULTS.pro)
+  const freeTier = buildTier('free', {
+    free_invoice_limit: '5',
+    free_receipt_scan_limit: '3',
+  })
+  const proTier = buildTier('pro', {
+    pro_invoice_limit: '0',
+    pro_receipt_scan_limit: '0',
+  })
 
   it('free tier blocks invoice after limit', () => {
     expect(canCreateInvoice(freeTier, 0)).toBe(true)

@@ -5,7 +5,7 @@ import { Crown, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-type UpgradePromptType = 'invoice' | 'scan' | 'storage' | 'email'
+type UpgradePromptType = 'invoice' | 'scan' | 'storage'
 
 interface UpgradePromptProps {
   type: UpgradePromptType
@@ -22,14 +22,12 @@ export function UpgradePrompt({ type, current, limit, showTrial, onManualFallbac
     invoice: t('invoiceLimitTitle', { current, limit }),
     scan: t('scanLimitTitle', { current, limit }),
     storage: t('storageLimitTitle'),
-    email: t('emailLimitTitle', { current, limit }),
   }
 
   const descriptions: Record<UpgradePromptType, string> = {
     invoice: t('invoiceLimitDesc'),
     scan: t('scanLimitDesc'),
     storage: t('storageLimitDesc'),
-    email: t('emailLimitDesc'),
   }
 
   return (

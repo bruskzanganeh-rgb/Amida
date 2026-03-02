@@ -320,8 +320,37 @@ describe('lib/usage.ts', () => {
     })
   })
 
+  // Platform config values matching what would be in the database
+  const PLATFORM_CONFIG: Record<string, { key: string; value: string }[]> = {
+    free: [
+      { key: 'free_invoice_limit', value: '5' },
+      { key: 'free_receipt_scan_limit', value: '3' },
+      { key: 'free_email_send_limit', value: '2' },
+      { key: 'free_storage_mb', value: '50' },
+    ],
+    pro: [
+      { key: 'pro_invoice_limit', value: '0' },
+      { key: 'pro_receipt_scan_limit', value: '0' },
+      { key: 'pro_email_send_limit', value: '0' },
+      { key: 'pro_storage_mb', value: '1024' },
+    ],
+    team: [
+      { key: 'team_invoice_limit', value: '0' },
+      { key: 'team_receipt_scan_limit', value: '0' },
+      { key: 'team_email_send_limit', value: '0' },
+      { key: 'team_storage_mb', value: '5120' },
+    ],
+  }
+
+  // Resolve effective plan (inactive pro/team → free)
+  function effectivePlan(plan: string, status: string) {
+    if (status === 'active' && (plan === 'pro' || plan === 'team')) return plan
+    return 'free'
+  }
+
   describe('checkUsageLimit', () => {
     function buildMockAdmin(plan: string, status: string, invoiceCount: number, receiptScanCount: number) {
+      const ePlan = effectivePlan(plan, status)
       return {
         from: vi.fn().mockImplementation((table: string) => {
           if (table === 'subscriptions') {
@@ -336,7 +365,7 @@ describe('lib/usage.ts', () => {
           if (table === 'platform_config') {
             return {
               select: vi.fn().mockReturnValue({
-                in: vi.fn().mockResolvedValue({ data: null }),
+                in: vi.fn().mockResolvedValue({ data: PLATFORM_CONFIG[ePlan] }),
               }),
             }
           }
@@ -411,6 +440,7 @@ describe('lib/usage.ts', () => {
 
   describe('checkStorageQuota', () => {
     function buildStorageMock(plan: string, status: string, attSizes: number[], expSizes: number[]) {
+      const ePlan = effectivePlan(plan, status)
       return {
         from: vi.fn().mockImplementation((table: string) => {
           if (table === 'subscriptions') {
@@ -425,7 +455,7 @@ describe('lib/usage.ts', () => {
           if (table === 'platform_config') {
             return {
               select: vi.fn().mockReturnValue({
-                in: vi.fn().mockResolvedValue({ data: null }),
+                in: vi.fn().mockResolvedValue({ data: PLATFORM_CONFIG[ePlan] }),
               }),
             }
           }
@@ -516,7 +546,7 @@ describe('lib/usage.ts', () => {
           if (table === 'platform_config') {
             return {
               select: vi.fn().mockReturnValue({
-                in: vi.fn().mockResolvedValue({ data: null }),
+                in: vi.fn().mockResolvedValue({ data: PLATFORM_CONFIG.free }),
               }),
             }
           }

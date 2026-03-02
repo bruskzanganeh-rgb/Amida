@@ -3,11 +3,11 @@
 import { useTranslations } from 'next-intl'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import Link from 'next/link'
-import { Crown } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 function UsageBar({ label, current, limit, unit }: { label: string; current: number; limit: number; unit?: string }) {
   const ratio = limit > 0 ? Math.min(current / limit, 1) : 0
-  const color = ratio >= 0.9 ? 'bg-red-500' : ratio >= 0.6 ? 'bg-amber-500' : 'bg-emerald-500'
+  const color = ratio >= 0.9 ? 'bg-red-500' : ratio >= 0.6 ? 'bg-amber-500' : 'bg-primary'
 
   return (
     <div className="flex-1 min-w-0">
@@ -20,7 +20,7 @@ function UsageBar({ label, current, limit, unit }: { label: string; current: num
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${ratio * 100}%` }}
+          style={{ width: `${Math.max(ratio * 100, 2)}%` }}
         />
       </div>
     </div>
@@ -39,11 +39,14 @@ export function UsageSummary() {
   return (
     <Link
       href="/settings?tab=subscription"
-      className="block rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10"
+      className="group block rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-accent"
     >
-      <div className="flex items-center gap-2 mb-2.5">
-        <Crown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-        <span className="text-xs font-medium text-amber-900 dark:text-amber-200">{t('usageSummaryTitle')}</span>
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-xs font-medium text-foreground">{t('usageSummaryTitle')}</span>
+        <span className="text-[11px] text-muted-foreground flex items-center gap-1 group-hover:text-foreground transition-colors">
+          {t('upgradeToPro')}
+          <ArrowRight className="h-3 w-3" />
+        </span>
       </div>
       <div className="flex gap-4">
         <UsageBar
@@ -55,11 +58,6 @@ export function UsageSummary() {
           label={t('receiptScans')}
           current={usage?.receipt_scan_count || 0}
           limit={limits.receiptScans === Infinity ? 0 : limits.receiptScans}
-        />
-        <UsageBar
-          label={t('emailSends')}
-          current={usage?.email_send_count || 0}
-          limit={limits.emailSends === Infinity ? 0 : limits.emailSends}
         />
         <UsageBar label={t('storage')} current={storageMb} limit={storageLimitMb} unit="MB" />
       </div>

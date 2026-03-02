@@ -6,7 +6,6 @@ import { logActivity } from '@/lib/activity'
 import { generateInvoicePdf } from '@/lib/pdf/generator'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { checkUsageLimit, incrementUsage } from '@/lib/usage'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -41,12 +40,6 @@ export async function POST(request: NextRequest) {
 
     if (fetchError || !invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
-    }
-
-    // Check email send limit (free: 2/month, pro/team: unlimited)
-    const emailLimit = await checkUsageLimit(user.id, 'email_send')
-    if (!emailLimit.allowed) {
-      return NextResponse.json({ error: 'Email send limit reached. Upgrade to Pro for unlimited.' }, { status: 403 })
     }
 
     // Get subscription for branding check
@@ -261,9 +254,6 @@ export async function POST(request: NextRequest) {
     } catch (storageErr) {
       console.error('PDF storage exception:', storageErr)
     }
-
-    // Increment email send usage
-    await incrementUsage(user.id, 'email_send')
 
     // Update invoice status - scope to user for safety
     if (invoice.status === 'draft') {

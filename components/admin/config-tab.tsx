@@ -15,13 +15,7 @@ type Props = {
   onSave: () => void
 }
 
-function FeatureListEditor({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
+function FeatureListEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations('admin')
   const [newKey, setNewKey] = useState('')
 
@@ -48,10 +42,7 @@ function FeatureListEditor({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
         {items.map((item, i) => (
-          <span
-            key={i}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-xs font-mono"
-          >
+          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-xs font-mono">
             {item}
             <button
               type="button"
@@ -105,7 +96,7 @@ function TierSection({
   const t = useTranslations('admin')
 
   const update = (key: string, value: string) => {
-    setConfigValues(prev => ({ ...prev, [key]: value }))
+    setConfigValues((prev) => ({ ...prev, [key]: value }))
   }
 
   return (
@@ -115,14 +106,14 @@ function TierSection({
         {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">{t('invoiceLimitLabel')}</Label>
             <Input
               type="number"
               min={0}
               value={configValues[`${prefix}_invoice_limit`] || '0'}
-              onChange={e => update(`${prefix}_invoice_limit`, e.target.value)}
+              onChange={(e) => update(`${prefix}_invoice_limit`, e.target.value)}
             />
             <p className="text-[10px] text-muted-foreground">{t('unlimitedHint')}</p>
           </div>
@@ -132,7 +123,17 @@ function TierSection({
               type="number"
               min={0}
               value={configValues[`${prefix}_receipt_scan_limit`] || '0'}
-              onChange={e => update(`${prefix}_receipt_scan_limit`, e.target.value)}
+              onChange={(e) => update(`${prefix}_receipt_scan_limit`, e.target.value)}
+            />
+            <p className="text-[10px] text-muted-foreground">{t('unlimitedHint')}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">{t('emailSendLimitLabel')}</Label>
+            <Input
+              type="number"
+              min={0}
+              value={configValues[`${prefix}_email_send_limit`] || '0'}
+              onChange={(e) => update(`${prefix}_email_send_limit`, e.target.value)}
             />
             <p className="text-[10px] text-muted-foreground">{t('unlimitedHint')}</p>
           </div>
@@ -142,7 +143,7 @@ function TierSection({
               type="number"
               min={0}
               value={configValues[`${prefix}_storage_mb`] || '0'}
-              onChange={e => update(`${prefix}_storage_mb`, e.target.value)}
+              onChange={(e) => update(`${prefix}_storage_mb`, e.target.value)}
             />
           </div>
         </div>
@@ -155,7 +156,7 @@ function TierSection({
                 type="number"
                 min={0}
                 value={configValues[`${prefix}_price_monthly`] || '0'}
-                onChange={e => update(`${prefix}_price_monthly`, e.target.value)}
+                onChange={(e) => update(`${prefix}_price_monthly`, e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -164,7 +165,7 @@ function TierSection({
                 type="number"
                 min={0}
                 value={configValues[`${prefix}_price_yearly`] || '0'}
-                onChange={e => update(`${prefix}_price_yearly`, e.target.value)}
+                onChange={(e) => update(`${prefix}_price_yearly`, e.target.value)}
               />
             </div>
             <p className="text-[10px] text-muted-foreground sm:col-span-2">{t('displayPriceHint')}</p>
@@ -229,7 +230,7 @@ export function ConfigTab({ configValues, setConfigValues, savingConfig, onSave 
             <Label>{t('brandingName')}</Label>
             <Input
               value={configValues['branding_name'] || 'Amida'}
-              onChange={e => setConfigValues(prev => ({ ...prev, branding_name: e.target.value }))}
+              onChange={(e) => setConfigValues((prev) => ({ ...prev, branding_name: e.target.value }))}
               placeholder="Amida"
             />
             <p className="text-xs text-muted-foreground">{t('brandingNameHint')}</p>
@@ -242,7 +243,7 @@ export function ConfigTab({ configValues, setConfigValues, savingConfig, onSave 
               <Input
                 type="password"
                 value={configValues['resend_api_key'] || ''}
-                onChange={e => setConfigValues(prev => ({ ...prev, resend_api_key: e.target.value }))}
+                onChange={(e) => setConfigValues((prev) => ({ ...prev, resend_api_key: e.target.value }))}
                 placeholder="re_..."
               />
             </div>
@@ -251,7 +252,7 @@ export function ConfigTab({ configValues, setConfigValues, savingConfig, onSave 
               <Input
                 type="email"
                 value={configValues['resend_from_email'] || ''}
-                onChange={e => setConfigValues(prev => ({ ...prev, resend_from_email: e.target.value }))}
+                onChange={(e) => setConfigValues((prev) => ({ ...prev, resend_from_email: e.target.value }))}
                 placeholder="faktura@example.com"
               />
             </div>

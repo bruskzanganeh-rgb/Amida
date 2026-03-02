@@ -1,37 +1,7 @@
 /**
  * Pure subscription/tier utility functions — no DB or React dependencies.
- * Used by both the API route and unit tests.
+ * All tier values come from platform_config (single source of truth).
  */
-
-export const TIER_DEFAULTS = {
-  free: {
-    invoiceLimit: 5,
-    receiptScanLimit: 3,
-    emailSendLimit: 2,
-    storageMb: 50,
-    priceMonthly: 0,
-    priceYearly: 0,
-    features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'],
-  },
-  pro: {
-    invoiceLimit: 0,
-    receiptScanLimit: 0,
-    emailSendLimit: 0,
-    storageMb: 1024,
-    priceMonthly: 5,
-    priceYearly: 50,
-    features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'],
-  },
-  team: {
-    invoiceLimit: 0,
-    receiptScanLimit: 0,
-    emailSendLimit: 0,
-    storageMb: 5120,
-    priceMonthly: 10,
-    priceYearly: 100,
-    features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'],
-  },
-} as const
 
 export type Plan = 'free' | 'pro' | 'team'
 
@@ -55,27 +25,23 @@ export function parseJsonArray(value: string | undefined, fallback: readonly str
   }
 }
 
-export function buildTier(
-  prefix: string,
-  config: Record<string, string>,
-  defaults: (typeof TIER_DEFAULTS)[Plan],
-): TierData {
+export function buildTier(prefix: string, config: Record<string, string>): TierData {
   return {
-    invoiceLimit: parseInt(config[`${prefix}_invoice_limit`] ?? String(defaults.invoiceLimit)),
-    receiptScanLimit: parseInt(config[`${prefix}_receipt_scan_limit`] ?? String(defaults.receiptScanLimit)),
-    emailSendLimit: parseInt(config[`${prefix}_email_send_limit`] ?? String(defaults.emailSendLimit)),
-    storageMb: parseInt(config[`${prefix}_storage_mb`] ?? String(defaults.storageMb)),
-    priceMonthly: parseInt(config[`${prefix}_price_monthly`] ?? String(defaults.priceMonthly)),
-    priceYearly: parseInt(config[`${prefix}_price_yearly`] ?? String(defaults.priceYearly)),
-    features: parseJsonArray(config[`${prefix}_features`], defaults.features),
+    invoiceLimit: parseInt(config[`${prefix}_invoice_limit`] || '0'),
+    receiptScanLimit: parseInt(config[`${prefix}_receipt_scan_limit`] || '0'),
+    emailSendLimit: parseInt(config[`${prefix}_email_send_limit`] || '0'),
+    storageMb: parseInt(config[`${prefix}_storage_mb`] || '0'),
+    priceMonthly: parseInt(config[`${prefix}_price_monthly`] || '0'),
+    priceYearly: parseInt(config[`${prefix}_price_yearly`] || '0'),
+    features: parseJsonArray(config[`${prefix}_features`], []),
   }
 }
 
 export function buildAllTiers(config: Record<string, string>) {
   return {
-    free: buildTier('free', config, TIER_DEFAULTS.free),
-    pro: buildTier('pro', config, TIER_DEFAULTS.pro),
-    team: buildTier('team', config, TIER_DEFAULTS.team),
+    free: buildTier('free', config),
+    pro: buildTier('pro', config),
+    team: buildTier('team', config),
   }
 }
 

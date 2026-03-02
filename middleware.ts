@@ -13,26 +13,37 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
         },
       },
-    }
+    },
   )
 
   // Refresh session
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
   // Public routes that don't require auth
-  const publicPaths = ['/login', '/signup', '/auth/callback', '/auth/confirm', '/forgot-password', '/reset-password', '/privacy', '/terms', '/blog', '/founding-members', '/sign', '/review']
-  const isPublicPath = publicPaths.some(p => pathname.startsWith(p))
+  const publicPaths = [
+    '/login',
+    '/signup',
+    '/auth/callback',
+    '/auth/confirm',
+    '/forgot-password',
+    '/reset-password',
+    '/privacy',
+    '/terms',
+    '/blog',
+    '/founding-members',
+    '/sign',
+    '/review',
+  ]
+  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
   const isLandingPage = pathname === '/'
   const isApiPath = pathname.startsWith('/api/')
 
@@ -60,18 +71,11 @@ export async function middleware(request: NextRequest) {
 
   // Onboarding redirect: if logged in but hasn't completed onboarding
   if (user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/setup-member') && !isApiPath) {
-    const { data: settings } = await supabase
-      .from('company_settings')
-      .select('onboarding_completed, locale')
-      .single()
+    const { data: settings } = await supabase.from('company_settings').select('onboarding_completed, locale').single()
 
     if (!settings || settings.onboarding_completed === false) {
       // Check if user is an invited member (has company_members with role='member')
-      const { data: membership } = await supabase
-        .from('company_members')
-        .select('role')
-        .eq('user_id', user.id)
-        .single()
+      const { data: membership } = await supabase.from('company_members').select('role').eq('user_id', user.id).single()
 
       const url = request.nextUrl.clone()
       url.pathname = membership?.role === 'member' ? '/setup-member' : '/onboarding'
@@ -93,6 +97,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all routes except static files and _next
-    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

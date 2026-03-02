@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { TIER_DEFAULTS, buildTier } from '@/lib/subscription-utils'
+import { buildTier } from '@/lib/subscription-utils'
 
 export async function GET() {
   try {
@@ -11,18 +11,16 @@ export async function GET() {
       .or('key.like.free_%,key.like.pro_%,key.like.team_%')
 
     const config: Record<string, string> = {}
-    data?.forEach(d => { config[d.key] = d.value })
+    data?.forEach((d) => {
+      config[d.key] = d.value
+    })
 
     return NextResponse.json({
-      free: buildTier('free', config, TIER_DEFAULTS.free),
-      pro: buildTier('pro', config, TIER_DEFAULTS.pro),
-      team: buildTier('team', config, TIER_DEFAULTS.team),
+      free: buildTier('free', config),
+      pro: buildTier('pro', config),
+      team: buildTier('team', config),
     })
   } catch {
-    return NextResponse.json({
-      free: buildTier('free', {}, TIER_DEFAULTS.free),
-      pro: buildTier('pro', {}, TIER_DEFAULTS.pro),
-      team: buildTier('team', {}, TIER_DEFAULTS.team),
-    })
+    return NextResponse.json({ error: 'Failed to load tier config' }, { status: 500 })
   }
 }

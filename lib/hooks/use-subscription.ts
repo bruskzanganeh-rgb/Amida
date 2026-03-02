@@ -43,42 +43,14 @@ export type TierConfig = {
   team: TierData
 }
 
-const DEFAULT_TIER_CONFIG: TierConfig = {
-  free: {
-    invoiceLimit: 5,
-    receiptScanLimit: 3,
-    emailSendLimit: 2,
-    storageMb: 50,
-    priceMonthly: 0,
-    priceYearly: 0,
-    features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'],
-  },
-  pro: {
-    invoiceLimit: 0,
-    receiptScanLimit: 0,
-    emailSendLimit: 0,
-    storageMb: 1024,
-    priceMonthly: 5,
-    priceYearly: 50,
-    features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'],
-  },
-  team: {
-    invoiceLimit: 0,
-    receiptScanLimit: 0,
-    emailSendLimit: 0,
-    storageMb: 5120,
-    priceMonthly: 10,
-    priceYearly: 100,
-    features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'],
-  },
-}
-
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [usage, setUsage] = useState<Usage | null>(null)
-  const [tierConfig, setTierConfig] = useState<TierConfig>(DEFAULT_TIER_CONFIG)
+  const [tierConfig, setTierConfig] = useState<TierConfig | null>(null)
   const [storageQuota, setStorageQuota] = useState<StorageQuota | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [subLoaded, setSubLoaded] = useState(false)
+  const [tierLoaded, setTierLoaded] = useState(false)
+  const loading = !subLoaded || !tierLoaded
   const supabase = createClient()
 
   const [refreshKey, setRefreshKey] = useState(0)
@@ -92,10 +64,13 @@ export function useSubscription() {
         const res = await fetch('/api/config/tiers')
         if (res.ok) {
           const data = await res.json()
-          if (!cancelled) setTierConfig(data)
+          if (!cancelled) {
+            setTierConfig(data)
+            setTierLoaded(true)
+          }
         }
       } catch {
-        // Use defaults on failure
+        if (!cancelled) setTierLoaded(true)
       }
     }
 
@@ -128,7 +103,7 @@ export function useSubscription() {
 
       if (!cancelled) {
         setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0, email_send_count: 0 })
-        setLoading(false)
+        setSubLoaded(true)
       }
     }
 
@@ -161,7 +136,18 @@ export function useSubscription() {
   const isTeam = subscription?.plan === 'team' && subscription?.status === 'active'
 
   const plan = isTeam ? 'team' : isPro ? 'pro' : 'free'
-  const tier = tierConfig[plan]
+
+  // Use zero tier (restrictive) until config loads from platform_config
+  const zeroTier: TierData = {
+    invoiceLimit: 0,
+    receiptScanLimit: 0,
+    emailSendLimit: 0,
+    storageMb: 0,
+    priceMonthly: 0,
+    priceYearly: 0,
+    features: [],
+  }
+  const tier = tierConfig ? tierConfig[plan] : zeroTier
 
   const limits = {
     invoices: tier.invoiceLimit === 0 ? Infinity : tier.invoiceLimit,

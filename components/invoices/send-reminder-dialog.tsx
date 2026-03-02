@@ -18,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Bell, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSubscription } from '@/lib/hooks/use-subscription'
-import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import Link from 'next/link'
 import { format, differenceInDays } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
@@ -46,7 +45,7 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
   const t = useTranslations('invoice')
   const tr = useTranslations('invoice.reminder')
   const tc = useTranslations('common')
-  const { isPro, canSendEmail, limits, usage, hasHadSubscription } = useSubscription()
+  const { isPro } = useSubscription()
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const [sending, setSending] = useState(false)
@@ -198,27 +197,11 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
         </div>
 
         <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col">
-          {!canSendEmail && (
-            <UpgradePrompt
-              type="email"
-              current={usage?.email_send_count || 0}
-              limit={limits.emailSends === Infinity ? 0 : limits.emailSends}
-              showTrial={!hasHadSubscription}
-            />
-          )}
-          {canSendEmail && !isPro && limits.emailSends !== Infinity && (
-            <p className="text-xs text-center text-muted-foreground">
-              {t('emailsRemaining', {
-                remaining: Math.max(0, limits.emailSends - (usage?.email_send_count || 0)),
-                limit: limits.emailSends,
-              })}
-            </p>
-          )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
               {tc('cancel')}
             </Button>
-            <Button onClick={handleSend} disabled={sending || !email || !canSendEmail}>
+            <Button onClick={handleSend} disabled={sending || !email}>
               {sending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

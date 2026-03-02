@@ -1019,6 +1019,7 @@
     "tierTeam": "Team",
     "invoiceLimitLabel": "Invoice limit / month",
     "receiptScanLimitLabel": "Receipt scan limit / month",
+    "emailSendLimitLabel": "Email sends / month",
     "storageMbLabel": "Storage (MB)",
     "displayPriceMonthly": "Display price / month (kr)",
     "displayPriceYearly": "Display price / year (kr)",

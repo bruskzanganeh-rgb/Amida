@@ -332,13 +332,13 @@ export function SubscriptionSettings() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{t('proMonthly')}</CardTitle>
               <CardDescription>
-                <span className="text-2xl font-bold text-foreground">${tierConfig.pro.priceMonthly}</span>
+                <span className="text-2xl font-bold text-foreground">${tierConfig?.pro.priceMonthly ?? 0}</span>
                 <span className="text-muted-foreground"> {t('perMonth')}</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 mb-4">
-                {tierConfig.pro.features.map((key) => (
+                {(tierConfig?.pro.features ?? []).map((key) => (
                   <li key={key} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                     {t(key)}
@@ -364,13 +364,13 @@ export function SubscriptionSettings() {
                 <Badge className="text-[10px]">{t('save15')}</Badge>
               </div>
               <CardDescription>
-                <span className="text-2xl font-bold text-foreground">${tierConfig.pro.priceYearly}</span>
+                <span className="text-2xl font-bold text-foreground">${tierConfig?.pro.priceYearly ?? 0}</span>
                 <span className="text-muted-foreground"> {t('perYear')}</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 mb-4">
-                {tierConfig.pro.features.map((key) => (
+                {(tierConfig?.pro.features ?? []).map((key) => (
                   <li key={key} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                     {t(key)}
@@ -402,13 +402,13 @@ export function SubscriptionSettings() {
                   {t('teamMonthly')}
                 </CardTitle>
                 <CardDescription>
-                  <span className="text-2xl font-bold text-foreground">${tierConfig.team.priceMonthly}</span>
+                  <span className="text-2xl font-bold text-foreground">${tierConfig?.team.priceMonthly ?? 0}</span>
                   <span className="text-muted-foreground"> {t('perMonth')}</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 mb-4">
-                  {tierConfig.team.features.map((key) => (
+                  {(tierConfig?.team.features ?? []).map((key) => (
                     <li key={key} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                       {t(key)}
@@ -441,13 +441,13 @@ export function SubscriptionSettings() {
                   <Badge className="text-[10px]">{t('save15')}</Badge>
                 </div>
                 <CardDescription>
-                  <span className="text-2xl font-bold text-foreground">${tierConfig.team.priceYearly}</span>
+                  <span className="text-2xl font-bold text-foreground">${tierConfig?.team.priceYearly ?? 0}</span>
                   <span className="text-muted-foreground"> {t('perYear')}</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 mb-4">
-                  {tierConfig.team.features.map((key) => (
+                  {(tierConfig?.team.features ?? []).map((key) => (
                     <li key={key} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                       {t(key)}

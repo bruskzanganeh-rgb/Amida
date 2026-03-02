@@ -1059,7 +1059,6 @@ describe('subscription-utils (supplemental)', () => {
   let resolvePlan: typeof import('@/lib/subscription-utils').resolvePlan
   let canCreateInvoice: typeof import('@/lib/subscription-utils').canCreateInvoice
   let canScanReceipt: typeof import('@/lib/subscription-utils').canScanReceipt
-  let TIER_DEFAULTS: typeof import('@/lib/subscription-utils').TIER_DEFAULTS
 
   beforeEach(async () => {
     const mod = await import('@/lib/subscription-utils')
@@ -1071,47 +1070,6 @@ describe('subscription-utils (supplemental)', () => {
     resolvePlan = mod.resolvePlan
     canCreateInvoice = mod.canCreateInvoice
     canScanReceipt = mod.canScanReceipt
-    TIER_DEFAULTS = mod.TIER_DEFAULTS
-  })
-
-  describe('TIER_DEFAULTS', () => {
-    it('free tier has correct price values', () => {
-      expect(TIER_DEFAULTS.free.priceYearly).toBe(0)
-    })
-
-    it('pro tier has correct price values', () => {
-      expect(TIER_DEFAULTS.pro.priceMonthly).toBe(5)
-      expect(TIER_DEFAULTS.pro.priceYearly).toBe(50)
-    })
-
-    it('team tier has correct price values', () => {
-      expect(TIER_DEFAULTS.team.priceMonthly).toBe(10)
-      expect(TIER_DEFAULTS.team.priceYearly).toBe(100)
-    })
-
-    it('free tier has exactly 3 features', () => {
-      expect(TIER_DEFAULTS.free.features).toHaveLength(3)
-    })
-
-    it('pro tier has exactly 3 features', () => {
-      expect(TIER_DEFAULTS.pro.features).toHaveLength(3)
-    })
-
-    it('team tier has exactly 3 features', () => {
-      expect(TIER_DEFAULTS.team.features).toHaveLength(3)
-    })
-
-    it('free tier features include unlimitedGigs', () => {
-      expect(TIER_DEFAULTS.free.features).toContain('unlimitedGigs')
-    })
-
-    it('pro tier features include unlimitedInvoices', () => {
-      expect(TIER_DEFAULTS.pro.features).toContain('unlimitedInvoices')
-    })
-
-    it('team tier features include everythingInPro', () => {
-      expect(TIER_DEFAULTS.team.features).toContain('everythingInPro')
-    })
   })
 
   describe('parseJsonArray', () => {
@@ -1173,7 +1131,7 @@ describe('subscription-utils (supplemental)', () => {
         pro_price_monthly: '15',
         pro_price_yearly: '150',
       }
-      const tier = buildTier('pro', config, TIER_DEFAULTS.pro)
+      const tier = buildTier('pro', config)
       expect(tier.invoiceLimit).toBe(100)
       expect(tier.receiptScanLimit).toBe(50)
       expect(tier.storageMb).toBe(2048)
@@ -1183,15 +1141,15 @@ describe('subscription-utils (supplemental)', () => {
 
     it('uses correct prefix for team tier', () => {
       const config = { team_storage_mb: '10240' }
-      const tier = buildTier('team', config, TIER_DEFAULTS.team)
+      const tier = buildTier('team', config)
       expect(tier.storageMb).toBe(10240)
-      // Other fields remain default
+      // Other fields default to 0 when not in config
       expect(tier.invoiceLimit).toBe(0)
     })
 
     it('handles NaN from parseInt gracefully', () => {
       const config = { free_invoice_limit: 'not-a-number' }
-      const tier = buildTier('free', config, TIER_DEFAULTS.free)
+      const tier = buildTier('free', config)
       expect(tier.invoiceLimit).toBeNaN()
     })
   })
@@ -1207,10 +1165,10 @@ describe('subscription-utils (supplemental)', () => {
       expect(tiers.free.invoiceLimit).toBe(10)
       expect(tiers.pro.storageMb).toBe(2048)
       expect(tiers.team.priceMonthly).toBe(20)
-      // Unchanged defaults
-      expect(tiers.free.storageMb).toBe(50)
+      // Fields not in config default to 0
+      expect(tiers.free.storageMb).toBe(0)
       expect(tiers.pro.invoiceLimit).toBe(0)
-      expect(tiers.team.storageMb).toBe(5120)
+      expect(tiers.team.storageMb).toBe(0)
     })
 
     it('returns object with exactly three keys', () => {
