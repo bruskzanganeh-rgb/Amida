@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Users, Copy, Check, Loader2, UserPlus, Crown, Trash2, Pencil } from 'lucide-react'
+import { Users, Copy, Check, Loader2, UserPlus, Crown, Trash2, Pencil, Clock, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTranslations } from 'next-intl'
@@ -29,6 +29,16 @@ export function TeamSettings() {
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [pendingInvites, setPendingInvites] = useState<
+    {
+      id: string
+      invited_email: string | null
+      created_at: string | null
+      expires_at: string | null
+      used_by: string | null
+    }[]
+  >([])
+  const [revokeInviteId, setRevokeInviteId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -45,6 +55,48 @@ export function TeamSettings() {
         })
     })
   }, [supabase])
+
+  useEffect(() => {
+    if (!companyId) return
+    supabase
+      .from('company_invitations')
+      .select('id, invited_email, created_at, expires_at, used_by')
+      .eq('company_id', companyId)
+      .is('used_by', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setPendingInvites(data)
+      })
+  }, [companyId, supabase])
+
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const minutes = Math.floor(diff / 60000)
+    if (minutes < 60) return `${minutes}m`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h`
+    const days = Math.floor(hours / 24)
+    return `${days}d`
+  }
+
+  function timeUntil(dateStr: string) {
+    const diff = new Date(dateStr).getTime() - Date.now()
+    if (diff <= 0) return '0d'
+    const hours = Math.floor(diff / 3600000)
+    if (hours < 24) return `${hours}h`
+    const days = Math.floor(hours / 24)
+    return `${days}d`
+  }
+
+  async function handleRevokeInvite(inviteId: string) {
+    const { error } = await supabase.from('company_invitations').delete().eq('id', inviteId)
+    if (error) {
+      toast.error(t('revokeError'))
+    } else {
+      setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId))
+      toast.success(t('inviteRevoked'))
+    }
+  }
 
   async function handleToggleShowOnlyMyData() {
     const newValue = !showOnlyMyData
@@ -249,6 +301,57 @@ export function TeamSettings() {
         </CardContent>
       </Card>
 
+      {/* Pending invitations */}
+      {isOwner && pendingInvites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              {t('pendingInvitations')}
+            </CardTitle>
+            <CardDescription>{t('pendingInvitationsDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pendingInvites.map((invite) => {
+              const expiresAt = invite.expires_at
+              const isExpired = expiresAt ? new Date(expiresAt).getTime() < Date.now() : false
+              return (
+                <div
+                  key={invite.id}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium block truncate">
+                        {invite.invited_email || t('openInvite')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {invite.created_at && t('invitedAgo', { time: timeAgo(invite.created_at) })}
+                        {expiresAt && !isExpired && <> · {t('expiresIn', { time: timeUntil(expiresAt as string) })}</>}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant={isExpired ? 'destructive' : 'secondary'}>
+                      {isExpired ? t('expired') : t('pending')}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRevokeInviteId(invite.id)}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Invite */}
       {isOwner && (
         <Card>
@@ -332,6 +435,21 @@ export function TeamSettings() {
         onConfirm={() => {
           if (removeMemberId) handleRemoveMember(removeMemberId)
           setRemoveMemberId(null)
+        }}
+      />
+      <ConfirmDialog
+        open={!!revokeInviteId}
+        onOpenChange={(open) => {
+          if (!open) setRevokeInviteId(null)
+        }}
+        title={t('revokeInviteTitle')}
+        description={t('revokeInviteDesc')}
+        confirmLabel={t('revokeInvite')}
+        cancelLabel={tc('cancel')}
+        variant="destructive"
+        onConfirm={() => {
+          if (revokeInviteId) handleRevokeInvite(revokeInviteId)
+          setRevokeInviteId(null)
         }}
       />
     </div>

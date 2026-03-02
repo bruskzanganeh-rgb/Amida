@@ -659,7 +659,19 @@
     "personalFilterDescription": "Filtrera alla vyer till att bara visa dina egna data",
     "showOnlyMyData": "Visa bara mina uppdrag",
     "showOnlyMyDataDesc": "När aktiverat visas bara dina egna uppdrag, fakturor och utgifter i alla vyer",
-    "namePlaceholder": "För- och efternamn"
+    "namePlaceholder": "För- och efternamn",
+    "pendingInvitations": "Väntande inbjudningar",
+    "pendingInvitationsDesc": "Inbjudningar som ännu inte accepterats",
+    "pending": "Väntande",
+    "expired": "Utgången",
+    "openInvite": "Öppen inbjudan (vem som helst med länken)",
+    "invitedAgo": "Skickad för {time} sedan",
+    "expiresIn": "Går ut om {time}",
+    "revokeInvite": "Återkalla",
+    "revokeInviteTitle": "Återkalla inbjudan",
+    "revokeInviteDesc": "Inbjudningslänken slutar fungera. Du kan skapa en ny senare.",
+    "revokeError": "Kunde inte återkalla inbjudan",
+    "inviteRevoked": "Inbjudan återkallad"
   },
   "currency": {
     "SEK": "Svensk krona",

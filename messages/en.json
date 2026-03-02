@@ -659,7 +659,19 @@
     "personalFilterDescription": "Filter all views to show only your own data",
     "showOnlyMyData": "Show only my gigs",
     "showOnlyMyDataDesc": "When enabled, only your own gigs, invoices and expenses are shown across all views",
-    "namePlaceholder": "First and last name"
+    "namePlaceholder": "First and last name",
+    "pendingInvitations": "Pending invitations",
+    "pendingInvitationsDesc": "Invitations that haven't been accepted yet",
+    "pending": "Pending",
+    "expired": "Expired",
+    "openInvite": "Open invite (anyone with link)",
+    "invitedAgo": "Invited {time} ago",
+    "expiresIn": "Expires in {time}",
+    "revokeInvite": "Revoke",
+    "revokeInviteTitle": "Revoke invitation",
+    "revokeInviteDesc": "The invitation link will stop working. You can create a new one later.",
+    "revokeError": "Could not revoke invitation",
+    "inviteRevoked": "Invitation revoked"
   },
   "currency": {
     "SEK": "Swedish krona",
