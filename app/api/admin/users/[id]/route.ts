@@ -77,6 +77,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
+  // Also update email in company_settings (displayed in admin UI)
+  if (email) {
+    await supabase.from('company_settings').update({ email }).eq('user_id', targetUserId)
+  }
+
   await logActivity({
     userId,
     eventType: 'user_updated',

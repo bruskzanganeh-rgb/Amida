@@ -27,7 +27,7 @@ export async function GET() {
       .select('user_id, company_name, org_number, email, address, phone, instruments_text'),
     supabase.from('company_members').select('user_id, company_id, role'),
     supabase.from('companies').select('id, postal_code, city, country_code'),
-    supabase.from('user_categories').select('user_id, category:instrument_categories(name)'),
+    supabase.from('user_categories').select('user_id, category_id, category:instrument_categories(name)'),
   ])
 
   const settingsMap = new Map((settings || []).map((s) => [s.user_id, s]))
@@ -41,14 +41,14 @@ export async function GET() {
     companiesDataMap.set(c.id, { postal_code: c.postal_code, city: c.city, country_code: c.country_code })
   }
 
-  // Build categories map (user_id -> category names[])
-  const categoriesMap = new Map<string, string[]>()
+  // Build categories map (user_id -> { id, name }[])
+  const categoriesMap = new Map<string, { id: string; name: string }[]>()
   for (const uc of userCategoriesData || []) {
     const category = uc.category as unknown as { name: string } | null
     if (!category) continue
     if (!categoriesMap.has(uc.user_id)) categoriesMap.set(uc.user_id, [])
     const list = categoriesMap.get(uc.user_id)!
-    if (!list.includes(category.name)) list.push(category.name)
+    if (!list.some((c) => c.id === uc.category_id)) list.push({ id: uc.category_id, name: category.name })
   }
 
   // Build membership maps

@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Pencil,
   Info,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -57,7 +58,7 @@ type User = {
   company_name: string | null
   city: string | null
   postal_code: string | null
-  categories: string[]
+  categories: { id: string; name: string }[]
   instruments_text: string | null
 }
 
@@ -67,6 +68,7 @@ type Props = {
   categories: InstrumentCategory[]
   setCategories: React.Dispatch<React.SetStateAction<InstrumentCategory[]>>
   users: User[]
+  onUpdateUserCategories: (userId: string, categories: { id: string; name: string }[]) => void
   onReload: () => void
 }
 
@@ -83,7 +85,15 @@ type AnalysisMatch = {
 
 type TargetingView = 'all' | 'analyze' | 'uncategorized'
 
-export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, users, onReload }: Props) {
+export function SponsorsHub({
+  sponsors,
+  setSponsors,
+  categories,
+  setCategories,
+  users,
+  onUpdateUserCategories,
+  onReload,
+}: Props) {
   const t = useTranslations('admin')
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
@@ -143,6 +153,10 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
   const [assignCategoryId, setAssignCategoryId] = useState('')
   const [savingAssign, setSavingAssign] = useState(false)
 
+  // Inline category edit
+  const [addingCategoryForUser, setAddingCategoryForUser] = useState<string | null>(null)
+  const [addCategoryId, setAddCategoryId] = useState('')
+
   // Global tier filter for dashboard + categories
   const [tierFilter, setTierFilter] = useState('')
 
@@ -152,7 +166,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
   const uncategorizedUsers = tierUsers.filter((u) => u.categories.length === 0)
 
   function getCategoryUserCount(categoryName: string) {
-    return tierUsers.filter((u) => u.categories.includes(categoryName)).length
+    return tierUsers.filter((u) => u.categories.some((c) => c.name === categoryName)).length
   }
 
   function getCategorySponsor(categoryId: string) {
@@ -162,7 +176,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
   // --- Filtered users for "All" view ---
   const filteredUsers = users.filter((u) => {
     if (cityFilter && !u.city?.toLowerCase().includes(cityFilter.toLowerCase())) return false
-    if (categoryFilter && categoryFilter !== 'all' && !u.categories.includes(categoryFilter)) return false
+    if (categoryFilter && categoryFilter !== 'all' && !u.categories.some((c) => c.name === categoryFilter)) return false
     if (planFilter && planFilter !== 'all' && u.plan !== planFilter) return false
     return true
   })
@@ -245,6 +259,44 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
       toast.error(error.message)
     } else {
       setCategories((prev) => prev.filter((c) => c.id !== id))
+    }
+  }
+
+  async function handleRemoveUserCategory(userId: string, categoryId: string) {
+    const user = users.find((u) => u.user_id === userId)
+    if (!user) return
+    const res = await fetch('/api/admin/assign-categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, category_id: categoryId }),
+    })
+    if (res.ok) {
+      onUpdateUserCategories(
+        userId,
+        user.categories.filter((c) => c.id !== categoryId),
+      )
+    } else {
+      toast.error('Could not remove category')
+    }
+  }
+
+  async function handleAddUserCategory(userId: string, categoryId: string) {
+    const user = users.find((u) => u.user_id === userId)
+    if (!user) return
+    const res = await fetch('/api/admin/assign-categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, category_ids: [categoryId] }),
+    })
+    if (res.ok) {
+      const cat = categories.find((c) => c.id === categoryId)
+      if (cat) {
+        onUpdateUserCategories(userId, [...user.categories, { id: cat.id, name: cat.name }])
+      }
+      setAddingCategoryForUser(null)
+      setAddCategoryId('')
+    } else {
+      toast.error('Could not add category')
     }
   }
 
@@ -718,17 +770,47 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                             <td className="p-2 hidden sm:table-cell text-muted-foreground">{u.company_name || '—'}</td>
                             <td className="p-2 hidden sm:table-cell text-muted-foreground">{u.city || '—'}</td>
                             <td className="p-2">
-                              {u.categories.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {u.categories.map((c) => (
-                                    <Badge key={c} variant="outline" className="text-[10px]">
-                                      {c}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
+                              <div className="flex flex-wrap gap-1 items-center">
+                                {u.categories.map((c) => (
+                                  <Badge key={c.id} variant="outline" className="text-[10px] gap-0.5 pr-0.5">
+                                    {c.name}
+                                    <button
+                                      onClick={() => handleRemoveUserCategory(u.user_id, c.id)}
+                                      className="ml-0.5 hover:text-destructive rounded-full"
+                                    >
+                                      <X className="h-2.5 w-2.5" />
+                                    </button>
+                                  </Badge>
+                                ))}
+                                {addingCategoryForUser === u.user_id ? (
+                                  <Select
+                                    value={addCategoryId}
+                                    onValueChange={(v) => {
+                                      handleAddUserCategory(u.user_id, v)
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-5 w-24 text-[10px]">
+                                      <SelectValue placeholder={t('category')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {categories
+                                        .filter((cat) => !u.categories.some((uc) => uc.id === cat.id))
+                                        .map((cat) => (
+                                          <SelectItem key={cat.id} value={cat.id} className="text-xs">
+                                            {cat.name}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <button
+                                    onClick={() => setAddingCategoryForUser(u.user_id)}
+                                    className="h-4 w-4 flex items-center justify-center rounded-full border border-dashed text-muted-foreground hover:text-foreground hover:border-foreground"
+                                  >
+                                    <Plus className="h-2.5 w-2.5" />
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="p-2 hidden sm:table-cell text-muted-foreground max-w-[200px] truncate">
                               {u.instruments_text || '—'}

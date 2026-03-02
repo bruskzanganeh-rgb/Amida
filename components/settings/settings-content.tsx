@@ -27,7 +27,6 @@ import {
   Key,
   Lock,
   Users,
-  Guitar,
 } from 'lucide-react'
 import { SubscriptionSettings } from '@/components/settings/subscription-settings'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
@@ -89,14 +88,10 @@ export default function SettingsPage() {
   const [emailProvider, setEmailProvider] = useState<string>('platform')
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
-  const [instrumentsText, setInstrumentsText] = useState('')
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set())
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
-  const [allCategories, setAllCategories] = useState<
-    { id: string; name: string; name_en: string | null; sort_order: number }[]
-  >([])
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { isPro, isTeam } = useSubscription()
@@ -214,27 +209,7 @@ export default function SettingsPage() {
           setLogoPreview(company.logo_url || null)
           setEmailProvider(company.email_provider || 'platform')
           setCompanyId(membership.company_id)
-          setInstrumentsText(personalSettings.instruments_text || '')
         }
-      }
-
-      // Load categories catalog
-      const { data: cats } = await supabase
-        .from('instrument_categories')
-        .select('id, name, sort_order')
-        .order('sort_order')
-      if (cats) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: enData } = await (supabase.from('instrument_categories') as any).select('id, name_en')
-        const enMap = new Map<string, string | null>()
-        if (enData) for (const r of enData as { id: string; name_en: string | null }[]) enMap.set(r.id, r.name_en)
-        setAllCategories(cats.map((c) => ({ ...c, name_en: enMap.get(c.id) || null })))
-      }
-
-      // Load existing user_categories
-      const { data: userCats } = await supabase.from('user_categories').select('category_id')
-      if (userCats && userCats.length > 0) {
-        setSelectedCategoryIds(new Set(userCats.map((uc) => uc.category_id)))
       }
 
       setLoading(false)
@@ -300,22 +275,8 @@ export default function SettingsPage() {
       .from('company_settings')
       .update({
         locale: settings.locale,
-        instruments_text: instrumentsText,
       })
       .eq('id', settings.id)
-
-    // Save user_categories: delete old + insert new
-    if (userId) {
-      await supabase.from('user_categories').delete().eq('user_id', userId)
-      if (selectedCategoryIds.size > 0) {
-        await supabase.from('user_categories').insert(
-          Array.from(selectedCategoryIds).map((category_id) => ({
-            user_id: userId,
-            category_id,
-          })),
-        )
-      }
-    }
 
     setSaving(false)
 
@@ -806,64 +767,6 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Guitar className="h-5 w-5" />
-                {t('yourCategories')}
-              </CardTitle>
-              <CardDescription>{t('selectYourCategories')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Category chips */}
-              <div className="flex flex-wrap gap-1.5">
-                {allCategories.map((cat) => {
-                  const selected = selectedCategoryIds.has(cat.id)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategoryIds((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(cat.id)) next.delete(cat.id)
-                          else next.add(cat.id)
-                          return next
-                        })
-                      }}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                        selected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                      }`}
-                    >
-                      {selected && <Check className="h-3 w-3" />}
-                      {locale === 'en' && cat.name_en ? cat.name_en : cat.name}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Free text for unlisted skills */}
-              <div className="space-y-2">
-                <Label>{t('otherSkills')}</Label>
-                <Textarea
-                  rows={2}
-                  value={instrumentsText}
-                  onChange={(e) => setInstrumentsText(e.target.value)}
-                  placeholder={
-                    locale === 'sv'
-                      ? 'T.ex. Barockviolin, Fotografi, Ljudteknik'
-                      : 'E.g. Baroque violin, Photography, Sound engineering'
-                  }
-                  className="resize-none"
-                />
-                <p className="text-xs text-muted-foreground">{t('otherSkillsHint')}</p>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Change password */}
           <Card>

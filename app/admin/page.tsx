@@ -57,7 +57,7 @@ type User = {
   city: string | null
   postal_code: string | null
   country_code: string | null
-  categories: string[]
+  categories: { id: string; name: string }[]
   instruments_text: string | null
   last_active?: string | null
   recent_activity_count?: number
@@ -360,6 +360,9 @@ export default function AdminPage() {
               categories={categories}
               setCategories={setCategories}
               users={users}
+              onUpdateUserCategories={(userId, cats) =>
+                setUsers((prev) => prev.map((u) => (u.user_id === userId ? { ...u, categories: cats } : u)))
+              }
               onReload={() => loadData()}
             />
           </TabsContent>

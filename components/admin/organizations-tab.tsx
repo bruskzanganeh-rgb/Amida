@@ -75,7 +75,7 @@ type User = {
   city: string | null
   postal_code: string | null
   country_code: string | null
-  categories: string[]
+  categories: { id: string; name: string }[]
   instruments_text: string | null
   last_active?: string | null
   recent_activity_count?: number
@@ -435,8 +435,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                       {u.categories && u.categories.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {u.categories.map((cat) => (
-                            <Badge key={cat} variant="outline" className="text-[10px]">
-                              {cat}
+                            <Badge key={cat.id} variant="outline" className="text-[10px]">
+                              {cat.name}
                             </Badge>
                           ))}
                         </div>
