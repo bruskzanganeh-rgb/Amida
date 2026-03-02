@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -261,12 +261,8 @@ export function ContractsTab() {
             </TableHeader>
             <TableBody>
               {filtered.map((contract) => (
-                <>
-                  <TableRow
-                    key={contract.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => toggleExpand(contract.id)}
-                  >
+                <Fragment key={contract.id}>
+                  <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleExpand(contract.id)}>
                     <TableCell>
                       <div>
                         <span className="font-medium text-sm">{contract.contract_number}</span>
@@ -324,7 +320,7 @@ export function ContractsTab() {
                     </TableCell>
                   </TableRow>
                   {expandedId === contract.id && expandedContract && (
-                    <TableRow key={`${contract.id}-detail`}>
+                    <TableRow>
                       <TableCell colSpan={6} className="bg-muted/30 p-4">
                         <ContractDetail
                           contract={expandedContract}
@@ -334,7 +330,7 @@ export function ContractsTab() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))}
             </TableBody>
           </Table>
