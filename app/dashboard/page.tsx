@@ -19,6 +19,7 @@ import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { ListSkeleton } from '@/components/skeletons/list-skeleton'
 import { PageTransition } from '@/components/ui/page-transition'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { SponsorBanner } from '@/components/sponsor-banner'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
 
@@ -424,6 +425,8 @@ export default function DashboardPage() {
               />
             )}
           </motion.div>
+
+          <SponsorBanner />
         </motion.div>
 
         {/* Quick Action Dialogs — outside grid container */}

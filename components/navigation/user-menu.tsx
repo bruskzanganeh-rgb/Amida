@@ -29,6 +29,7 @@ export function UserMenu() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [companyName, setCompanyName] = useState('')
+  const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [plan, setPlan] = useState<string>('free')
   const [isAdmin, setIsAdmin] = useState(false)
@@ -49,7 +50,7 @@ export function UserMenu() {
       setUserEmail(session.user.email || '')
 
       const [{ data: membership }, { data: admin }, { data: sub }] = await Promise.all([
-        supabase.from('company_members').select('company_id').limit(1).single(),
+        supabase.from('company_members').select('company_id, full_name').limit(1).single(),
         supabase.rpc('is_admin', { uid: session.user.id }),
         supabase.from('subscriptions').select('plan').limit(1).single(),
       ])
@@ -72,6 +73,7 @@ export function UserMenu() {
 
       if (!cancelled) {
         setCompanyName(companyName)
+        setUserName(membership?.full_name || '')
         setPlan(currentPlan)
         setIsAdmin(!!admin)
       }
@@ -149,7 +151,12 @@ export function UserMenu() {
           className="header-nav-link flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-medium"
           style={{ color: '#C7D2FE', background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          <span className="max-w-[100px] sm:max-w-[180px] truncate">{companyName || userEmail}</span>
+          <span className="flex flex-col items-end leading-tight">
+            <span className="max-w-[100px] sm:max-w-[180px] truncate">{companyName || userEmail}</span>
+            {companyName && userName && (
+              <span className="max-w-[100px] sm:max-w-[180px] truncate text-[10px] opacity-70">{userName}</span>
+            )}
+          </span>
           {plan !== 'free' && (
             <span
               className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none"

@@ -764,10 +764,20 @@ export default function GigsPage() {
                                   </Button>
                                 ) : (
                                   <div className="flex items-center justify-end gap-1">
-                                    <Button variant="ghost" size="sm" onClick={() => updateStatus(gig.id, 'accepted')}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => updateStatus(gig.id, 'accepted')}
+                                      title={t('acceptGig')}
+                                    >
                                       <Check className="h-4 w-4 text-green-600" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" onClick={() => setConfirmDeclineGig(gig.id)}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setConfirmDeclineGig(gig.id)}
+                                      title={t('declineGig')}
+                                    >
                                       <X className="h-4 w-4 text-red-600" />
                                     </Button>
                                   </div>
@@ -1100,6 +1110,7 @@ export default function GigsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => updateStatus(gig.id, 'accepted')}
+                                                title={t('acceptGig')}
                                               >
                                                 <Check className="h-4 w-4 text-green-600" />
                                               </Button>
@@ -1107,6 +1118,7 @@ export default function GigsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setConfirmDeclineGig(gig.id)}
+                                                title={t('declineGig')}
                                               >
                                                 <X className="h-4 w-4 text-red-600" />
                                               </Button>

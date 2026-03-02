@@ -178,7 +178,9 @@
     "notesError": "Could not save notes",
     "statusUpdateError": "Could not update status",
     "viewReceipt": "View receipt",
-    "duplicateGig": "Duplicate"
+    "duplicateGig": "Duplicate",
+    "acceptGig": "Accept gig",
+    "declineGig": "Decline gig"
   },
   "invoice": {
     "invoice": "Invoice",
@@ -939,6 +941,8 @@
     "tagline": "Tagline",
     "website": "Website",
     "logoUrl": "Logo URL",
+    "uploadLogo": "Upload logo",
+    "logo": "Logo",
     "priority": "Priority (higher = shown first)",
     "inactive": "Inactive",
     "deactivate": "Deactivate",

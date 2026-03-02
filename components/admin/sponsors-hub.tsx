@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,8 @@ import {
   Pencil,
   Info,
   X,
+  Upload,
+  ImageIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -146,6 +148,7 @@ export function SponsorsHub({
     target_cities: [] as string[],
   })
   const [savingSponsor, setSavingSponsor] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   // AI analysis state
   const [analyzing, setAnalyzing] = useState(false)
@@ -1201,12 +1204,56 @@ export function SponsorsHub({
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('logoUrl')}</Label>
-              <Input
-                value={sponsorForm.logo_url}
-                onChange={(e) => setSponsorForm((f) => ({ ...f, logo_url: e.target.value }))}
-                placeholder="https://..."
-              />
+              <Label>{t('logo')}</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/50 shrink-0">
+                  {sponsorForm.logo_url ? (
+                    <img src={sponsorForm.logo_url} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground/50" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 500 * 1024) {
+                        toast.error('Max 500 KB')
+                        return
+                      }
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setSponsorForm((f) => ({ ...f, logo_url: reader.result as string }))
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()}>
+                    <Upload className="h-3.5 w-3.5 mr-1.5" />
+                    {t('uploadLogo')}
+                  </Button>
+                  {sponsorForm.logo_url && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-7"
+                      onClick={() => {
+                        setSponsorForm((f) => ({ ...f, logo_url: '' }))
+                        if (logoInputRef.current) logoInputRef.current.value = ''
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      {tc('delete')}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t('targetCountry')}</Label>

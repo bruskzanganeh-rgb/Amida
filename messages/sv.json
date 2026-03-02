@@ -178,7 +178,9 @@
     "notesError": "Kunde inte spara anteckningar",
     "statusUpdateError": "Kunde inte uppdatera status",
     "viewReceipt": "Visa kvitto",
-    "duplicateGig": "Duplicera"
+    "duplicateGig": "Duplicera",
+    "acceptGig": "Acceptera uppdraget",
+    "declineGig": "Avböj uppdraget"
   },
   "invoice": {
     "invoice": "Faktura",
@@ -939,6 +941,8 @@
     "tagline": "Tagline",
     "website": "Webbplats",
     "logoUrl": "Logo-URL",
+    "uploadLogo": "Ladda upp logo",
+    "logo": "Logo",
     "priority": "Prioritet (högre = visas först)",
     "inactive": "Inaktiv",
     "deactivate": "Inaktivera",

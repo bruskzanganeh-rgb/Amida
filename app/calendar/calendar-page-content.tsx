@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useRouter, usePathname } from 'next/navigation'
 import { CalendarDays, CalendarCheck } from 'lucide-react'
 import { PageTransition } from '@/components/ui/page-transition'
+import { SponsorBanner } from '@/components/sponsor-banner'
 
 import dynamic from 'next/dynamic'
 
@@ -72,6 +73,7 @@ export function CalendarPageContent() {
             </ErrorBoundary>
           </TabsContent>
         </Tabs>
+        <SponsorBanner />
       </div>
     </PageTransition>
   )
