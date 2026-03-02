@@ -1005,6 +1005,8 @@
     "assignCategory": "Assign category",
     "freelancers": "freelancers",
     "freeText": "Free text",
+    "city": "City",
+    "category": "Category",
     "companies": "Companies",
     "noCompanies": "No companies registered",
     "registeredAt": "Registered",
