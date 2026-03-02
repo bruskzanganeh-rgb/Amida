@@ -92,9 +92,15 @@ export function SponsorBanner() {
 
   if (subLoading || isPro || !sponsor) return null
 
+  const url = sponsor.website_url
+    ? sponsor.website_url.match(/^https?:\/\//)
+      ? sponsor.website_url
+      : `https://${sponsor.website_url}`
+    : '#'
+
   return (
     <a
-      href={sponsor.website_url || '#'}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-center justify-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-4 py-2.5 transition-colors hover:bg-muted/50"

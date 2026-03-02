@@ -170,7 +170,13 @@ export function UserMenu() {
           )}
           {plan === 'free' && sponsor && (
             <a
-              href={sponsor.website_url || '#'}
+              href={
+                sponsor.website_url
+                  ? sponsor.website_url.match(/^https?:\/\//)
+                    ? sponsor.website_url
+                    : `https://${sponsor.website_url}`
+                  : '#'
+              }
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
