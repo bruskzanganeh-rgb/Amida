@@ -543,6 +543,20 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                                   size="sm"
                                   variant="ghost"
                                   className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleImpersonate(m.user_id)}
+                                  disabled={impersonatingId === m.user_id}
+                                  title={t('impersonate')}
+                                >
+                                  {impersonatingId === m.user_id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <LogIn className="h-3 w-3" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
                                   onClick={() => {
                                     setEditUserId(m.user_id)
                                     setEditForm({ email: m.email || '', password: '' })
