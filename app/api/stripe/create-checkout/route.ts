@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
   }
 
-  const { priceId, plan } = parsed.data
+  const { priceId, plan, trial } = parsed.data
 
   // Get or create Stripe customer
   const { data: subscription } = await supabase
@@ -59,12 +59,16 @@ export async function POST(request: Request) {
     companyId = membership.company_id
   }
 
+  // Check if user is eligible for trial (never had a Stripe subscription)
+  const canTrial = trial && !subscription?.stripe_customer_id
+
   // Create Checkout Session
   const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
+    ...(canTrial ? { subscription_data: { trial_period_days: 14 } } : {}),
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?upgrade=success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?upgrade=canceled`,
     metadata: {

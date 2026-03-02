@@ -16,6 +16,7 @@ import { Loader2, Plus, Trash2, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { InvoicePreview } from './invoice-preview'
 import { useSubscription } from '@/lib/hooks/use-subscription'
+import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
 
@@ -118,7 +119,7 @@ export function CreateInvoiceDialog({
   const tg = useTranslations('gig')
   const te = useTranslations('expense')
   const tToast = useTranslations('toast')
-  const { canCreateInvoice, limits } = useSubscription()
+  const { canCreateInvoice, limits, usage, hasHadSubscription } = useSubscription()
   const formatLocale = useFormatLocale()
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
@@ -414,10 +415,7 @@ export function CreateInvoiceDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!canCreateInvoice) {
-      toast.error(t('invoiceLimitReached', { limit: limits.invoices }))
-      return
-    }
+    if (!canCreateInvoice) return
     setLoading(true)
 
     // Save reference_person_override if different from client default
@@ -849,11 +847,21 @@ export function CreateInvoiceDialog({
             </div>
 
             {/* Footer */}
+            {!canCreateInvoice && (
+              <div className="px-6 pb-2">
+                <UpgradePrompt
+                  type="invoice"
+                  current={usage?.invoice_count || 0}
+                  limit={limits.invoices === Infinity ? 0 : limits.invoices}
+                  showTrial={!hasHadSubscription}
+                />
+              </div>
+            )}
             <DialogFooter className="px-6 py-4 border-t">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
                 {tc('cancel')}
               </Button>
-              <Button type="submit" disabled={loading || !formData.client_id}>
+              <Button type="submit" disabled={loading || !formData.client_id || !canCreateInvoice}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('createInvoice')}
               </Button>

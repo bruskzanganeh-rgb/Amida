@@ -18,6 +18,7 @@ type Subscription = {
 type Usage = {
   invoice_count: number
   receipt_scan_count: number
+  email_send_count: number
 }
 
 type StorageQuota = {
@@ -29,6 +30,7 @@ type StorageQuota = {
 type TierData = {
   invoiceLimit: number
   receiptScanLimit: number
+  emailSendLimit: number
   storageMb: number
   priceMonthly: number
   priceYearly: number
@@ -45,7 +47,8 @@ const DEFAULT_TIER_CONFIG: TierConfig = {
   free: {
     invoiceLimit: 5,
     receiptScanLimit: 3,
-    storageMb: 10,
+    emailSendLimit: 2,
+    storageMb: 50,
     priceMonthly: 0,
     priceYearly: 0,
     features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'],
@@ -53,6 +56,7 @@ const DEFAULT_TIER_CONFIG: TierConfig = {
   pro: {
     invoiceLimit: 0,
     receiptScanLimit: 0,
+    emailSendLimit: 0,
     storageMb: 1024,
     priceMonthly: 5,
     priceYearly: 50,
@@ -61,6 +65,7 @@ const DEFAULT_TIER_CONFIG: TierConfig = {
   team: {
     invoiceLimit: 0,
     receiptScanLimit: 0,
+    emailSendLimit: 0,
     storageMb: 5120,
     priceMonthly: 10,
     priceYearly: 100,
@@ -115,14 +120,14 @@ export function useSubscription() {
       const now = new Date()
       const { data: usageData } = await supabase
         .from('usage_tracking')
-        .select('invoice_count, receipt_scan_count')
+        .select('invoice_count, receipt_scan_count, email_send_count')
         .eq('year', now.getFullYear())
         .eq('month', now.getMonth() + 1)
         .limit(1)
         .single()
 
       if (!cancelled) {
-        setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0 })
+        setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0, email_send_count: 0 })
         setLoading(false)
       }
     }
@@ -161,10 +166,15 @@ export function useSubscription() {
   const limits = {
     invoices: tier.invoiceLimit === 0 ? Infinity : tier.invoiceLimit,
     receiptScans: tier.receiptScanLimit === 0 ? Infinity : tier.receiptScanLimit,
+    emailSends: tier.emailSendLimit === 0 ? Infinity : tier.emailSendLimit,
   }
 
   const canCreateInvoice = limits.invoices === Infinity || (usage?.invoice_count || 0) < limits.invoices
   const canScanReceipt = limits.receiptScans === Infinity || (usage?.receipt_scan_count || 0) < limits.receiptScans
+  const canSendEmail = limits.emailSends === Infinity || (usage?.email_send_count || 0) < limits.emailSends
+
+  // Check if user has ever had a paid subscription (for trial eligibility)
+  const hasHadSubscription = !!(subscription?.stripe_subscription_id || subscription?.status === 'canceled')
 
   return {
     subscription,
@@ -172,9 +182,12 @@ export function useSubscription() {
     loading,
     isPro,
     isTeam,
+    plan,
     limits,
     canCreateInvoice,
     canScanReceipt,
+    canSendEmail,
+    hasHadSubscription,
     storageQuota,
     tierConfig,
     refresh,

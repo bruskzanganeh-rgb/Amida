@@ -20,6 +20,7 @@ import { ListSkeleton } from '@/components/skeletons/list-skeleton'
 import { PageTransition } from '@/components/ui/page-transition'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { SponsorBanner } from '@/components/sponsor-banner'
+import { UsageSummary } from '@/components/dashboard/usage-summary'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
 
@@ -331,6 +332,11 @@ export default function DashboardPage() {
               )}
             </motion.div>
           </div>
+
+          {/* ── Usage Summary (free users only) ── */}
+          <motion.div variants={itemVariants}>
+            <UsageSummary />
+          </motion.div>
 
           {/* ── Main Grid: Gigs | Invoices | Week View ── */}
           <motion.div

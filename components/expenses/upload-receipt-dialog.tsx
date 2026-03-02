@@ -31,6 +31,7 @@ import {
 import NextImage from 'next/image'
 import { toast } from 'sonner'
 import { useSubscription } from '@/lib/hooks/use-subscription'
+import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { GigCombobox } from '@/components/expenses/gig-combobox'
 import { GigListBox } from '@/components/expenses/gig-listbox'
 import { isValidReceiptFile, ALLOWED_RECEIPT_EXTENSIONS } from '@/lib/upload/file-validation'
@@ -91,7 +92,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
-  const { canScanReceipt, limits } = useSubscription()
+  const { canScanReceipt, limits, usage, hasHadSubscription } = useSubscription()
   const [step, setStep] = useState<'upload' | 'review' | 'saving'>('upload')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -216,11 +217,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
 
   const handleScan = async () => {
     if (!file) return
-    if (!canScanReceipt) {
-      toast.error(t('scanLimitReached', { limit: limits.receiptScans }))
-      handleSkipAI()
-      return
-    }
+    if (!canScanReceipt) return
 
     setScanning(true)
     setError(null)
@@ -621,6 +618,18 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
           </div>
         )}
 
+        {step === 'upload' && !canScanReceipt && file && (
+          <div className="px-6 pb-2">
+            <UpgradePrompt
+              type="scan"
+              current={usage?.receipt_scan_count || 0}
+              limit={limits.receiptScans === Infinity ? 0 : limits.receiptScans}
+              showTrial={!hasHadSubscription}
+              onManualFallback={handleSkipAI}
+            />
+          </div>
+        )}
+
         <DialogFooter>
           {step === 'upload' && (
             <div className="flex gap-2 w-full justify-between">
@@ -632,7 +641,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                   <PenLine className="mr-2 h-4 w-4" />
                   {t('manualEntry')}
                 </Button>
-                <Button onClick={handleScan} disabled={!file || scanning}>
+                <Button onClick={handleScan} disabled={!file || scanning || !canScanReceipt}>
                   {scanning ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

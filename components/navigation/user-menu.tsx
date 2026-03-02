@@ -169,7 +169,7 @@ export function UserMenu() {
                   color: plan === 'team' ? '#c4b5fd' : '#a5b4fc',
                 }}
               >
-                {plan}
+                {plan === 'team' ? 'Business' : 'Pro'}
               </span>
             )}
           </span>

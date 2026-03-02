@@ -4,9 +4,33 @@
  */
 
 export const TIER_DEFAULTS = {
-  free: { invoiceLimit: 5, receiptScanLimit: 3, storageMb: 10, priceMonthly: 0, priceYearly: 0, features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'] },
-  pro: { invoiceLimit: 0, receiptScanLimit: 0, storageMb: 1024, priceMonthly: 5, priceYearly: 50, features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'] },
-  team: { invoiceLimit: 0, receiptScanLimit: 0, storageMb: 5120, priceMonthly: 10, priceYearly: 100, features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'] },
+  free: {
+    invoiceLimit: 5,
+    receiptScanLimit: 3,
+    emailSendLimit: 2,
+    storageMb: 50,
+    priceMonthly: 0,
+    priceYearly: 0,
+    features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'],
+  },
+  pro: {
+    invoiceLimit: 0,
+    receiptScanLimit: 0,
+    emailSendLimit: 0,
+    storageMb: 1024,
+    priceMonthly: 5,
+    priceYearly: 50,
+    features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'],
+  },
+  team: {
+    invoiceLimit: 0,
+    receiptScanLimit: 0,
+    emailSendLimit: 0,
+    storageMb: 5120,
+    priceMonthly: 10,
+    priceYearly: 100,
+    features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'],
+  },
 } as const
 
 export type Plan = 'free' | 'pro' | 'team'
@@ -14,6 +38,7 @@ export type Plan = 'free' | 'pro' | 'team'
 export type TierData = {
   invoiceLimit: number
   receiptScanLimit: number
+  emailSendLimit: number
   storageMb: number
   priceMonthly: number
   priceYearly: number
@@ -30,10 +55,15 @@ export function parseJsonArray(value: string | undefined, fallback: readonly str
   }
 }
 
-export function buildTier(prefix: string, config: Record<string, string>, defaults: (typeof TIER_DEFAULTS)[Plan]): TierData {
+export function buildTier(
+  prefix: string,
+  config: Record<string, string>,
+  defaults: (typeof TIER_DEFAULTS)[Plan],
+): TierData {
   return {
     invoiceLimit: parseInt(config[`${prefix}_invoice_limit`] ?? String(defaults.invoiceLimit)),
     receiptScanLimit: parseInt(config[`${prefix}_receipt_scan_limit`] ?? String(defaults.receiptScanLimit)),
+    emailSendLimit: parseInt(config[`${prefix}_email_send_limit`] ?? String(defaults.emailSendLimit)),
     storageMb: parseInt(config[`${prefix}_storage_mb`] ?? String(defaults.storageMb)),
     priceMonthly: parseInt(config[`${prefix}_price_monthly`] ?? String(defaults.priceMonthly)),
     priceYearly: parseInt(config[`${prefix}_price_yearly`] ?? String(defaults.priceYearly)),
@@ -71,4 +101,9 @@ export function canCreateInvoice(tier: TierData, invoiceCount: number): boolean 
 export function canScanReceipt(tier: TierData, scanCount: number): boolean {
   const limit = tier.receiptScanLimit === 0 ? Infinity : tier.receiptScanLimit
   return scanCount < limit
+}
+
+export function canSendEmail(tier: TierData, emailSendCount: number): boolean {
+  const limit = tier.emailSendLimit === 0 ? Infinity : tier.emailSendLimit
+  return emailSendCount < limit
 }

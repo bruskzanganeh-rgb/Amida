@@ -1532,6 +1532,7 @@ export type Database = {
           month: number
           invoice_count: number
           receipt_scan_count: number
+          email_send_count: number
           created_at: string | null
           updated_at: string | null
         }
@@ -1542,6 +1543,7 @@ export type Database = {
           month: number
           invoice_count?: number
           receipt_scan_count?: number
+          email_send_count?: number
           created_at?: string | null
           updated_at?: string | null
         }
@@ -1552,6 +1554,7 @@ export type Database = {
           month?: number
           invoice_count?: number
           receipt_scan_count?: number
+          email_send_count?: number
           created_at?: string | null
           updated_at?: string | null
         }

@@ -33,8 +33,8 @@ const featureLabels: Record<string, string> = {
   unlimitedScans: 'Unlimited receipt scanning',
   noBranding: 'No branding on invoices',
   everythingInPro: 'Everything in Pro',
-  inviteMembers: 'Invite team members',
-  sharedCalendar: 'Shared calendar and gigs',
+  inviteMembers: 'Invite company members',
+  sharedCalendar: 'Shared invoice numbering, receipts & clients',
 }
 
 export function PricingSection() {
@@ -43,13 +43,26 @@ export function PricingSection() {
 
   useEffect(() => {
     fetch('/api/config/tiers')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) setTiers({
-          free: { priceMonthly: data.free?.priceMonthly ?? 0, priceYearly: data.free?.priceYearly ?? 0, features: data.free?.features ?? DEFAULT_TIERS.free.features },
-          pro: { priceMonthly: data.pro?.priceMonthly ?? 5, priceYearly: data.pro?.priceYearly ?? 50, features: data.pro?.features ?? DEFAULT_TIERS.pro.features },
-          team: { priceMonthly: data.team?.priceMonthly ?? 10, priceYearly: data.team?.priceYearly ?? 100, features: data.team?.features ?? DEFAULT_TIERS.team.features },
-        })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data)
+          setTiers({
+            free: {
+              priceMonthly: data.free?.priceMonthly ?? 0,
+              priceYearly: data.free?.priceYearly ?? 0,
+              features: data.free?.features ?? DEFAULT_TIERS.free.features,
+            },
+            pro: {
+              priceMonthly: data.pro?.priceMonthly ?? 5,
+              priceYearly: data.pro?.priceYearly ?? 50,
+              features: data.pro?.features ?? DEFAULT_TIERS.pro.features,
+            },
+            team: {
+              priceMonthly: data.team?.priceMonthly ?? 10,
+              priceYearly: data.team?.priceYearly ?? 100,
+              features: data.team?.features ?? DEFAULT_TIERS.team.features,
+            },
+          })
       })
       .catch(() => {})
   }, [])
@@ -72,9 +85,7 @@ export function PricingSection() {
           <button
             onClick={() => setBilling('monthly')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              billing === 'monthly'
-                ? 'bg-white/10 text-white'
-                : 'text-[#C7D2FE]/50 hover:text-[#C7D2FE]'
+              billing === 'monthly' ? 'bg-white/10 text-white' : 'text-[#C7D2FE]/50 hover:text-[#C7D2FE]'
             }`}
           >
             Monthly
@@ -82,9 +93,7 @@ export function PricingSection() {
           <button
             onClick={() => setBilling('yearly')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${
-              billing === 'yearly'
-                ? 'bg-white/10 text-white'
-                : 'text-[#C7D2FE]/50 hover:text-[#C7D2FE]'
+              billing === 'yearly' ? 'bg-white/10 text-white' : 'text-[#C7D2FE]/50 hover:text-[#C7D2FE]'
             }`}
           >
             Yearly
@@ -118,7 +127,11 @@ export function PricingSection() {
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full bg-transparent border-[#1a3a5c] text-[#C7D2FE] hover:bg-white/5 hover:text-white" asChild>
+          <Button
+            variant="outline"
+            className="w-full bg-transparent border-[#1a3a5c] text-[#C7D2FE] hover:bg-white/5 hover:text-white"
+            asChild
+          >
             <Link href="/signup">Get started</Link>
           </Button>
         </motion.div>
@@ -149,9 +162,9 @@ export function PricingSection() {
           </Button>
         </motion.div>
 
-        {/* Team */}
+        {/* Business */}
         <motion.div variants={fadeIn} className="rounded-2xl border border-[#1a3a5c] bg-[#102544] p-6">
-          <p className="text-sm font-medium text-[#C7D2FE]/70 mb-1">Team</p>
+          <p className="text-sm font-medium text-[#C7D2FE]/70 mb-1">Business</p>
           <div className="flex items-baseline gap-1 mb-1">
             <span className="text-4xl font-bold text-white">{formatPrice(getPrice(tiers.team))}</span>
             <span className="text-sm text-[#C7D2FE]/50">/mo</span>
@@ -167,7 +180,11 @@ export function PricingSection() {
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full bg-transparent border-[#1a3a5c] text-[#C7D2FE] hover:bg-white/5 hover:text-white" asChild>
+          <Button
+            variant="outline"
+            className="w-full bg-transparent border-[#1a3a5c] text-[#C7D2FE] hover:bg-white/5 hover:text-white"
+            asChild
+          >
             <Link href="/signup">Get started</Link>
           </Button>
         </motion.div>

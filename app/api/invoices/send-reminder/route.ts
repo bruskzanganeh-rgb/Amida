@@ -6,6 +6,7 @@ import { logActivity } from '@/lib/activity'
 import { generateInvoicePdf } from '@/lib/pdf/generator'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkUsageLimit, incrementUsage } from '@/lib/usage'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -41,7 +42,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    // Check Pro plan
+    // Check email send limit (free: 2/month, pro/team: unlimited)
+    const emailLimit = await checkUsageLimit(user.id, 'email_send')
+    if (!emailLimit.allowed) {
+      return NextResponse.json({ error: 'Email send limit reached. Upgrade to Pro for unlimited.' }, { status: 403 })
+    }
+
+    // Get subscription for branding check
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('plan, status')
@@ -50,9 +57,6 @@ export async function POST(request: NextRequest) {
 
     const isPaidPlan =
       (subscription?.plan === 'pro' || subscription?.plan === 'team') && subscription?.status === 'active'
-    if (!isPaidPlan) {
-      return NextResponse.json({ error: 'Pro plan required to send emails' }, { status: 403 })
-    }
 
     // Fetch company info from companies table
     const { data: membership } = await supabase
@@ -226,6 +230,9 @@ export async function POST(request: NextRequest) {
     } catch (storageErr) {
       console.error('Reminder PDF storage exception:', storageErr)
     }
+
+    // Increment email send usage
+    await incrementUsage(user.id, 'email_send')
 
     // Compute next reminder number
     const { data: maxReminder } = await supabase

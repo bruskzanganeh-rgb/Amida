@@ -1,9 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const DEFAULT_TIER_LIMITS = {
-  free: { invoices: 5, receiptScans: 3, storageMb: 10 },
-  pro: { invoices: 0, receiptScans: 0, storageMb: 1024 },
-  team: { invoices: 0, receiptScans: 0, storageMb: 5120 },
+  free: { invoices: 5, receiptScans: 3, emailSends: 2, storageMb: 50 },
+  pro: { invoices: 0, receiptScans: 0, emailSends: 0, storageMb: 1024 },
+  team: { invoices: 0, receiptScans: 0, emailSends: 0, storageMb: 5120 },
 } as const
 
 type Plan = 'free' | 'pro' | 'team'
@@ -13,7 +13,12 @@ async function getTierLimits(supabaseAdmin: ReturnType<typeof createAdminClient>
   const { data } = await supabaseAdmin
     .from('platform_config')
     .select('key, value')
-    .in('key', [`${plan}_invoice_limit`, `${plan}_receipt_scan_limit`, `${plan}_storage_mb`])
+    .in('key', [
+      `${plan}_invoice_limit`,
+      `${plan}_receipt_scan_limit`,
+      `${plan}_email_send_limit`,
+      `${plan}_storage_mb`,
+    ])
 
   if (!data || data.length === 0) return defaults
 
@@ -22,11 +27,12 @@ async function getTierLimits(supabaseAdmin: ReturnType<typeof createAdminClient>
     receiptScans: parseInt(
       data.find((d) => d.key === `${plan}_receipt_scan_limit`)?.value ?? String(defaults.receiptScans),
     ),
+    emailSends: parseInt(data.find((d) => d.key === `${plan}_email_send_limit`)?.value ?? String(defaults.emailSends)),
     storageMb: parseInt(data.find((d) => d.key === `${plan}_storage_mb`)?.value ?? String(defaults.storageMb)),
   }
 }
 
-export async function incrementUsage(userId: string, type: 'invoice' | 'receipt_scan') {
+export async function incrementUsage(userId: string, type: 'invoice' | 'receipt_scan' | 'email_send') {
   const supabaseAdmin = createAdminClient()
   const now = new Date()
   const year = now.getFullYear()
@@ -34,15 +40,27 @@ export async function incrementUsage(userId: string, type: 'invoice' | 'receipt_
 
   const { data: existing } = await supabaseAdmin
     .from('usage_tracking')
-    .select('id, invoice_count, receipt_scan_count')
+    .select('id, invoice_count, receipt_scan_count, email_send_count')
     .eq('user_id', userId)
     .eq('year', year)
     .eq('month', month)
     .single()
 
+  const fieldMap = {
+    invoice: 'invoice_count',
+    receipt_scan: 'receipt_scan_count',
+    email_send: 'email_send_count',
+  } as const
+
+  const countMap = {
+    invoice: existing?.invoice_count,
+    receipt_scan: existing?.receipt_scan_count,
+    email_send: existing?.email_send_count,
+  } as const
+
   if (existing) {
-    const currentCount = type === 'invoice' ? existing.invoice_count : existing.receipt_scan_count
-    const field = type === 'invoice' ? 'invoice_count' : 'receipt_scan_count'
+    const field = fieldMap[type]
+    const currentCount = countMap[type]
     await supabaseAdmin
       .from('usage_tracking')
       .update({ [field]: (currentCount ?? 0) + 1 })
@@ -54,13 +72,14 @@ export async function incrementUsage(userId: string, type: 'invoice' | 'receipt_
       month,
       invoice_count: type === 'invoice' ? 1 : 0,
       receipt_scan_count: type === 'receipt_scan' ? 1 : 0,
+      email_send_count: type === 'email_send' ? 1 : 0,
     })
   }
 }
 
 export async function checkUsageLimit(
   userId: string,
-  type: 'invoice' | 'receipt_scan',
+  type: 'invoice' | 'receipt_scan' | 'email_send',
 ): Promise<{ allowed: boolean; current: number; limit: number }> {
   const supabaseAdmin = createAdminClient()
   const { data: subscription } = await supabaseAdmin
@@ -75,7 +94,12 @@ export async function checkUsageLimit(
       : 'free'
 
   const tierLimits = await getTierLimits(supabaseAdmin, plan)
-  const rawLimit = type === 'invoice' ? tierLimits.invoices : tierLimits.receiptScans
+  const rawLimitMap = {
+    invoice: tierLimits.invoices,
+    receipt_scan: tierLimits.receiptScans,
+    email_send: tierLimits.emailSends,
+  } as const
+  const rawLimit = rawLimitMap[type]
   const limit = rawLimit === 0 ? Infinity : rawLimit
 
   if (limit === Infinity) {
@@ -85,13 +109,18 @@ export async function checkUsageLimit(
   const now = new Date()
   const { data: usage } = await supabaseAdmin
     .from('usage_tracking')
-    .select('invoice_count, receipt_scan_count')
+    .select('invoice_count, receipt_scan_count, email_send_count')
     .eq('user_id', userId)
     .eq('year', now.getFullYear())
     .eq('month', now.getMonth() + 1)
     .single()
 
-  const current = type === 'invoice' ? usage?.invoice_count || 0 : usage?.receipt_scan_count || 0
+  const currentMap = {
+    invoice: usage?.invoice_count || 0,
+    receipt_scan: usage?.receipt_scan_count || 0,
+    email_send: usage?.email_send_count || 0,
+  } as const
+  const current = currentMap[type]
 
   return { allowed: current < limit, current, limit }
 }
