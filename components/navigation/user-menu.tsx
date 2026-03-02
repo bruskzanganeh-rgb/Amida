@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { Shield, LogOut, Moon, Sun, ChevronDown, Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useSponsor } from '@/lib/hooks/use-sponsor'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,13 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-
-interface SponsorData {
-  id: string
-  name: string
-  display_prefix: string | null
-  website_url: string | null
-}
 
 export function UserMenu() {
   const t = useTranslations('nav')
@@ -33,7 +27,7 @@ export function UserMenu() {
   const [userEmail, setUserEmail] = useState('')
   const [plan, setPlan] = useState<string>('free')
   const [isAdmin, setIsAdmin] = useState(false)
-  const [sponsor, setSponsor] = useState<SponsorData | null>(null)
+  const { sponsor, isFree } = useSponsor()
   const [impressionLogged, setImpressionLogged] = useState(false)
   const supabase = createClient()
 
@@ -56,17 +50,13 @@ export function UserMenu() {
       ])
 
       let companyName = ''
-      let userCity = ''
-      let userCountry = ''
       if (membership) {
         const { data: comp } = await supabase
           .from('companies')
-          .select('company_name, city, country_code')
+          .select('company_name')
           .eq('id', membership.company_id)
           .single()
         companyName = comp?.company_name || ''
-        userCity = comp?.city || ''
-        userCountry = comp?.country_code || ''
       }
 
       const currentPlan = sub?.plan || 'free'
@@ -76,44 +66,6 @@ export function UserMenu() {
         setUserName(membership?.full_name || '')
         setPlan(currentPlan)
         setIsAdmin(!!admin)
-      }
-
-      // Load sponsor for free-tier users
-      if (currentPlan === 'free' && !cancelled) {
-        const { data: userCats } = await supabase.from('user_categories').select('category_id')
-
-        const categoryIds = (userCats || []).map((uc) => uc.category_id).filter(Boolean)
-
-        if (categoryIds.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: sponsors } = await (supabase.from('sponsors') as any)
-            .select('id, name, display_prefix, website_url, target_city, target_country, target_cities')
-            .in('instrument_category_id', categoryIds)
-            .eq('active', true)
-            .order('priority', { ascending: false })
-
-          if (!cancelled && sponsors && sponsors.length > 0) {
-            const lowerCity = userCity.toLowerCase()
-            // Prefer city match > country match > global > first
-            const cityMatch = userCity
-              ? sponsors.find((s: { target_cities?: string[] | null }) =>
-                  s.target_cities?.some((c: string) => c.toLowerCase() === lowerCity),
-                )
-              : null
-            const countryMatch = userCountry
-              ? sponsors.find(
-                  (s: { target_country?: string | null; target_cities?: string[] | null }) =>
-                    s.target_country === userCountry && !s.target_cities?.length,
-                )
-              : null
-            const globalMatch = sponsors.find(
-              (s: { target_country?: string | null; target_cities?: string[] | null }) =>
-                !s.target_country && !s.target_cities?.length,
-            )
-            const best = cityMatch || countryMatch || globalMatch || null
-            setSponsor(best)
-          }
-        }
       }
     }
 
@@ -132,9 +84,7 @@ export function UserMenu() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sponsor_id: sponsor.id }),
-      }).catch(() => {
-        // Impression logging is best-effort; don't block UI
-      })
+      }).catch(() => {})
     }
   }, [sponsor, impressionLogged])
 
@@ -173,7 +123,7 @@ export function UserMenu() {
               </span>
             )}
           </span>
-          {plan === 'free' && sponsor && (
+          {isFree && sponsor && (
             <a
               href={
                 sponsor.website_url
@@ -192,7 +142,7 @@ export function UserMenu() {
                   body: JSON.stringify({ sponsor_id: sponsor.id, type: 'click' }),
                 }).catch(() => {})
               }}
-              className="rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
+              className="hidden md:inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
               style={{
                 background: 'rgba(217,173,66,0.15)',
                 color: '#d4a843',

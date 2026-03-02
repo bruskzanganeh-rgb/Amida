@@ -259,22 +259,11 @@ export default function GigsPage() {
   const [confirmBatchComplete, setConfirmBatchComplete] = useState(false)
   const [gigExpenses, setGigExpenses] = useState<GigExpense[]>([])
   const [showScrollHint, setShowScrollHint] = useState(true)
-  const [memberFilter, setMemberFilter] = useState<string>(gigFilter.shouldFilter ? gigFilter.currentUserId : 'all')
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [panelCanScrollUp, setPanelCanScrollUp] = useState(false)
   const [panelCanScrollDown, setPanelCanScrollDown] = useState(false)
   const panelScrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
-
-  // Sync memberFilter with global filter toggle
-  useEffect(() => {
-    if (gigFilter.shouldFilter && gigFilter.currentUserId) {
-      setMemberFilter(gigFilter.currentUserId)
-    } else if (!gigFilter.shouldFilter && memberFilter === gigFilter.currentUserId) {
-      setMemberFilter('all')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gigFilter.shouldFilter, gigFilter.currentUserId])
 
   const upcomingScrollRef = useRef<HTMLDivElement>(null)
   const historyScrollRef = useRef<HTMLDivElement>(null)
@@ -515,7 +504,7 @@ export default function GigsPage() {
 
   const matchesSearch = useCallback(
     (g: Gig) => {
-      if (memberFilter !== 'all' && g.user_id !== memberFilter) return false
+      if (gigFilter.shouldFilter && g.user_id !== gigFilter.currentUserId) return false
       if (!searchQuery.trim()) return true
       const q = searchQuery.toLowerCase()
       return (
@@ -525,7 +514,7 @@ export default function GigsPage() {
         (g.gig_type?.name || '').toLowerCase().includes(q)
       )
     },
-    [memberFilter, searchQuery],
+    [gigFilter.shouldFilter, gigFilter.currentUserId, searchQuery],
   )
 
   const sortedUpcoming = useMemo(
@@ -833,31 +822,7 @@ export default function GigsPage() {
                           <Calendar className="h-5 w-5" />
                           {t('upcoming')} ({sortedUpcoming.length})
                         </CardTitle>
-                        <div className="flex items-center gap-2">
-                          {isSharedMode && !gigFilter.shouldFilter && (
-                            <>
-                              <Button
-                                variant={memberFilter === 'all' ? 'default' : 'outline'}
-                                size="sm"
-                                className="h-8 text-xs"
-                                onClick={() => setMemberFilter('all')}
-                              >
-                                {tTeam('allMembers')}
-                              </Button>
-                              {members.map((m) => (
-                                <Button
-                                  key={m.user_id}
-                                  variant={memberFilter === m.user_id ? 'default' : 'outline'}
-                                  size="sm"
-                                  className="h-8 text-xs"
-                                  onClick={() => setMemberFilter(m.user_id)}
-                                >
-                                  {getMemberLabel(m.user_id)}
-                                </Button>
-                              ))}
-                            </>
-                          )}
-                        </div>
+                        <div className="flex items-center gap-2" />
                       </div>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

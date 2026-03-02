@@ -12,6 +12,8 @@ import { motion } from 'framer-motion'
 import { navigationItems } from './nav-items'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useActionCount } from '@/lib/hooks/use-action-count'
+import { useSponsor } from '@/lib/hooks/use-sponsor'
+import { ExternalLink } from 'lucide-react'
 
 const UserMenu = dynamic(() => import('./user-menu').then((m) => m.UserMenu), { ssr: false })
 const CommandPalette = dynamic(() => import('./command-palette').then((m) => m.CommandPalette), { ssr: false })
@@ -21,6 +23,7 @@ export function Header() {
   const t = useTranslations('nav')
   const { isSharedMode, showOnlyMine, toggleShowOnlyMine } = useGigFilter()
   const actionCount = useActionCount()
+  const { sponsor, isFree } = useSponsor()
   const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
@@ -119,6 +122,29 @@ export function Header() {
           <UserMenu />
         </div>
       </div>
+      {isFree && sponsor && (
+        <a
+          href={
+            sponsor.website_url
+              ? sponsor.website_url.match(/^https?:\/\//)
+                ? sponsor.website_url
+                : `https://${sponsor.website_url}`
+              : '#'
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="md:hidden flex items-center justify-center gap-1.5 py-1.5 transition-opacity hover:opacity-70"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          <span className="text-[10px]" style={{ color: 'rgba(148,163,184,0.6)' }}>
+            {sponsor.display_prefix || 'Sponsored by'}{' '}
+            <span className="font-semibold" style={{ color: '#d4a843' }}>
+              {sponsor.name}
+            </span>
+          </span>
+          <ExternalLink className="h-2.5 w-2.5" style={{ color: 'rgba(212,168,67,0.4)' }} />
+        </a>
+      )}
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   )
