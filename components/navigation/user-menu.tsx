@@ -110,7 +110,7 @@ export function UserMenu() {
               (s: { target_country?: string | null; target_cities?: string[] | null }) =>
                 !s.target_country && !s.target_cities?.length,
             )
-            const best = cityMatch || countryMatch || globalMatch || sponsors[0]
+            const best = cityMatch || countryMatch || globalMatch || null
             setSponsor(best)
           }
         }

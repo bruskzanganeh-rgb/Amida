@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -169,6 +169,25 @@ export function SponsorsHub({
 
   // Global tier filter for dashboard + categories
   const [tierFilter, setTierFilter] = useState('')
+
+  // Sponsor coverage stats
+  type CoverageData = {
+    totalFreeUsers: number
+    withSponsor: number
+    withoutSponsor: number
+    byCity: { city: string; country: string; freeUsers: number; withSponsor: number }[]
+  }
+  const [coverage, setCoverage] = useState<CoverageData | null>(null)
+  const [coverageExpanded, setCoverageExpanded] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/sponsor-stats')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setCoverage(data)
+      })
+      .catch(() => {})
+  }, [])
 
   // Sponsor stats expand
   const [expandedSponsorId, setExpandedSponsorId] = useState<string | null>(null)
@@ -634,6 +653,65 @@ export function SponsorsHub({
           icon={<Award className="h-4 w-4" />}
         />
       </div>
+
+      {/* Sponsor Coverage */}
+      {coverage && (
+        <Card>
+          <CardContent className="py-4">
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setCoverageExpanded(!coverageExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                {coverageExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <h3 className="text-sm font-semibold">{t('sponsorCoverage')}</h3>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>
+                  {coverage.withSponsor}/{coverage.totalFreeUsers} {t('freeUsers')}
+                </span>
+                {coverage.withoutSponsor > 0 && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-300">
+                    {coverage.withoutSponsor} {t('withoutSponsor')}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            {coverageExpanded && coverage.byCity.length > 0 && (
+              <Table className="mt-3">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">{t('city')}</TableHead>
+                    <TableHead className="text-xs">{t('country')}</TableHead>
+                    <TableHead className="text-xs text-right">{t('freeUsers')}</TableHead>
+                    <TableHead className="text-xs text-right">{t('withSponsor')}</TableHead>
+                    <TableHead className="text-xs text-right">{t('withoutSponsor')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {coverage.byCity.map((row) => {
+                    const without = row.freeUsers - row.withSponsor
+                    return (
+                      <TableRow
+                        key={`${row.city}|${row.country}`}
+                        className={without > 0 ? 'bg-amber-50 dark:bg-amber-950/20' : ''}
+                      >
+                        <TableCell className="text-xs">{row.city || t('noCitySet')}</TableCell>
+                        <TableCell className="text-xs">{row.country || '—'}</TableCell>
+                        <TableCell className="text-xs text-right">{row.freeUsers}</TableCell>
+                        <TableCell className="text-xs text-right">{row.withSponsor}</TableCell>
+                        <TableCell className="text-xs text-right font-medium">
+                          {without > 0 ? <span className="text-amber-600">{without}</span> : '0'}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Categories Section */}
       <Card>

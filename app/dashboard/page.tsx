@@ -431,9 +431,9 @@ export default function DashboardPage() {
               />
             )}
           </motion.div>
-
-          <SponsorBanner />
         </motion.div>
+
+        <SponsorBanner />
 
         {/* Quick Action Dialogs — outside grid container */}
         <GigDialog gig={null} open={showGigDialog} onOpenChange={setShowGigDialog} onSuccess={loadDashboardData} />

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useSubscription } from '@/lib/hooks/use-subscription'
 import { ExternalLink } from 'lucide-react'
 
 interface SponsorData {
@@ -14,16 +13,27 @@ interface SponsorData {
 }
 
 export function SponsorBanner() {
-  const { isPro, loading: subLoading } = useSubscription()
   const [sponsor, setSponsor] = useState<SponsorData | null>(null)
   const [impressionLogged, setImpressionLogged] = useState(false)
+  const [hidden, setHidden] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    if (subLoading || isPro) return
     let cancelled = false
 
     async function load() {
+      // Ensure auth session is loaded before RLS-gated queries
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session?.user || cancelled) return
+
+      // Check plan directly (no useSubscription dependency)
+      const { data: sub } = await supabase.from('subscriptions').select('plan').limit(1).single()
+      if (cancelled) return
+      if (sub?.plan === 'pro' || sub?.plan === 'team') return
+      setHidden(false)
+
       // Get user's company city + country
       const { data: membership } = await supabase.from('company_members').select('company_id').limit(1).single()
       let userCity = ''
@@ -68,7 +78,7 @@ export function SponsorBanner() {
         (s: { target_country?: string | null; target_cities?: string[] | null }) =>
           !s.target_country && !s.target_cities?.length,
       )
-      const best = cityMatch || countryMatch || globalMatch || sponsors[0]
+      const best = cityMatch || countryMatch || globalMatch || null
       if (!cancelled) setSponsor(best)
     }
 
@@ -76,7 +86,8 @@ export function SponsorBanner() {
     return () => {
       cancelled = true
     }
-  }, [subLoading, isPro, supabase])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Log impression once
   useEffect(() => {
@@ -90,7 +101,7 @@ export function SponsorBanner() {
     }
   }, [sponsor, impressionLogged])
 
-  if (subLoading || isPro || !sponsor) return null
+  if (hidden || !sponsor) return null
 
   const url = sponsor.website_url
     ? sponsor.website_url.match(/^https?:\/\//)
@@ -110,13 +121,16 @@ export function SponsorBanner() {
           body: JSON.stringify({ sponsor_id: sponsor.id, type: 'click' }),
         }).catch(() => {})
       }}
-      className="flex items-center justify-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-4 py-2.5 transition-colors hover:bg-muted/50"
+      className="flex items-center justify-center gap-2.5 px-4 py-3 transition-opacity hover:opacity-70"
     >
       {sponsor.logo_url && <img src={sponsor.logo_url} alt={sponsor.name} className="h-5 w-auto object-contain" />}
-      <span className="text-xs text-muted-foreground">
-        {sponsor.display_prefix || 'Sponsored by'} <span className="font-medium">{sponsor.name}</span>
+      <span className="text-xs text-muted-foreground/60">
+        {sponsor.display_prefix || 'Sponsored by'}{' '}
+        <span className="font-semibold" style={{ color: '#d4a843' }}>
+          {sponsor.name}
+        </span>
       </span>
-      <ExternalLink className="h-3 w-3 text-muted-foreground/50" />
+      <ExternalLink className="h-3 w-3 text-muted-foreground/40" />
     </a>
   )
 }

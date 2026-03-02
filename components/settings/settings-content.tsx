@@ -115,8 +115,8 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const countryConfig = getCountryConfig(settings?.country_code || 'SE')
 
-  // Default to subscription tab if coming from Stripe checkout
-  const defaultTab = searchParams.get('upgrade') ? 'subscription' : 'company'
+  // Default to subscription tab if coming from Stripe checkout or upgrade link
+  const defaultTab = searchParams.get('tab') || (searchParams.get('upgrade') ? 'subscription' : 'company')
   const [activeTab, setActiveTab] = useState(defaultTab)
 
   // Get user ID for calendar URL
