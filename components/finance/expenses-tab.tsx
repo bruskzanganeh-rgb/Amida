@@ -78,6 +78,7 @@ export default function ExpensesTab() {
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
+  const [mobileExpenseLimit, setMobileExpenseLimit] = useState(20)
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -375,8 +376,8 @@ export default function ExpensesTab() {
               ) : (
                 <>
                   {/* Mobile card view */}
-                  <div className="lg:hidden space-y-2 overflow-auto max-h-[calc(100vh-24rem)]">
-                    {filteredExpenses.map((expense) => (
+                  <div className="lg:hidden space-y-2">
+                    {filteredExpenses.slice(0, mobileExpenseLimit).map((expense) => (
                       <div
                         key={expense.id}
                         className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
@@ -444,6 +445,15 @@ export default function ExpensesTab() {
                         )}
                       </div>
                     ))}
+                    {filteredExpenses.length > mobileExpenseLimit && (
+                      <Button
+                        variant="ghost"
+                        className="w-full mt-2 text-sm text-muted-foreground"
+                        onClick={() => setMobileExpenseLimit((prev) => prev + 20)}
+                      >
+                        {t('showMore', { count: filteredExpenses.length - mobileExpenseLimit })}
+                      </Button>
+                    )}
                   </div>
 
                   {/* Desktop table view */}

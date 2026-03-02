@@ -117,7 +117,7 @@ export default function ClientDetailPage() {
   if (!client) {
     return (
       <div className="space-y-6">
-        <Link href="/clients">
+        <Link href="/config?tab=clients">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('backToClients')}
@@ -134,7 +134,7 @@ export default function ClientDetailPage() {
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <Link href="/clients">
+      <Link href="/config?tab=clients">
         <Button variant="ghost" size="sm">
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('backToClients')}

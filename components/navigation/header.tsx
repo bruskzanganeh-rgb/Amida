@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
@@ -9,10 +10,11 @@ import { User, Users, Search } from 'lucide-react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { navigationItems } from './nav-items'
-import { UserMenu } from './user-menu'
-import { CommandPalette } from './command-palette'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useActionCount } from '@/lib/hooks/use-action-count'
+
+const UserMenu = dynamic(() => import('./user-menu').then((m) => m.UserMenu), { ssr: false })
+const CommandPalette = dynamic(() => import('./command-palette').then((m) => m.CommandPalette), { ssr: false })
 
 export function Header() {
   const pathname = usePathname()

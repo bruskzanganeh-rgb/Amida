@@ -454,7 +454,7 @@
     "selectMonth": "Select month",
     "selectYear": "Select year",
     "selectYearAndMonth": "Select year and month",
-    "showMore": "Show more",
+    "showMore": "Show more ({count} remaining)",
     "showReceiptImage": "Show receipt image",
     "showVatDetails": "Show VAT details",
     "skip": "Skip",

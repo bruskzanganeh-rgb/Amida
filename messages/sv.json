@@ -454,7 +454,7 @@
     "selectMonth": "Välj månad",
     "selectYear": "Välj år",
     "selectYearAndMonth": "Välj år och månad",
-    "showMore": "Visa mer",
+    "showMore": "Visa fler ({count} till)",
     "showReceiptImage": "Visa kvittobild",
     "showVatDetails": "Visa momsdetaljer",
     "skip": "Hoppa över",
