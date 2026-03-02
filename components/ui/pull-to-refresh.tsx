@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
 interface PullToRefreshProps {
@@ -15,55 +15,79 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [refreshing, setRefreshing] = useState(false)
   const startY = useRef(0)
   const pulling = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const refreshingRef = useRef(false)
+  const pullDistanceRef = useRef(0)
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (refreshing) return
-      if (window.scrollY === 0) {
+  // Keep refs in sync with state for use in native event handlers
+  refreshingRef.current = refreshing
+  pullDistanceRef.current = pullDistance
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    setPullDistance(THRESHOLD * 0.6)
+    try {
+      await onRefresh()
+    } finally {
+      setRefreshing(false)
+      setPullDistance(0)
+    }
+  }, [onRefresh])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    function onTouchStart(e: TouchEvent) {
+      if (refreshingRef.current) return
+      if (window.scrollY <= 0) {
         startY.current = e.touches[0].clientY
         pulling.current = true
       }
-    },
-    [refreshing],
-  )
+    }
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!pulling.current || refreshing) return
+    function onTouchMove(e: TouchEvent) {
+      if (!pulling.current || refreshingRef.current) return
       const delta = e.touches[0].clientY - startY.current
-      if (delta > 0) {
-        // Dampen the pull distance for a natural feel
-        setPullDistance(Math.min(delta * 0.4, 100))
+      if (delta > 0 && window.scrollY <= 0) {
+        // Prevent iOS native bounce/refresh
+        e.preventDefault()
+        const distance = Math.min(delta * 0.4, 100)
+        pullDistanceRef.current = distance
+        setPullDistance(distance)
       } else {
         pulling.current = false
         setPullDistance(0)
       }
-    },
-    [refreshing],
-  )
+    }
 
-  const onTouchEnd = useCallback(async () => {
-    if (!pulling.current) return
-    pulling.current = false
+    function onTouchEnd() {
+      if (!pulling.current) return
+      pulling.current = false
 
-    if (pullDistance >= THRESHOLD) {
-      setRefreshing(true)
-      setPullDistance(THRESHOLD * 0.6)
-      try {
-        await onRefresh()
-      } finally {
-        setRefreshing(false)
+      if (pullDistanceRef.current >= THRESHOLD) {
+        handleRefresh()
+      } else {
         setPullDistance(0)
       }
-    } else {
-      setPullDistance(0)
     }
-  }, [pullDistance, onRefresh])
+
+    // passive: false is critical for iOS Safari to allow preventDefault()
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd, { passive: true })
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [handleRefresh])
 
   const progress = Math.min(pullDistance / THRESHOLD, 1)
 
   return (
-    <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    <div ref={containerRef}>
       {/* Spinner indicator */}
       <div
         className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
