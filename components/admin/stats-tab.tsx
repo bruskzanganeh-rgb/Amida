@@ -1,7 +1,18 @@
 'use client'
 
 import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTranslations } from 'next-intl'
+import { formatDistanceToNow } from 'date-fns'
+import { sv, enUS } from 'date-fns/locale'
+import { useLocale } from 'next-intl'
+
+type SponsorImpressionRow = {
+  id: string
+  name: string
+  count: number
+  latest: string
+}
 
 type Stats = {
   totalUsers: number
@@ -13,10 +24,12 @@ type Stats = {
   yearlySubscribers: number
   adminSetPro: number
   totalImpressions: number
+  sponsorImpressionBreakdown?: SponsorImpressionRow[]
 }
 
 export function StatsTab({ stats }: { stats: Stats | null }) {
   const t = useTranslations('admin')
+  const locale = useLocale()
 
   return (
     <div className="space-y-4">
@@ -80,14 +93,41 @@ export function StatsTab({ stats }: { stats: Stats | null }) {
       </div>
 
       {/* Row 3: Sponsor impressions */}
-      <div className="grid grid-cols-1 gap-4">
-        <Card>
-          <CardContent className="pt-4">
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-baseline gap-3 mb-3">
             <p className="text-xs text-muted-foreground">{t('sponsorImpressions')}</p>
             <p className="text-2xl font-bold">{stats?.totalImpressions ?? 0}</p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          {stats?.sponsorImpressionBreakdown && stats.sponsorImpressionBreakdown.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('name')}</TableHead>
+                  <TableHead className="text-right">{t('impressions')}</TableHead>
+                  <TableHead className="text-right">{t('latest')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.sponsorImpressionBreakdown.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="text-right">{s.count}</TableCell>
+                    <TableCell className="text-right text-muted-foreground text-xs">
+                      {formatDistanceToNow(new Date(s.latest), {
+                        addSuffix: true,
+                        locale: locale === 'sv' ? sv : enUS,
+                      })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('noData')}</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

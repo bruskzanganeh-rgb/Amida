@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { CalendarDays, CalendarCheck } from 'lucide-react'
 import { PageTransition } from '@/components/ui/page-transition'
 import { SponsorBanner } from '@/components/sponsor-banner'
+import { useTranslations } from 'next-intl'
 
 import dynamic from 'next/dynamic'
 
@@ -30,6 +31,7 @@ function TabSkeleton() {
 }
 
 export function CalendarPageContent() {
+  const t = useTranslations('calendar')
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -49,11 +51,11 @@ export function CalendarPageContent() {
           <TabsList>
             <TabsTrigger value="calendar" className="gap-2">
               <CalendarDays className="h-4 w-4" />
-              Kalender
+              {t('calendar')}
             </TabsTrigger>
             <TabsTrigger value="availability" className="gap-2">
               <CalendarCheck className="h-4 w-4" />
-              Tillgänglighet
+              {t('availability')}
             </TabsTrigger>
           </TabsList>
 

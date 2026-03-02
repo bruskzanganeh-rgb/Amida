@@ -136,6 +136,7 @@ export function SponsorsHub({
 
   // Sponsor dialog
   const [sponsorDialogOpen, setSponsorDialogOpen] = useState(false)
+  const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null)
   const [sponsorForm, setSponsorForm] = useState({
     name: '',
     logo_url: '',
@@ -340,13 +341,47 @@ export function SponsorsHub({
   }
 
   // --- Sponsor CRUD ---
-  async function handleCreateSponsor() {
+  const defaultSponsorForm = {
+    name: '',
+    logo_url: '',
+    tagline: '',
+    website_url: '',
+    instrument_category_id: '',
+    priority: 0,
+    display_prefix: 'Sponsored by',
+    target_country: '',
+    target_cities: [] as string[],
+  }
+
+  function openEditSponsor(s: Sponsor) {
+    setSponsorForm({
+      name: s.name,
+      logo_url: s.logo_url || '',
+      tagline: s.tagline || '',
+      website_url: s.website_url || '',
+      instrument_category_id: s.instrument_category_id,
+      priority: s.priority || 0,
+      display_prefix: s.display_prefix || 'Sponsored by',
+      target_country: s.target_country || '',
+      target_cities: s.target_cities || [],
+    })
+    setEditingSponsorId(s.id)
+    setSponsorDialogOpen(true)
+  }
+
+  function openNewSponsor() {
+    setSponsorForm({ ...defaultSponsorForm })
+    setEditingSponsorId(null)
+    setSponsorDialogOpen(true)
+  }
+
+  async function handleSaveSponsor() {
     if (!sponsorForm.name || !sponsorForm.instrument_category_id) {
       toast.error(t('nameAndCategoryRequired'))
       return
     }
     setSavingSponsor(true)
-    const { error } = await supabase.from('sponsors').insert({
+    const data = {
       name: sponsorForm.name,
       logo_url: sponsorForm.logo_url || null,
       tagline: sponsorForm.tagline || null,
@@ -357,24 +392,22 @@ export function SponsorsHub({
       target_city: sponsorForm.target_cities[0] || null,
       target_country: sponsorForm.target_country || null,
       target_cities: sponsorForm.target_cities.length > 0 ? sponsorForm.target_cities : null,
-      active: true,
-    } as never)
+    }
+
+    const { error } = editingSponsorId
+      ? await supabase
+          .from('sponsors')
+          .update(data as never)
+          .eq('id', editingSponsorId)
+      : await supabase.from('sponsors').insert({ ...data, active: true } as never)
+
     if (error) {
       toast.error(tToast('sponsorCreateError'))
     } else {
-      toast.success(tToast('sponsorCreated'))
+      toast.success(editingSponsorId ? tToast('sponsorUpdated') : tToast('sponsorCreated'))
       setSponsorDialogOpen(false)
-      setSponsorForm({
-        name: '',
-        logo_url: '',
-        tagline: '',
-        website_url: '',
-        instrument_category_id: '',
-        priority: 0,
-        display_prefix: 'Sponsored by',
-        target_country: '',
-        target_cities: [],
-      })
+      setSponsorForm({ ...defaultSponsorForm })
+      setEditingSponsorId(null)
       onReload()
     }
     setSavingSponsor(false)
@@ -618,7 +651,7 @@ export function SponsorsHub({
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation()
-                setSponsorDialogOpen(true)
+                openNewSponsor()
               }}
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -676,6 +709,15 @@ export function SponsorsHub({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => openEditSponsor(s)}
+                          title={t('editSponsor')}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -1158,7 +1200,7 @@ export function SponsorsHub({
       <Dialog open={sponsorDialogOpen} onOpenChange={setSponsorDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('newSponsor')}</DialogTitle>
+            <DialogTitle>{editingSponsorId ? t('editSponsor') : t('newSponsor')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1332,9 +1374,9 @@ export function SponsorsHub({
             <Button variant="outline" onClick={() => setSponsorDialogOpen(false)}>
               {tc('cancel')}
             </Button>
-            <Button onClick={handleCreateSponsor} disabled={savingSponsor}>
+            <Button onClick={handleSaveSponsor} disabled={savingSponsor}>
               {savingSponsor && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {tc('create')}
+              {editingSponsorId ? tc('save') : tc('create')}
             </Button>
           </DialogFooter>
         </DialogContent>
