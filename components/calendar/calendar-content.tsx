@@ -75,6 +75,7 @@ function formatDateLocal(date: Date): string {
 }
 
 const statusColors: Record<string, string> = {
+  tentative: 'bg-orange-400',
   pending: 'bg-yellow-400',
   accepted: 'bg-green-500',
   declined: 'bg-red-400',

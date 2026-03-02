@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-import { User, Users } from 'lucide-react'
+import { User, Users, Search } from 'lucide-react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { navigationItems } from './nav-items'
 import { UserMenu } from './user-menu'
+import { CommandPalette } from './command-palette'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useActionCount } from '@/lib/hooks/use-action-count'
 
@@ -18,10 +19,22 @@ export function Header() {
   const t = useTranslations('nav')
   const { isSharedMode, showOnlyMine, toggleShowOnlyMine } = useGigFilter()
   const actionCount = useActionCount()
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <header
@@ -91,9 +104,20 @@ export function Header() {
               <div className="h-5 border-l border-white/10" />
             </>
           )}
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] font-medium transition-colors hover:bg-white/10"
+            style={{ color: '#94a3b8' }}
+            title="Search (⌘K)"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="hidden lg:inline text-[11px]">⌘K</span>
+          </button>
+          <div className="h-5 border-l border-white/10" />
           <UserMenu />
         </div>
       </div>
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   )
 }

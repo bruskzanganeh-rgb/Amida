@@ -13,7 +13,12 @@
     "showingMyGigs": "Visar bara mina uppdrag",
     "showingTeamGigs": "Visar alla teammedlemmars uppdrag",
     "allShort": "Alla",
-    "mineShort": "Mina"
+    "mineShort": "Mina",
+    "searchPlaceholder": "Sök eller navigera...",
+    "navigation": "Navigation",
+    "actions": "Åtgärder",
+    "clients": "Kunder",
+    "noResults": "Inga resultat"
   },
   "common": {
     "save": "Spara",
@@ -568,6 +573,8 @@
     "sharedCalendar": "Teamets gigs",
     "sharedCalendarDesc": "Kalenderprenumeration med alla gigs i teamet",
     "localDevWarning": "Kalenderprenumerationer kräver en publik URL. Deploya appen till Vercel eller liknande för att aktivera denna funktion.",
+    "calendarTimezone": "Tidszon",
+    "calendarTimezoneHint": "Tider i iCal-flödet visas i denna tidszon",
     "calendarAutoUpdate": "Kalendern uppdateras automatiskt. Uppdateringsintervallet styrs av din kalenderapp (vanligtvis 15 min - 24 timmar).",
     "subscription": "Prenumeration",
     "subscriptionDesc": "Hantera din plan och uppgradera till Pro",

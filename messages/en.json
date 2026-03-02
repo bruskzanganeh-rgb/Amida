@@ -13,7 +13,12 @@
     "showingMyGigs": "Showing only my gigs",
     "showingTeamGigs": "Showing all team members' gigs",
     "allShort": "All",
-    "mineShort": "Mine"
+    "mineShort": "Mine",
+    "searchPlaceholder": "Search or jump to...",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "clients": "Clients",
+    "noResults": "No results"
   },
   "common": {
     "save": "Save",
@@ -568,6 +573,8 @@
     "sharedCalendar": "Team gigs",
     "sharedCalendarDesc": "Calendar subscription with all gigs in the team",
     "localDevWarning": "Calendar subscriptions require a public URL. Deploy the app to Vercel or similar to enable this feature.",
+    "calendarTimezone": "Timezone",
+    "calendarTimezoneHint": "Times in the iCal feed will use this timezone",
     "calendarAutoUpdate": "The calendar updates automatically. The update interval is controlled by your calendar app (typically 15 min - 24 hours).",
     "subscription": "Subscription",
     "subscriptionDesc": "Manage your plan and upgrade to Pro",

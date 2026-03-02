@@ -70,6 +70,7 @@ type CompanySettings = {
   email_provider: string | null
   country_code: string | null
   calendar_token: string | null
+  timezone: string | null
 }
 
 export default function SettingsPage() {
@@ -147,9 +148,9 @@ export default function SettingsPage() {
       setLoading(true)
 
       // Load personal prefs from company_settings
-      const { data: personalSettings, error: psError } = await supabase
-        .from('company_settings')
-        .select('id, locale, calendar_token, instruments_text')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: personalSettings, error: psError } = await (supabase.from('company_settings') as any)
+        .select('id, locale, calendar_token, instruments_text, timezone')
         .limit(1)
         .single()
 
@@ -205,6 +206,7 @@ export default function SettingsPage() {
             email_provider: company.email_provider,
             country_code: company.country_code,
             calendar_token: personalSettings.calendar_token,
+            timezone: personalSettings.timezone || 'Europe/Stockholm',
           })
           setLogoPreview(company.logo_url || null)
           setEmailProvider(company.email_provider || 'platform')
@@ -275,6 +277,7 @@ export default function SettingsPage() {
       .from('company_settings')
       .update({
         locale: settings.locale,
+        timezone: settings.timezone,
       })
       .eq('id', settings.id)
 
@@ -1091,6 +1094,31 @@ export default function SettingsPage() {
                     <li>{t('appleCalendarStep4')}</li>
                   </ol>
                 </div>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <Label htmlFor="calendar_timezone">{t('calendarTimezone')}</Label>
+                <Select
+                  value={settings?.timezone || 'Europe/Stockholm'}
+                  onValueChange={(value) => setSettings((s) => (s ? { ...s, timezone: value } : null))}
+                >
+                  <SelectTrigger className="w-full sm:w-[300px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Europe/Stockholm">Europe/Stockholm (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/London">Europe/London (GMT/BST)</SelectItem>
+                    <SelectItem value="Europe/Berlin">Europe/Berlin (CET/CEST)</SelectItem>
+                    <SelectItem value="Europe/Paris">Europe/Paris (CET/CEST)</SelectItem>
+                    <SelectItem value="America/New_York">America/New_York (ET)</SelectItem>
+                    <SelectItem value="America/Chicago">America/Chicago (CT)</SelectItem>
+                    <SelectItem value="America/Denver">America/Denver (MT)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">America/Los_Angeles (PT)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
+                    <SelectItem value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">{t('calendarTimezoneHint')}</p>
               </div>
 
               <p className="text-xs text-muted-foreground">{t('calendarAutoUpdate')}</p>
