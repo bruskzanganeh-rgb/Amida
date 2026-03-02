@@ -71,7 +71,7 @@ export default function ExpensesTab() {
   const [currentUserId, setCurrentUserId] = useState<string>('')
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString())
+  const [yearFilter, setYearFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [supplierFilter, setSupplierFilter] = useState<string>('all')
   const [gigFilter, setGigFilter] = useState<string>('all')

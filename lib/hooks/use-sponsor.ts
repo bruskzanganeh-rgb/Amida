@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SponsorData {
@@ -29,9 +29,10 @@ function subscribe(listener: () => void) {
   }
 }
 
-let _cachedSnapshot = { sponsor: _sponsor, plan: _plan, loaded: _loaded }
-function getSnapshot() {
-  const next = { sponsor: _sponsor, plan: _plan, loaded: _loaded }
+type Snapshot = { sponsor: SponsorData | null; plan: string; loaded: boolean }
+let _cachedSnapshot: Snapshot = { sponsor: _sponsor, plan: _plan, loaded: _loaded }
+function getSnapshot(): Snapshot {
+  const next: Snapshot = { sponsor: _sponsor, plan: _plan, loaded: _loaded }
   if (
     next.sponsor !== _cachedSnapshot.sponsor ||
     next.plan !== _cachedSnapshot.plan ||
