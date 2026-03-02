@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { verifyAdmin } from '@/lib/admin'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const auth = await verifyAdmin()
   if (auth instanceof NextResponse) return auth
   const { supabase } = auth
@@ -30,29 +30,44 @@ export async function GET() {
   const mrr = monthlySubscribers * 49 + yearlySubscribers * Math.round(499 / 12)
   const arr = mrr * 12
 
-  // Total sponsor impressions
-  const { count: totalImpressions } = await supabase
-    .from('sponsor_impressions')
-    .select('*', { count: 'exact', head: true })
+  // Sponsor impression time filtering
+  const from = request.nextUrl.searchParams.get('from')
+  const to = request.nextUrl.searchParams.get('to')
 
-  // Per-sponsor impression breakdown
-  const { data: impressionRows } = await supabase
+  // Total sponsor impressions (filtered)
+  let totalQuery = supabase.from('sponsor_impressions').select('*', { count: 'exact', head: true })
+  if (from) totalQuery = totalQuery.gte('created_at', from)
+  if (to) totalQuery = totalQuery.lt('created_at', to)
+  const { count: totalImpressions } = await totalQuery
+
+  // Per-sponsor impression breakdown with type
+  let impressionQuery = supabase
     .from('sponsor_impressions')
-    .select('sponsor_id, created_at, sponsor:sponsors(name)')
+    .select('sponsor_id, impression_type, created_at, sponsor:sponsors(name)')
     .order('created_at', { ascending: false })
+  if (from) impressionQuery = impressionQuery.gte('created_at', from)
+  if (to) impressionQuery = impressionQuery.lt('created_at', to)
+  const { data: impressionRows } = await impressionQuery
 
-  const sponsorStats: Record<string, { name: string; count: number; latest: string }> = {}
+  const sponsorStats: Record<
+    string,
+    { name: string; app: number; pdf: number; click: number; total: number; latest: string }
+  > = {}
   for (const row of impressionRows || []) {
     const id = row.sponsor_id
     const name = (row.sponsor as unknown as { name: string } | null)?.name || 'Unknown'
+    const type = row.impression_type || 'pdf'
     if (!sponsorStats[id]) {
-      sponsorStats[id] = { name, count: 0, latest: row.created_at || '' }
+      sponsorStats[id] = { name, app: 0, pdf: 0, click: 0, total: 0, latest: row.created_at || '' }
     }
-    sponsorStats[id].count++
+    if (type === 'app') sponsorStats[id].app++
+    else if (type === 'click') sponsorStats[id].click++
+    else sponsorStats[id].pdf++
+    sponsorStats[id].total++
   }
   const sponsorImpressionBreakdown = Object.entries(sponsorStats)
     .map(([id, data]) => ({ id, ...data }))
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => b.total - a.total)
 
   return NextResponse.json({
     totalUsers: totalUsers || 0,

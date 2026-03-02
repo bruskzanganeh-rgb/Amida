@@ -103,6 +103,13 @@ export function SponsorBanner() {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => {
+        fetch('/api/sponsor-impression', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sponsor_id: sponsor.id, type: 'click' }),
+        }).catch(() => {})
+      }}
       className="flex items-center justify-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-4 py-2.5 transition-colors hover:bg-muted/50"
     >
       {sponsor.logo_url && <img src={sponsor.logo_url} alt={sponsor.name} className="h-5 w-auto object-contain" />}

@@ -1,16 +1,21 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTranslations } from 'next-intl'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 import { sv, enUS } from 'date-fns/locale'
 import { useLocale } from 'next-intl'
 
 type SponsorImpressionRow = {
   id: string
   name: string
-  count: number
+  app: number
+  pdf: number
+  click: number
+  total: number
   latest: string
 }
 
@@ -27,9 +32,45 @@ type Stats = {
   sponsorImpressionBreakdown?: SponsorImpressionRow[]
 }
 
-export function StatsTab({ stats }: { stats: Stats | null }) {
+export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
   const t = useTranslations('admin')
   const locale = useLocale()
+  const [stats, setStats] = useState(initialStats)
+  const [period, setPeriod] = useState('all')
+
+  // Generate month options (last 6 months)
+  const monthOptions = Array.from({ length: 6 }, (_, i) => {
+    const date = subMonths(new Date(), i)
+    const from = startOfMonth(date).toISOString()
+    const to = endOfMonth(date).toISOString()
+    const label = format(date, 'MMMM yyyy', { locale: locale === 'sv' ? sv : enUS })
+    return { value: `${from}|${to}`, label }
+  })
+
+  const fetchStats = useCallback(async (from?: string, to?: string) => {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
+    const res = await fetch(`/api/admin/stats?${params.toString()}`)
+    if (res.ok) {
+      const data = await res.json()
+      setStats(data)
+    }
+  }, [])
+
+  useEffect(() => {
+    setStats(initialStats)
+  }, [initialStats])
+
+  function handlePeriodChange(value: string) {
+    setPeriod(value)
+    if (value === 'all') {
+      fetchStats()
+    } else {
+      const [from, to] = value.split('|')
+      fetchStats(from, to)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -95,16 +136,34 @@ export function StatsTab({ stats }: { stats: Stats | null }) {
       {/* Row 3: Sponsor impressions */}
       <Card>
         <CardContent className="pt-4">
-          <div className="flex items-baseline gap-3 mb-3">
-            <p className="text-xs text-muted-foreground">{t('sponsorImpressions')}</p>
-            <p className="text-2xl font-bold">{stats?.totalImpressions ?? 0}</p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-baseline gap-3">
+              <p className="text-xs text-muted-foreground">{t('sponsorImpressions')}</p>
+              <p className="text-2xl font-bold">{stats?.totalImpressions ?? 0}</p>
+            </div>
+            <Select value={period} onValueChange={handlePeriodChange}>
+              <SelectTrigger className="w-[180px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allTime')}</SelectItem>
+                {monthOptions.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {stats?.sponsorImpressionBreakdown && stats.sponsorImpressionBreakdown.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('name')}</TableHead>
-                  <TableHead className="text-right">{t('impressions')}</TableHead>
+                  <TableHead className="text-right">{t('appImpressions')}</TableHead>
+                  <TableHead className="text-right">{t('pdfImpressions')}</TableHead>
+                  <TableHead className="text-right">{t('clicks')}</TableHead>
+                  <TableHead className="text-right">{t('total')}</TableHead>
                   <TableHead className="text-right">{t('latest')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -112,12 +171,17 @@ export function StatsTab({ stats }: { stats: Stats | null }) {
                 {stats.sponsorImpressionBreakdown.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell className="text-right">{s.count}</TableCell>
+                    <TableCell className="text-right">{s.app}</TableCell>
+                    <TableCell className="text-right">{s.pdf}</TableCell>
+                    <TableCell className="text-right">{s.click}</TableCell>
+                    <TableCell className="text-right font-medium">{s.total}</TableCell>
                     <TableCell className="text-right text-muted-foreground text-xs">
-                      {formatDistanceToNow(new Date(s.latest), {
-                        addSuffix: true,
-                        locale: locale === 'sv' ? sv : enUS,
-                      })}
+                      {s.latest
+                        ? formatDistanceToNow(new Date(s.latest), {
+                            addSuffix: true,
+                            locale: locale === 'sv' ? sv : enUS,
+                          })
+                        : '-'}
                     </TableCell>
                   </TableRow>
                 ))}

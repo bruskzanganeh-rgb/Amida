@@ -179,7 +179,14 @@ export function UserMenu() {
               }
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                fetch('/api/sponsor-impression', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sponsor_id: sponsor.id, type: 'click' }),
+                }).catch(() => {})
+              }}
               className="rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
               style={{
                 background: 'rgba(217,173,66,0.15)',

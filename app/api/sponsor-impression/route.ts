@@ -11,22 +11,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { sponsor_id?: string }
+  let body: { sponsor_id?: string; type?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { sponsor_id } = body
+  const { sponsor_id, type } = body
   if (!sponsor_id || typeof sponsor_id !== 'string') {
     return NextResponse.json({ error: 'sponsor_id is required' }, { status: 400 })
   }
 
+  const impressionType = type === 'click' ? 'click' : 'app'
+
   const { error } = await supabase.from('sponsor_impressions').insert({
     sponsor_id,
     user_id: user.id,
-    impression_type: 'app',
+    impression_type: impressionType,
   })
 
   if (error) {
