@@ -76,6 +76,7 @@ type User = {
   postal_code: string | null
   country_code: string | null
   categories: string[]
+  instruments_text: string | null
   last_active?: string | null
   recent_activity_count?: number
   members?: Member[]

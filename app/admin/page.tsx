@@ -58,6 +58,7 @@ type User = {
   postal_code: string | null
   country_code: string | null
   categories: string[]
+  instruments_text: string | null
   last_active?: string | null
   recent_activity_count?: number
   members?: {
@@ -99,6 +100,7 @@ type Stats = {
 type InstrumentCategory = {
   id: string
   name: string
+  name_en?: string | null
   slug?: string
   sort_order?: number
   instrument_count?: number
@@ -190,16 +192,23 @@ export default function AdminPage() {
       .from('instrument_categories')
       .select('id, name, slug, sort_order, instruments(count)')
       .order('sort_order')
-    if (cats)
+    if (cats) {
+      // Fetch name_en separately (column not in generated Supabase types yet)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: enData } = await (supabase.from('instrument_categories') as any).select('id, name_en')
+      const enMap = new Map<string, string | null>()
+      if (enData) for (const r of enData as { id: string; name_en: string | null }[]) enMap.set(r.id, r.name_en)
       setCategories(
         cats.map((c) => ({
           id: c.id,
           name: c.name,
+          name_en: enMap.get(c.id) || null,
           slug: c.slug,
           sort_order: c.sort_order,
           instrument_count: (c.instruments as unknown as { count: number }[])?.[0]?.count || 0,
         })),
       )
+    }
 
     // Users
     const usersRes = await fetch('/api/admin/users')

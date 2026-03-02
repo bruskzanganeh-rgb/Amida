@@ -18,7 +18,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Could not load categories' }, { status: 500 })
   }
 
-  // Get users with non-empty instruments_text + their email/company_name
+  // Get ALL users with non-empty instruments_text
   const { data: settings } = await supabase
     .from('company_settings')
     .select('user_id, instruments_text, email, company_name')
@@ -28,27 +28,41 @@ export async function POST() {
     return NextResponse.json({ results: [], message: 'No free text to analyze' })
   }
 
-  // Get existing user_categories to find unmatched users
-  const userIds = settings.map((s) => s.user_id).filter((id): id is string => id != null)
-  const { data: existingUc } = await supabase.from('user_categories').select('user_id').in('user_id', userIds)
+  const usersWithText = settings.filter((s) => s.user_id && s.instruments_text?.trim())
 
-  const usersWithCategories = new Set((existingUc || []).map((uc) => uc.user_id))
-
-  // Filter to users who have free text but no categories
-  const unmatchedUsers = settings.filter(
-    (s) => s.user_id && !usersWithCategories.has(s.user_id) && s.instruments_text?.trim(),
-  )
-
-  if (unmatchedUsers.length === 0) {
-    return NextResponse.json({ results: [], message: 'All users with free text already have categories' })
+  if (usersWithText.length === 0) {
+    return NextResponse.json({ results: [], message: 'No free text to analyze' })
   }
 
-  // Build the AI prompt — match to CATEGORIES, not instruments
+  // Get existing user_categories so AI can skip already-assigned categories
+  const userIds = usersWithText.map((s) => s.user_id).filter((id): id is string => id != null)
+  const { data: existingUc } = await supabase
+    .from('user_categories')
+    .select('user_id, category_id')
+    .in('user_id', userIds)
+
+  // Build map: user_id -> set of already-assigned category names
+  const userExistingCategories = new Map<string, string[]>()
+  if (existingUc) {
+    const categoryNameMap = new Map(categories.map((c) => [c.id, c.name]))
+    for (const uc of existingUc) {
+      const name = categoryNameMap.get(uc.category_id)
+      if (!name) continue
+      if (!userExistingCategories.has(uc.user_id)) userExistingCategories.set(uc.user_id, [])
+      userExistingCategories.get(uc.user_id)!.push(name)
+    }
+  }
+
+  // Build the AI prompt
   const categoryList = categories.map((c) => `- ${c.name} (id: ${c.id}, slug: ${c.slug})`).join('\n')
 
-  const userEntries = unmatchedUsers
+  const userEntries = usersWithText
     .slice(0, 50)
-    .map((u, idx) => `${idx + 1}. user_id: "${u.user_id}" → "${u.instruments_text}"`)
+    .map((u, idx) => {
+      const existing = userExistingCategories.get(u.user_id!)
+      const existingStr = existing && existing.length > 0 ? ` [already assigned: ${existing.join(', ')}]` : ''
+      return `${idx + 1}. user_id: "${u.user_id}" → "${u.instruments_text}"${existingStr}`
+    })
     .join('\n')
 
   const prompt = `You are analyzing free-text entries from freelancers describing their skills/instruments/profession. Match each entry to the most appropriate category.
@@ -76,7 +90,8 @@ For each user, analyze their free text and suggest category matches. Return a JS
 
 Rules:
 - Split comma-separated texts into individual items
-- Match variations: "barockviolin" → Stråk, "piccolo" → Blås, "fotograf" → check if category exists
+- Match variations: "barockviolin" → Stråk, "piccolo" → Blås, "arrangemang" → check if category exists
+- If a user already has assigned categories (shown in brackets), do NOT suggest those categories again — only suggest NEW matches
 - If no category matches, set category_id to null
 - Confidence: 1.0 = exact match, 0.7-0.9 = close variation, 0.3-0.6 = weak match, 0.0 = no match
 - Return ONLY valid JSON, no markdown`
@@ -98,7 +113,7 @@ Rules:
     const results = JSON.parse(jsonMatch[0])
 
     // Enrich results with email and company_name
-    const settingsMap = new Map(unmatchedUsers.map((u) => [u.user_id, u]))
+    const settingsMap = new Map(usersWithText.map((u) => [u.user_id, u]))
     for (const r of results) {
       const userSettings = settingsMap.get(r.user_id)
       r.email = userSettings?.email || null
@@ -107,7 +122,7 @@ Rules:
 
     return NextResponse.json({
       results,
-      analyzed: unmatchedUsers.length,
+      analyzed: usersWithText.length,
       tokens: { input: message.usage.input_tokens, output: message.usage.output_tokens },
     })
   } catch (err) {

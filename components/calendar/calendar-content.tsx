@@ -554,7 +554,7 @@ export default function CalendarPage() {
                                     statusColors[gig.status],
                                   )}
                                   onClick={() => {
-                                    setSelectedGig(gig)
+                                    setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                     setEditingNotes(false)
                                   }}
                                   title={`${gig.client ? gig.client.name : tGig('clientNotSpecified')} - ${gig.project_name || (gig.gig_type ? gig.gig_type.name : '')}`}

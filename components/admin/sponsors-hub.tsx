@@ -9,7 +9,20 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Award, Plus, Trash2, Loader2, Sparkles, Users, Tag, Target, ChevronDown, ChevronRight } from 'lucide-react'
+import {
+  Award,
+  Plus,
+  Trash2,
+  Loader2,
+  Sparkles,
+  Users,
+  Tag,
+  Target,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Info,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
@@ -17,6 +30,7 @@ import { createClient } from '@/lib/supabase/client'
 type InstrumentCategory = {
   id: string
   name: string
+  name_en?: string | null
   slug?: string
   sort_order?: number
   instrument_count?: number
@@ -44,6 +58,7 @@ type User = {
   city: string | null
   postal_code: string | null
   categories: string[]
+  instruments_text: string | null
 }
 
 type Props = {
@@ -91,8 +106,18 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
 
   // Category dialog
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
-  const [categoryForm, setCategoryForm] = useState({ name: '', sort_order: 0 })
+  const [categoryForm, setCategoryForm] = useState({ name: '', name_en: '', sort_order: 0 })
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [savingCategory, setSavingCategory] = useState(false)
+
+  // Auto-suggest after category create
+  const [suggestMatches, setSuggestMatches] = useState<
+    { user_id: string; email: string | null; company_name: string | null; selected: boolean }[]
+  >([])
+  const [suggestCategoryId, setSuggestCategoryId] = useState<string | null>(null)
+  const [suggestCategoryName, setSuggestCategoryName] = useState('')
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false)
+  const [applyingSuggestions, setApplyingSuggestions] = useState(false)
 
   // Sponsor dialog
   const [sponsorDialogOpen, setSponsorDialogOpen] = useState(false)
@@ -143,24 +168,75 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
   })
 
   // --- Category CRUD ---
-  async function handleCreateCategory() {
+  async function handleSaveCategory() {
     if (!categoryForm.name) return
     setSavingCategory(true)
-    const slug = categoryForm.name.toLowerCase().replace(/[^a-zåäö0-9]+/g, '-')
-    const { error } = await supabase.from('instrument_categories').insert({
-      name: categoryForm.name,
-      slug,
-      sort_order: categoryForm.sort_order,
-    })
-    if (error) {
-      toast.error(error.message)
+
+    if (editingCategoryId) {
+      // Update existing
+      const slug = categoryForm.name.toLowerCase().replace(/[^a-zåäö0-9]+/g, '-')
+      const { error } = await supabase
+        .from('instrument_categories')
+        .update({
+          name: categoryForm.name,
+          name_en: categoryForm.name_en || null,
+          slug,
+          sort_order: categoryForm.sort_order,
+        } as never)
+        .eq('id', editingCategoryId)
+      if (error) {
+        toast.error(error.message)
+      } else {
+        toast.success(t('categorySaved'))
+        setCategoryDialogOpen(false)
+        setEditingCategoryId(null)
+        setCategoryForm({ name: '', name_en: '', sort_order: 0 })
+        onReload()
+      }
     } else {
-      toast.success(t('categorySaved'))
-      setCategoryDialogOpen(false)
-      setCategoryForm({ name: '', sort_order: 0 })
-      onReload()
+      // Create new
+      const slug = categoryForm.name.toLowerCase().replace(/[^a-zåäö0-9]+/g, '-')
+      const { data: inserted, error } = await supabase
+        .from('instrument_categories')
+        .insert({
+          name: categoryForm.name,
+          name_en: categoryForm.name_en || null,
+          slug,
+          sort_order: categoryForm.sort_order,
+        } as never)
+        .select('id')
+        .single()
+      if (error) {
+        toast.error(error.message)
+      } else {
+        toast.success(t('categorySaved'))
+        setCategoryDialogOpen(false)
+        const newName = categoryForm.name
+        const newId = inserted.id
+        setCategoryForm({ name: '', name_en: '', sort_order: 0 })
+        onReload()
+
+        // Auto-suggest: find users whose instruments_text mentions this category name
+        const matches = users.filter(
+          (u) => u.instruments_text && u.instruments_text.toLowerCase().includes(newName.toLowerCase()),
+        )
+        if (matches.length > 0) {
+          setSuggestCategoryId(newId)
+          setSuggestCategoryName(newName)
+          setSuggestMatches(
+            matches.map((u) => ({ user_id: u.user_id, email: u.email, company_name: u.company_name, selected: true })),
+          )
+          setSuggestDialogOpen(true)
+        }
+      }
     }
     setSavingCategory(false)
+  }
+
+  function openEditCategory(cat: InstrumentCategory) {
+    setEditingCategoryId(cat.id)
+    setCategoryForm({ name: cat.name, name_en: cat.name_en || '', sort_order: cat.sort_order || 0 })
+    setCategoryDialogOpen(true)
   }
 
   async function handleDeleteCategory(id: string) {
@@ -170,6 +246,28 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
     } else {
       setCategories((prev) => prev.filter((c) => c.id !== id))
     }
+  }
+
+  async function handleApplySuggestions() {
+    const selected = suggestMatches.filter((m) => m.selected)
+    if (selected.length === 0 || !suggestCategoryId) return
+    setApplyingSuggestions(true)
+    try {
+      for (const m of selected) {
+        await fetch('/api/admin/assign-categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: m.user_id, category_ids: [suggestCategoryId] }),
+        })
+      }
+      toast.success(`${t('categoryAssigned')} (${selected.length})`)
+      setSuggestDialogOpen(false)
+      setSuggestMatches([])
+      onReload()
+    } catch {
+      toast.error('Failed to assign')
+    }
+    setApplyingSuggestions(false)
   }
 
   // --- Sponsor CRUD ---
@@ -377,6 +475,8 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation()
+                setEditingCategoryId(null)
+                setCategoryForm({ name: '', name_en: '', sort_order: 0 })
                 setCategoryDialogOpen(true)
               }}
             >
@@ -396,7 +496,10 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                   return (
                     <div key={c.id} className="flex items-center justify-between py-2 px-3 rounded bg-secondary/30">
                       <div className="flex items-center gap-3">
-                        <p className="text-sm font-medium">{c.name}</p>
+                        <p className="text-sm font-medium">
+                          {c.name}
+                          {c.name_en && <span className="text-muted-foreground font-normal"> / {c.name_en}</span>}
+                        </p>
                         <span className="text-xs text-muted-foreground">
                           {userCount} {t('freelancers')}
                         </span>
@@ -408,14 +511,19 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                           <span className="text-[10px] text-muted-foreground">{t('noSponsor')}</span>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteCategory(c.id)}
-                        className="text-destructive hover:text-destructive h-7 w-7 p-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEditCategory(c)} className="h-7 w-7 p-0">
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCategory(c.id)}
+                          className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   )
                 })
@@ -504,6 +612,11 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
               )}
             </div>
           )}
+
+          <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>{t('sponsorPriorityInfo')}</span>
+          </div>
         </CardContent>
       </Card>
 
@@ -594,6 +707,7 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                           <th className="p-2 text-left hidden sm:table-cell">{t('companyName')}</th>
                           <th className="p-2 text-left hidden sm:table-cell">{t('city')}</th>
                           <th className="p-2 text-left">{t('categories')}</th>
+                          <th className="p-2 text-left hidden sm:table-cell">{t('freeText')}</th>
                           <th className="p-2 text-left">Plan</th>
                         </tr>
                       </thead>
@@ -615,6 +729,9 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                               ) : (
                                 <span className="text-muted-foreground">—</span>
                               )}
+                            </td>
+                            <td className="p-2 hidden sm:table-cell text-muted-foreground max-w-[200px] truncate">
+                              {u.instruments_text || '—'}
                             </td>
                             <td className="p-2">
                               <Badge variant={u.plan === 'free' ? 'secondary' : 'default'} className="text-[10px]">
@@ -830,11 +947,20 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
         </CardContent>
       </Card>
 
-      {/* Category Dialog */}
-      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+      {/* Category Dialog (Create / Edit) */}
+      <Dialog
+        open={categoryDialogOpen}
+        onOpenChange={(open) => {
+          setCategoryDialogOpen(open)
+          if (!open) {
+            setEditingCategoryId(null)
+            setCategoryForm({ name: '', name_en: '', sort_order: 0 })
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('newCategory')}</DialogTitle>
+            <DialogTitle>{editingCategoryId ? t('editCategory') : t('newCategory')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -843,6 +969,14 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Stråk / Fotograf / Musiklärare"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('categoryNameEn')}</Label>
+              <Input
+                value={categoryForm.name_en}
+                onChange={(e) => setCategoryForm((f) => ({ ...f, name_en: e.target.value }))}
+                placeholder="Strings / Photographer / Music teacher"
               />
             </div>
             <div className="space-y-2">
@@ -858,9 +992,46 @@ export function SponsorsHub({ sponsors, setSponsors, categories, setCategories, 
             <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>
               {tc('cancel')}
             </Button>
-            <Button onClick={handleCreateCategory} disabled={savingCategory}>
+            <Button onClick={handleSaveCategory} disabled={savingCategory}>
               {savingCategory && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {tc('create')}
+              {editingCategoryId ? tc('save') : tc('create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Auto-suggest Dialog */}
+      <Dialog open={suggestDialogOpen} onOpenChange={setSuggestDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('suggestAssignTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t('suggestAssignDesc', { count: suggestMatches.length, category: suggestCategoryName })}
+          </p>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {suggestMatches.map((m) => (
+              <label key={m.user_id} className="flex items-center gap-2 py-1">
+                <Checkbox
+                  checked={m.selected}
+                  onCheckedChange={(checked) =>
+                    setSuggestMatches((prev) =>
+                      prev.map((p) => (p.user_id === m.user_id ? { ...p, selected: !!checked } : p)),
+                    )
+                  }
+                />
+                <span className="text-sm">{m.email || m.user_id}</span>
+                {m.company_name && <span className="text-xs text-muted-foreground">({m.company_name})</span>}
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSuggestDialogOpen(false)}>
+              {tc('cancel')}
+            </Button>
+            <Button onClick={handleApplySuggestions} disabled={applyingSuggestions}>
+              {applyingSuggestions && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {t('assignCategory')} ({suggestMatches.filter((m) => m.selected).length})
             </Button>
           </DialogFooter>
         </DialogContent>

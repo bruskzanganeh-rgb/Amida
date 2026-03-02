@@ -634,7 +634,7 @@ export default function GigsPage() {
                           className="py-2.5 pr-3 pl-3 rounded-lg border border-amber-200/50 border-l-4 bg-white/60 dark:bg-white/5 cursor-pointer hover:bg-amber-100/30 transition-colors"
                           style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                           onClick={() => {
-                            setSelectedGig(gig)
+                            setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                             setEditingNotes(false)
                           }}
                         >
@@ -705,7 +705,7 @@ export default function GigsPage() {
                               key={gig.id}
                               className="cursor-pointer hover:bg-amber-100/50"
                               onClick={() => {
-                                setSelectedGig(gig)
+                                setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                 setEditingNotes(false)
                               }}
                             >
@@ -885,7 +885,7 @@ export default function GigsPage() {
                                 className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                                 style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
-                                  setSelectedGig(gig)
+                                  setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                   setEditingNotes(false)
                                 }}
                               >
@@ -1016,7 +1016,7 @@ export default function GigsPage() {
                                       ref={upcomingVirtualizer.measureElement}
                                       className="cursor-pointer hover:bg-muted/50"
                                       onClick={() => {
-                                        setSelectedGig(gig)
+                                        setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                         setEditingNotes(false)
                                       }}
                                     >
@@ -1252,7 +1252,7 @@ export default function GigsPage() {
                                 className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                                 style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
-                                  setSelectedGig(gig)
+                                  setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                   setEditingNotes(false)
                                 }}
                               >
@@ -1380,7 +1380,7 @@ export default function GigsPage() {
                                       ref={historyVirtualizer.measureElement}
                                       className="cursor-pointer hover:bg-muted/50"
                                       onClick={() => {
-                                        setSelectedGig(gig)
+                                        setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                         setEditingNotes(false)
                                       }}
                                     >
@@ -1552,7 +1552,7 @@ export default function GigsPage() {
                                 className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                                 style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
                                 onClick={() => {
-                                  setSelectedGig(gig)
+                                  setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                   setEditingNotes(false)
                                 }}
                               >
@@ -1680,7 +1680,7 @@ export default function GigsPage() {
                                       ref={declinedVirtualizer.measureElement}
                                       className="cursor-pointer hover:bg-muted/50"
                                       onClick={() => {
-                                        setSelectedGig(gig)
+                                        setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                         setEditingNotes(false)
                                       }}
                                     >

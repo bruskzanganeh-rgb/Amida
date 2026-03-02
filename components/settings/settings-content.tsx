@@ -94,7 +94,9 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
-  const [allCategories, setAllCategories] = useState<{ id: string; name: string; sort_order: number }[]>([])
+  const [allCategories, setAllCategories] = useState<
+    { id: string; name: string; name_en: string | null; sort_order: number }[]
+  >([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { isPro, isTeam } = useSubscription()
@@ -222,7 +224,11 @@ export default function SettingsPage() {
         .select('id, name, sort_order')
         .order('sort_order')
       if (cats) {
-        setAllCategories(cats)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: enData } = await (supabase.from('instrument_categories') as any).select('id, name_en')
+        const enMap = new Map<string, string | null>()
+        if (enData) for (const r of enData as { id: string; name_en: string | null }[]) enMap.set(r.id, r.name_en)
+        setAllCategories(cats.map((c) => ({ ...c, name_en: enMap.get(c.id) || null })))
       }
 
       // Load existing user_categories
@@ -834,7 +840,7 @@ export default function SettingsPage() {
                       }`}
                     >
                       {selected && <Check className="h-3 w-3" />}
-                      {cat.name}
+                      {locale === 'en' && cat.name_en ? cat.name_en : cat.name}
                     </button>
                   )
                 })}

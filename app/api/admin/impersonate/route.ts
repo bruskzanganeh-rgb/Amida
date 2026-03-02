@@ -43,7 +43,12 @@ export async function POST(request: NextRequest) {
       metadata: { target_email: email },
     })
 
-    return NextResponse.json({ url: linkData.properties.action_link })
+    // Build URL through our /auth/confirm route which properly exchanges the token
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || ''
+    const token = linkData.properties.hashed_token
+    const url = `${origin}/auth/confirm?token_hash=${token}&type=magiclink`
+
+    return NextResponse.json({ url })
   } catch (error) {
     console.error('Impersonation error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

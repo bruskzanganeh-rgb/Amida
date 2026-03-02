@@ -22,7 +22,9 @@ export async function GET() {
         'user_id, plan, status, stripe_customer_id, stripe_price_id, current_period_end, cancel_at_period_end, created_at, admin_override',
       )
       .order('created_at', { ascending: false }),
-    supabase.from('company_settings').select('user_id, company_name, org_number, email, address, phone'),
+    supabase
+      .from('company_settings')
+      .select('user_id, company_name, org_number, email, address, phone, instruments_text'),
     supabase.from('company_members').select('user_id, company_id, role'),
     supabase.from('companies').select('id, postal_code, city, country_code'),
     supabase.from('user_categories').select('user_id, category:instrument_categories(name)'),
@@ -165,6 +167,7 @@ export async function GET() {
         email: settingsMap.get(sub.user_id)?.email || null,
         address: settingsMap.get(sub.user_id)?.address || null,
         phone: settingsMap.get(sub.user_id)?.phone || null,
+        instruments_text: settingsMap.get(sub.user_id)?.instruments_text || null,
         gig_count: stats?.gig_count || 0,
         invoice_count: stats?.invoice_count || 0,
         client_count: stats?.client_count || 0,
