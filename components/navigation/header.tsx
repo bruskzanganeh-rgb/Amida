@@ -81,12 +81,12 @@ export function Header() {
             <>
               <button
                 onClick={toggleShowOnlyMine}
-                className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-white/10"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-white/10"
                 style={{ color: showOnlyMine ? '#c4b5fd' : '#94a3b8' }}
                 title={showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}
               >
                 {showOnlyMine ? <User className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
-                <span className="hidden sm:inline">{showOnlyMine ? t('showingMyGigs') : t('showingTeamGigs')}</span>
+                {showOnlyMine ? t('mineShort') : t('allShort')}
               </button>
               <div className="h-5 border-l border-white/10" />
             </>

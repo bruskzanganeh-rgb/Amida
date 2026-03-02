@@ -11,7 +11,9 @@
     "menu": "Menu",
     "logout": "Log out",
     "showingMyGigs": "Showing only my gigs",
-    "showingTeamGigs": "Showing all team members' gigs"
+    "showingTeamGigs": "Showing all team members' gigs",
+    "allShort": "All",
+    "mineShort": "Mine"
   },
   "common": {
     "save": "Save",

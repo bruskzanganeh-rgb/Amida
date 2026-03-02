@@ -11,7 +11,9 @@
     "menu": "Meny",
     "logout": "Logga ut",
     "showingMyGigs": "Visar bara mina uppdrag",
-    "showingTeamGigs": "Visar alla teammedlemmars uppdrag"
+    "showingTeamGigs": "Visar alla teammedlemmars uppdrag",
+    "allShort": "Alla",
+    "mineShort": "Mina"
   },
   "common": {
     "save": "Spara",
