@@ -18,8 +18,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Mail, Receipt, FileText, ExternalLink, FileCheck } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSubscription } from '@/lib/hooks/use-subscription'
-import Link from 'next/link'
 import { format } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
@@ -59,7 +57,6 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
   const t = useTranslations('invoice')
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
-  const { isPro } = useSubscription()
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const [loading, setLoading] = useState(false)

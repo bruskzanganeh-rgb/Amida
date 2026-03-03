@@ -148,8 +148,7 @@ export async function matchClient(extractedName: string): Promise<ClientMatchRes
 /**
  * Manually set client match (user selection)
  */
-export async function setClientMatch(extractedName: string, clientId: string): Promise<void> {
+export async function setClientMatch(_extractedName: string, _clientId: string): Promise<void> {
   // In the future, we could store these manual mappings in a cache table
   // for faster matching of similar names
-  // Manual match stored — could persist to a cache table in the future
 }

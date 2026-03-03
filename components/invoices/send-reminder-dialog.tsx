@@ -17,8 +17,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Bell, FileText } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSubscription } from '@/lib/hooks/use-subscription'
-import Link from 'next/link'
 import { format, differenceInDays } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
@@ -45,7 +43,6 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
   const t = useTranslations('invoice')
   const tr = useTranslations('invoice.reminder')
   const tc = useTranslations('common')
-  const { isPro } = useSubscription()
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const [sending, setSending] = useState(false)

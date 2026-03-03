@@ -882,27 +882,14 @@ describe('client-matcher', () => {
   })
 
   describe('setClientMatch', () => {
-    it('logs the manual match', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-
-      await setClientMatch('Test Client Name', 'client-id-123')
-
-      expect(consoleSpy).toHaveBeenCalledWith('Manual match set: "Test Client Name" → client-id-123')
-      consoleSpy.mockRestore()
-    })
-
-    it('returns void', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {})
+    it('returns void (no-op stub for future cache)', async () => {
       const result = await setClientMatch('Name', 'id')
       expect(result).toBeUndefined()
-      vi.restoreAllMocks()
     })
 
     it('does not throw on any input', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {})
       await expect(setClientMatch('', '')).resolves.not.toThrow()
       await expect(setClientMatch('Very Long Name '.repeat(100), 'id')).resolves.not.toThrow()
-      vi.restoreAllMocks()
     })
   })
 })
