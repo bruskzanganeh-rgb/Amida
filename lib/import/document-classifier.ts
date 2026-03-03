@@ -9,7 +9,10 @@ const anthropic = new Anthropic({
 
 // Schema för utgiftsdata - flexibelt för att hantera ofullständiga PDFs
 const ExpenseDataSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
   supplier: z.string(),
   subtotal: z.number().nonnegative(),
   vatRate: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(25)]),
@@ -17,8 +20,16 @@ const ExpenseDataSchema = z.object({
   total: z.number().nonnegative(),
   currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']),
   category: z.enum([
-    'Resa', 'Mat', 'Hotell', 'Instrument', 'Noter',
-    'Utrustning', 'Kontorsmaterial', 'Telefon', 'Prenumeration', 'Övrigt'
+    'Resa',
+    'Mat',
+    'Hotell',
+    'Instrument',
+    'Noter',
+    'Utrustning',
+    'Kontorsmaterial',
+    'Telefon',
+    'Prenumeration',
+    'Övrigt',
   ]),
   notes: z.string().optional(),
 })
@@ -27,8 +38,14 @@ const ExpenseDataSchema = z.object({
 const InvoiceDataSchema = z.object({
   invoiceNumber: z.number().int(),
   clientName: z.string(),
-  invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  invoiceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
   subtotal: z.number().nonnegative(),
   vatRate: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(25)]),
   vatAmount: z.number().nonnegative(),
@@ -162,10 +179,7 @@ async function pdfPageToBase64(buffer: ArrayBuffer): Promise<string> {
 }
 
 // Klassificera med text (snabbare, använder Haiku utan vision)
-async function classifyWithText(
-  text: string,
-  originalFilename: string
-): Promise<ClassifiedDocument> {
+async function classifyWithText(text: string, originalFilename: string): Promise<ClassifiedDocument> {
   const model = 'claude-haiku-4-5-latest'
   const message = await anthropic.messages.create({
     model,
@@ -193,10 +207,7 @@ async function classifyWithText(
 }
 
 // Klassificera PDF-dokument (med automatisk Vision-fallback)
-export async function classifyPdfDocument(
-  buffer: ArrayBuffer,
-  originalFilename: string
-): Promise<ClassifiedDocument> {
+export async function classifyPdfDocument(buffer: ArrayBuffer, originalFilename: string): Promise<ClassifiedDocument> {
   // Skapa en kopia av buffern eftersom unpdf kan detacha den
   const bufferCopy = buffer.slice(0)
 
@@ -207,7 +218,7 @@ export async function classifyPdfDocument(
       return classifyWithText(text, originalFilename)
     }
   } catch {
-    console.log('Text extraction failed, falling back to vision')
+    // Text extraction failed — fall back to vision
   }
 
   // 2. Fallback: Rendera PDF som bild och använd Vision
@@ -215,9 +226,7 @@ export async function classifyPdfDocument(
     const imageBase64 = await pdfPageToBase64(bufferCopy)
     return classifyImageDocument(imageBase64, 'image/png', originalFilename)
   } catch (error) {
-    throw new Error(
-      `Kunde inte analysera PDF: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte analysera PDF: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
@@ -225,7 +234,7 @@ export async function classifyPdfDocument(
 export async function classifyImageDocument(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  originalFilename: string
+  originalFilename: string,
 ): Promise<ClassifiedDocument> {
   try {
     const model = 'claude-haiku-4-5-20251001'
@@ -266,17 +275,13 @@ export async function classifyImageDocument(
 
     return parseAIResponse(message)
   } catch (error) {
-    throw new Error(
-      `Kunde inte klassificera bild: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte klassificera bild: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
 // Parsa AI-svar
 function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
-  const responseText = message.content[0]?.type === 'text'
-    ? message.content[0].text
-    : null
+  const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
   if (!responseText) {
     throw new Error('Inget svar från Claude')
@@ -312,7 +317,7 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
         parsed.data.total = total
       } else if (total > 0) {
         // Bara total - beräkna subtotal och moms
-        const divisor = 1 + (vatRate / 100)
+        const divisor = 1 + vatRate / 100
         parsed.data.subtotal = Math.round((total / divisor) * 100) / 100
         parsed.data.vatAmount = Math.round((total - parsed.data.subtotal) * 100) / 100
         parsed.data.total = total

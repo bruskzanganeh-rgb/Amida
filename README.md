@@ -5,16 +5,17 @@ Ett komplett gig- och fakturahanteringssystem för musiker, byggt med Next.js oc
 ## Funktioner
 
 ### ✅ Klar funktionalitet
+
 - Grundläggande projekt-setup
 - Databas-schema definierat
 - UI-komponenter (shadcn/ui)
 - Navigation och layout
 
 ### 🚧 Under utveckling
+
 - Uppdragsgivare-register
 - Uppdragshantering med email-integration
 - PDF-fakturagenerering (Babalisk-design)
-- Dropbox-integration för import av historiska fakturor
 - Google Calendar-synkronisering
 - Statistik och rapporter
 
@@ -52,6 +53,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=din-anon-key
 5. Verifiera att alla tabeller skapades under **Table Editor**
 
 Du ska nu se följande tabeller:
+
 - `clients` - Uppdragsgivare
 - `contacts` - Kontaktpersoner
 - `gig_types` - Uppdragstyper (Konsert, Inspelning, Undervisning)
@@ -101,20 +103,27 @@ babalisk-manager/
 ## Databas-schema
 
 ### Uppdragsgivare (`clients`)
+
 Orkestrar, företag och organisationer som ger dig uppdrag.
 
 ### Kontaktpersoner (`contacts`)
+
 Flera kontaktpersoner per uppdragsgivare.
 
 ### Uppdragstyper (`gig_types`)
+
 Flexibla typer med olika momssatser:
+
 - Konsert (0% moms)
 - Inspelning (6% moms)
 - Undervisning (25% moms)
-+ Du kan skapa egna typer
+
+* Du kan skapa egna typer
 
 ### Uppdrag (`gigs`)
+
 Alla dina gigs med status-spårning:
+
 - `pending` - Väntar på svar
 - `accepted` - Tackat ja
 - `declined` - Tackat nej (sparas för statistik)
@@ -123,10 +132,12 @@ Alla dina gigs med status-spårning:
 - `paid` - Betalt
 
 ### Fakturor (`invoices`)
+
 Utgående fakturor med PDF-generering och email-utskick.
 
 ### Utgifter (`expenses`)
-Kvitton och kostnader, importerade från Dropbox.
+
+Kvitton och kostnader med AI-driven kvittoskanning.
 
 ## Nästa steg
 
@@ -134,8 +145,7 @@ Kvitton och kostnader, importerade från Dropbox.
 2. **Uppdragshantering** - Skapa och hantera gigs
 3. **Email-integration** - Forward uppdragsmail för automatisk registrering
 4. **PDF-fakturering** - Generera fakturor med Babalisk-design
-5. **Dropbox-import** - Importera alla fakturor från 2019
-6. **Statistik** - Visualisera inkomst över tid
+5. **Statistik** - Visualisera inkomst över tid
 
 ## Tech Stack
 
@@ -151,6 +161,7 @@ Kvitton och kostnader, importerade från Dropbox.
 ## Support
 
 Om du stöter på problem:
+
 1. Kontrollera att Supabase-credentials är korrekta i `.env.local`
 2. Verifiera att databas-schemat kördes utan fel
 3. Kolla browser console för felmeddelanden

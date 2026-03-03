@@ -32,6 +32,13 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.69.0",
+    "@capacitor/cli": "8.1.0",
+    "@capacitor/core": "8.1.0",
+    "@capacitor/haptics": "8.0.1",
+    "@capacitor/ios": "8.1.0",
+    "@capacitor/network": "8.0.1",
+    "@capacitor/splash-screen": "8.0.1",
+    "@capacitor/status-bar": "8.0.1",
     "@hookform/resolvers": "5.2.2",
     "@napi-rs/canvas": "0.1.88",
     "@radix-ui/react-alert-dialog": "1.1.15",
@@ -80,6 +87,7 @@
     "zod": "4.1.12"
   },
   "devDependencies": {
+    "@capacitor/assets": "3.0.5",
     "@playwright/test": "1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

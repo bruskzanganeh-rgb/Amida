@@ -50,8 +50,7 @@ export function TeamSettings() {
         .eq('user_id', user.id)
         .single()
         .then(({ data }) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (data) setShowOnlyMyData((data as any).show_only_my_data ?? false)
+          if (data) setShowOnlyMyData(data.show_only_my_data ?? false)
         })
     })
   }, [supabase])
@@ -107,8 +106,7 @@ export function TeamSettings() {
     if (!user) return
     const { error } = await supabase
       .from('company_settings')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ show_only_my_data: newValue } as any)
+      .update({ show_only_my_data: newValue })
       .eq('user_id', user.id)
     if (error) {
       setShowOnlyMyData(!newValue)

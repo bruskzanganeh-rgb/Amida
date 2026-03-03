@@ -31,14 +31,13 @@ export async function GET() {
     .eq('company_id', membership.company_id)
     .order('joined_at')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const members = (rawMembers || []) as any[]
+  const members = rawMembers || []
   if (members.length === 0) {
     return NextResponse.json({ members: [] })
   }
 
   // Fetch auth emails using admin client
-  const userIds = members.map((m: { user_id: string }) => m.user_id)
+  const userIds = members.map((m) => m.user_id)
   const emailMap = new Map<string, string>()
 
   try {

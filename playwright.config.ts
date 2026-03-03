@@ -113,6 +113,17 @@ export default defineConfig({
       },
     },
 
+    // Admin API tests (owner, desktop) — admin endpoints
+    {
+      name: 'admin',
+      testMatch: /admin-api\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        viewport: { width: 1440, height: 900 },
+        storageState: 'tests/.auth/state.json',
+      },
+    },
+
     // CRUD tests (owner, desktop) — gigs, clients, invoices, expenses, config
     {
       name: 'crud',

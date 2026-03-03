@@ -56,8 +56,11 @@ export function MiniCalendar({ className }: MiniCalendarProps) {
         .lte('date', end)
 
       if (data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const filtered = (data as any[])
+        type GigDateRow = {
+          date: string
+          gig: { status: string; user_id: string; project_name: string; client: { name: string } | null } | null
+        }
+        const filtered = (data as unknown as GigDateRow[])
           .filter((d) => {
             if (!d.gig) return false
             if (d.gig.status === 'cancelled' || d.gig.status === 'declined') return false
@@ -66,8 +69,8 @@ export function MiniCalendar({ className }: MiniCalendarProps) {
           })
           .map((d) => ({
             date: d.date,
-            status: d.gig.status,
-            label: d.gig.project_name || d.gig.client?.name || '',
+            status: d.gig!.status,
+            label: d.gig!.project_name || d.gig!.client?.name || '',
           }))
         setDayGigs(filtered)
       }

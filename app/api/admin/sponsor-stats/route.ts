@@ -43,8 +43,8 @@ export async function GET() {
   }
 
   // 4. Get all active sponsors
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sponsors } = await (supabase.from('sponsors') as any)
+  const { data: sponsors } = await supabase
+    .from('sponsors')
     .select('id, name, instrument_category_id, target_country, target_cities')
     .eq('active', true)
 

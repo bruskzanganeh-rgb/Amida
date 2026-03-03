@@ -254,11 +254,7 @@ export type Database = {
           smtp_password: string | null
           smtp_from_email: string | null
           smtp_from_name: string | null
-          dropbox_access_token: string | null
-          dropbox_refresh_token: string | null
-          dropbox_token_expires_at: string | null
-          dropbox_account_id: string | null
-          dropbox_connected_at: string | null
+
           gig_visibility: string
           created_at: string | null
           updated_at: string | null
@@ -294,11 +290,7 @@ export type Database = {
           smtp_password?: string | null
           smtp_from_email?: string | null
           smtp_from_name?: string | null
-          dropbox_access_token?: string | null
-          dropbox_refresh_token?: string | null
-          dropbox_token_expires_at?: string | null
-          dropbox_account_id?: string | null
-          dropbox_connected_at?: string | null
+
           gig_visibility?: string
           created_at?: string | null
           updated_at?: string | null
@@ -334,11 +326,7 @@ export type Database = {
           smtp_password?: string | null
           smtp_from_email?: string | null
           smtp_from_name?: string | null
-          dropbox_access_token?: string | null
-          dropbox_refresh_token?: string | null
-          dropbox_token_expires_at?: string | null
-          dropbox_account_id?: string | null
-          dropbox_connected_at?: string | null
+
           gig_visibility?: string
           created_at?: string | null
           updated_at?: string | null
@@ -430,11 +418,7 @@ export type Database = {
           email_inbound_address: string | null
           created_at: string | null
           updated_at: string | null
-          dropbox_access_token: string | null
-          dropbox_refresh_token: string | null
-          dropbox_token_expires_at: string | null
-          dropbox_account_id: string | null
-          dropbox_connected_at: string | null
+
           vat_registration_number: string | null
           late_payment_interest_text: string | null
           show_logo_on_invoice: boolean | null
@@ -454,6 +438,8 @@ export type Database = {
           calendar_token: string | null
           calendar_show_all_members: boolean | null
           instruments_text: string | null
+          show_only_my_data: boolean | null
+          timezone: string | null
         }
         Insert: {
           id?: string
@@ -470,11 +456,7 @@ export type Database = {
           email_inbound_address?: string | null
           created_at?: string | null
           updated_at?: string | null
-          dropbox_access_token?: string | null
-          dropbox_refresh_token?: string | null
-          dropbox_token_expires_at?: string | null
-          dropbox_account_id?: string | null
-          dropbox_connected_at?: string | null
+
           vat_registration_number?: string | null
           late_payment_interest_text?: string | null
           show_logo_on_invoice?: boolean | null
@@ -494,6 +476,8 @@ export type Database = {
           calendar_token?: string | null
           calendar_show_all_members?: boolean | null
           instruments_text?: string | null
+          show_only_my_data?: boolean | null
+          timezone?: string | null
         }
         Update: {
           id?: string
@@ -510,11 +494,7 @@ export type Database = {
           email_inbound_address?: string | null
           created_at?: string | null
           updated_at?: string | null
-          dropbox_access_token?: string | null
-          dropbox_refresh_token?: string | null
-          dropbox_token_expires_at?: string | null
-          dropbox_account_id?: string | null
-          dropbox_connected_at?: string | null
+
           vat_registration_number?: string | null
           late_payment_interest_text?: string | null
           show_logo_on_invoice?: boolean | null
@@ -534,6 +514,8 @@ export type Database = {
           calendar_token?: string | null
           calendar_show_all_members?: boolean | null
           instruments_text?: string | null
+          show_only_my_data?: boolean | null
+          timezone?: string | null
         }
         Relationships: []
       }
@@ -765,8 +747,7 @@ export type Database = {
           currency: string | null
           amount_base: number | null
           attachment_url: string | null
-          dropbox_synced: boolean | null
-          dropbox_path: string | null
+
           subtotal: number | null
           vat_rate: number | null
           vat_amount: number | null
@@ -788,8 +769,7 @@ export type Database = {
           currency?: string | null
           amount_base?: number | null
           attachment_url?: string | null
-          dropbox_synced?: boolean | null
-          dropbox_path?: string | null
+
           subtotal?: number | null
           vat_rate?: number | null
           vat_amount?: number | null
@@ -811,8 +791,7 @@ export type Database = {
           currency?: string | null
           amount_base?: number | null
           attachment_url?: string | null
-          dropbox_synced?: boolean | null
-          dropbox_path?: string | null
+
           subtotal?: number | null
           vat_rate?: number | null
           vat_amount?: number | null
@@ -1033,6 +1012,7 @@ export type Database = {
           slug: string
           sort_order: number
           created_at: string | null
+          name_en: string | null
         }
         Insert: {
           id?: string
@@ -1040,6 +1020,7 @@ export type Database = {
           slug: string
           sort_order: number
           created_at?: string | null
+          name_en?: string | null
         }
         Update: {
           id?: string
@@ -1047,6 +1028,7 @@ export type Database = {
           slug?: string
           sort_order?: number
           created_at?: string | null
+          name_en?: string | null
         }
         Relationships: []
       }
@@ -1437,6 +1419,8 @@ export type Database = {
           priority: number | null
           display_prefix: string | null
           target_city: string | null
+          target_country: string | null
+          target_cities: string[] | null
           created_at: string | null
           updated_at: string | null
         }
@@ -1451,6 +1435,8 @@ export type Database = {
           priority?: number | null
           display_prefix?: string | null
           target_city?: string | null
+          target_country?: string | null
+          target_cities?: string[] | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -1465,6 +1451,8 @@ export type Database = {
           priority?: number | null
           display_prefix?: string | null
           target_city?: string | null
+          target_country?: string | null
+          target_cities?: string[] | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -1487,6 +1475,9 @@ export type Database = {
           company_id: string | null
           pending_plan: string | null
           admin_override: boolean | null
+          payment_provider: string
+          apple_product_id: string | null
+          apple_transaction_id: string | null
         }
         Insert: {
           id?: string
@@ -1504,6 +1495,9 @@ export type Database = {
           company_id?: string | null
           pending_plan?: string | null
           admin_override?: boolean | null
+          payment_provider?: string
+          apple_product_id?: string | null
+          apple_transaction_id?: string | null
         }
         Update: {
           id?: string
@@ -1521,6 +1515,9 @@ export type Database = {
           company_id?: string | null
           pending_plan?: string | null
           admin_override?: boolean | null
+          payment_provider?: string
+          apple_product_id?: string | null
+          apple_transaction_id?: string | null
         }
         Relationships: []
       }

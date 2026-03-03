@@ -110,7 +110,6 @@ export async function POST(request: NextRequest) {
         notes,
         attachment_url: attachmentUrl,
         file_size: fileSize,
-        dropbox_synced: false,
         gig_id: gigId,
         user_id: user.id,
       })

@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token and get locale + timezone
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: settings } = await (supabase.from('company_settings') as any)
+    const { data: settings } = await supabase
+      .from('company_settings')
       .select('calendar_token, locale, timezone')
       .eq('user_id', userId)
       .single()

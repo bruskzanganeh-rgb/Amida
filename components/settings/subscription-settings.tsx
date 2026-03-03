@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { useCompany } from '@/lib/hooks/use-company'
+import { isNative } from '@/lib/capacitor'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, ArrowDown, Check, Crown, HardDrive, Info, Loader2, Users } from 'lucide-react'
+import { AlertTriangle, ArrowDown, Check, Crown, HardDrive, Info, Loader2, RefreshCw, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export function SubscriptionSettings() {
@@ -25,6 +27,7 @@ export function SubscriptionSettings() {
   const [changingPlan, setChangingPlan] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [reactivating, setReactivating] = useState(false)
+  const [restoring, setRestoring] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -126,6 +129,57 @@ export function SubscriptionSettings() {
     } finally {
       setCancelling(false)
       setShowCancelConfirm(false)
+    }
+  }
+
+  /**
+   * Apple In-App Purchase handler for native iOS app.
+   * Uses StoreKit via Capacitor plugin to initiate purchase,
+   * then validates the receipt server-side.
+   */
+  async function handleAppleIAP(productId: string) {
+    setUpgrading(true)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { Purchases } = (await import('@capawesome-team/capacitor-purchases')) as any
+
+      const { transactionId } = await Purchases.purchase({ productId })
+
+      // Validate with our server
+      const res = await fetch('/api/iap/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId, productId }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Validation failed')
+
+      toast.success(t('upgradeSuccess'))
+      refresh()
+    } catch (err: unknown) {
+      // User cancelled purchase — not an error
+      if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'USER_CANCELLED') {
+        setUpgrading(false)
+        return
+      }
+      toast.error(err instanceof Error ? err.message : tToast('checkoutError'))
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
+  async function handleRestorePurchases() {
+    setRestoring(true)
+    try {
+      const { Purchases } = await import('@capawesome-team/capacitor-purchases')
+      await Purchases.restorePurchases()
+      toast.success(t('restoreSuccess'))
+      refresh()
+    } catch {
+      toast.error(t('restoreError'))
+    } finally {
+      setRestoring(false)
     }
   }
 
@@ -325,8 +379,8 @@ export function SubscriptionSettings() {
         onConfirm={handleCancel}
       />
 
-      {/* Pro upgrade cards (shown when not Pro, only if price IDs are configured) */}
-      {!isPro && process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID && (
+      {/* Pro upgrade cards (shown when not Pro) */}
+      {!isPro && (isNative() || process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID) && (
         <div className="grid md:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-3">
@@ -346,7 +400,11 @@ export function SubscriptionSettings() {
                 ))}
               </ul>
               <Button
-                onClick={() => handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID || '', 'pro')}
+                onClick={() =>
+                  isNative()
+                    ? handleAppleIAP('amida_pro_monthly')
+                    : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID || '', 'pro')
+                }
                 disabled={upgrading}
                 className="w-full"
                 variant="outline"
@@ -378,7 +436,11 @@ export function SubscriptionSettings() {
                 ))}
               </ul>
               <Button
-                onClick={() => handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID || '', 'pro')}
+                onClick={() =>
+                  isNative()
+                    ? handleAppleIAP('amida_pro_yearly')
+                    : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID || '', 'pro')
+                }
                 disabled={upgrading}
                 className="w-full"
               >
@@ -417,9 +479,11 @@ export function SubscriptionSettings() {
                 </ul>
                 <Button
                   onClick={() =>
-                    subscription?.stripe_subscription_id
-                      ? handleChangePlan('team', 'monthly')
-                      : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_TEAM_MONTHLY_PRICE_ID || '', 'team')
+                    isNative()
+                      ? handleAppleIAP('amida_team_monthly')
+                      : subscription?.stripe_subscription_id
+                        ? handleChangePlan('team', 'monthly')
+                        : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_TEAM_MONTHLY_PRICE_ID || '', 'team')
                   }
                   disabled={upgrading || changingPlan}
                   className="w-full"
@@ -456,9 +520,11 @@ export function SubscriptionSettings() {
                 </ul>
                 <Button
                   onClick={() =>
-                    subscription?.stripe_subscription_id
-                      ? handleChangePlan('team', 'yearly')
-                      : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_TEAM_YEARLY_PRICE_ID || '', 'team')
+                    isNative()
+                      ? handleAppleIAP('amida_team_yearly')
+                      : subscription?.stripe_subscription_id
+                        ? handleChangePlan('team', 'yearly')
+                        : handleUpgrade(process.env.NEXT_PUBLIC_STRIPE_TEAM_YEARLY_PRICE_ID || '', 'team')
                   }
                   disabled={upgrading || changingPlan}
                   className="w-full"
@@ -468,6 +534,30 @@ export function SubscriptionSettings() {
                 </Button>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Purchases + Terms (native app only) */}
+      {isNative() && (
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={handleRestorePurchases}
+            disabled={restoring}
+          >
+            {restoring ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+            Restore Purchases
+          </Button>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <Link href="/terms" className="underline hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/privacy" className="underline hover:text-foreground">
+              Privacy
+            </Link>
           </div>
         </div>
       )}

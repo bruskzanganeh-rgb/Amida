@@ -123,14 +123,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           supabase.from('expenses').select('id, supplier, category, amount').ilike('category', searchPattern).limit(5),
         ])
 
-      // Merge and deduplicate gig results
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      const allGigs = [
-        ...((gigByName.data as any) || []),
-        ...((gigByVenue.data as any) || []),
-        ...((gigByClient.data as any) || []),
+      // Merge and deduplicate gig results (join queries lack type inference due to missing Relationships in generated types)
+      const allGigs: GigResult[] = [
+        ...((gigByName.data as unknown as GigResult[]) ?? []),
+        ...((gigByVenue.data as unknown as GigResult[]) ?? []),
+        ...((gigByClient.data as unknown as GigResult[]) ?? []),
       ]
-      /* eslint-enable @typescript-eslint/no-explicit-any */
       const gigSeen = new Set<string>()
       const uniqueGigs = allGigs
         .filter((g: GigResult) => {
@@ -141,8 +139,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         .slice(0, 5)
 
       // Merge and deduplicate invoice results
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allInvoices = [...((invoiceByNum.data as any) || []), ...((invoiceByClient.data as any) || [])]
+      const allInvoices: InvoiceResult[] = [
+        ...((invoiceByNum.data as unknown as InvoiceResult[]) ?? []),
+        ...((invoiceByClient.data as unknown as InvoiceResult[]) ?? []),
+      ]
       const invSeen = new Set<string>()
       const uniqueInvoices = allInvoices
         .filter((inv: InvoiceResult) => {

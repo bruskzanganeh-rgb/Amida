@@ -58,8 +58,7 @@ function ensureLoaded() {
 
     const { data } = await supabase.from('company_settings').select('show_only_my_data').eq('user_id', user.id).single()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _showOnlyMine = (data as any)?.show_only_my_data ?? false
+    _showOnlyMine = data?.show_only_my_data ?? false
     _loaded = true
     notify()
   })()
@@ -77,11 +76,7 @@ async function toggleShowOnlyMine() {
   } = await supabase.auth.getUser()
   if (!user) return
 
-  await supabase
-    .from('company_settings')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ show_only_my_data: newValue } as any)
-    .eq('user_id', user.id)
+  await supabase.from('company_settings').update({ show_only_my_data: newValue }).eq('user_id', user.id)
 }
 
 // ── Hook ──

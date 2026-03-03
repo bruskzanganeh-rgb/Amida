@@ -195,11 +195,9 @@ export default function AdminPage() {
       .select('id, name, slug, sort_order, instruments(count)')
       .order('sort_order')
     if (cats) {
-      // Fetch name_en separately (column not in generated Supabase types yet)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: enData } = await (supabase.from('instrument_categories') as any).select('id, name_en')
+      const { data: enData } = await supabase.from('instrument_categories').select('id, name_en')
       const enMap = new Map<string, string | null>()
-      if (enData) for (const r of enData as { id: string; name_en: string | null }[]) enMap.set(r.id, r.name_en)
+      if (enData) for (const r of enData) enMap.set(r.id, r.name_en)
       setCategories(
         cats.map((c) => ({
           id: c.id,
@@ -227,13 +225,10 @@ export default function AdminPage() {
       )
       .order('priority', { ascending: false })
     if (sponsorData) {
-      // Fetch geo columns not in generated types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: geoData } = await (supabase.from('sponsors') as any).select('id, target_country, target_cities')
+      const { data: geoData } = await supabase.from('sponsors').select('id, target_country, target_cities')
       const geoMap = new Map<string, { target_country: string | null; target_cities: string[] | null }>()
       if (geoData)
-        for (const g of geoData as { id: string; target_country: string | null; target_cities: string[] | null }[])
-          geoMap.set(g.id, g)
+        for (const g of geoData) geoMap.set(g.id, { target_country: g.target_country, target_cities: g.target_cities })
       setSponsors(
         sponsorData.map((s) => ({
           id: s.id,

@@ -164,8 +164,8 @@ export default function SettingsPage() {
       setLoading(true)
 
       // Load personal prefs from company_settings
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: personalSettings, error: psError } = await (supabase.from('company_settings') as any)
+      const { data: personalSettings, error: psError } = await supabase
+        .from('company_settings')
         .select('id, locale, calendar_token, instruments_text, timezone')
         .limit(1)
         .single()

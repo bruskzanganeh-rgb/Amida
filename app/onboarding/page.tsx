@@ -166,10 +166,9 @@ export default function OnboardingPage() {
       .select('id, name, sort_order')
       .order('sort_order')
     if (cats) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: enData } = await (supabase.from('instrument_categories') as any).select('id, name_en')
+      const { data: enData } = await supabase.from('instrument_categories').select('id, name_en')
       const enMap = new Map<string, string | null>()
-      if (enData) for (const r of enData as { id: string; name_en: string | null }[]) enMap.set(r.id, r.name_en)
+      if (enData) for (const r of enData) enMap.set(r.id, r.name_en)
       setAllCategories(cats.map((c) => ({ ...c, name_en: enMap.get(c.id) || null })))
     }
 

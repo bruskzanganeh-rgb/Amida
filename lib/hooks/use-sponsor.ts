@@ -100,8 +100,8 @@ function ensureLoaded() {
       return
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: sponsors } = await (supabase.from('sponsors') as any)
+    const { data: sponsors } = await supabase
+      .from('sponsors')
       .select('id, name, logo_url, display_prefix, website_url, target_city, target_country, target_cities')
       .in('instrument_category_id', categoryIds)
       .eq('active', true)

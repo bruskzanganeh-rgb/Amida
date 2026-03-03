@@ -13,6 +13,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { AuthHashHandler } from '@/components/auth-hash-handler'
 import { BottomNav } from '@/components/navigation/bottom-nav'
 import { SwRegister } from '@/components/sw-register'
+import { NativeInit } from '@/components/native-init'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -99,6 +100,7 @@ export default async function RootLayout({
           </ThemeProvider>
         </NextIntlClientProvider>
         <SwRegister />
+        <NativeInit />
         <Analytics />
         <SpeedInsights />
       </body>

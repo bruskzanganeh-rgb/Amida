@@ -66,8 +66,19 @@ export function WeekView({ className }: WeekViewProps) {
       .lte('date', endStr)
 
     if (data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const filtered = (data as any[])
+      type GigDateRow = {
+        date: string
+        sessions: { start: string; end?: string; label?: string }[] | null
+        gig: {
+          id: string
+          status: string
+          user_id: string
+          project_name: string
+          client: { name: string } | null
+          gig_type: { name: string; color: string } | null
+        } | null
+      }
+      const filtered = (data as unknown as GigDateRow[])
         .filter((d) => {
           if (!d.gig) return false
           if (d.gig.status === 'cancelled' || d.gig.status === 'declined') return false
@@ -75,15 +86,14 @@ export function WeekView({ className }: WeekViewProps) {
           return true
         })
         .map((d) => {
-          const sessions = d.sessions as { start: string; end?: string; label?: string }[] | null
-          const firstSession = sessions?.[0]
+          const firstSession = d.sessions?.[0]
           return {
             date: d.date,
-            status: d.gig.status,
-            label: d.gig.project_name || d.gig.client?.name || '',
+            status: d.gig!.status,
+            label: d.gig!.project_name || d.gig!.client?.name || '',
             time: firstSession?.start || null,
-            gigId: d.gig.id,
-            gigTypeColor: d.gig.gig_type?.color || null,
+            gigId: d.gig!.id,
+            gigTypeColor: d.gig!.gig_type?.color || null,
           }
         })
       setWeekGigs(filtered)

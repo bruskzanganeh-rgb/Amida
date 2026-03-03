@@ -28,21 +28,44 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-white">1. Data Controller</h2>
             <p>
-              Babalisk AB is responsible for the processing of your personal data in connection with
-              the service Amida (amida.babalisk.com). Contact us with any questions:
+              Babalisk AB is responsible for the processing of your personal data in connection with the service Amida
+              (amida.babalisk.com). Contact us with any questions:
             </p>
-            <p>Email: <a href="mailto:support@babalisk.com" className="text-[#F59E0B] hover:underline">support@babalisk.com</a></p>
+            <p>
+              Email:{' '}
+              <a href="mailto:support@babalisk.com" className="text-[#F59E0B] hover:underline">
+                support@babalisk.com
+              </a>
+            </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white">2. Data We Collect</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong className="text-white">Account information</strong> — email address and password (encrypted) upon registration.</li>
-              <li><strong className="text-white">Company information</strong> — company name, registration number, address, and bank details that you enter in settings.</li>
-              <li><strong className="text-white">Gigs and invoices</strong> — dates, fees, client names, and invoice data that you create in the service.</li>
-              <li><strong className="text-white">Receipts and attachments</strong> — images you upload for receipt scanning or as attachments to gigs.</li>
-              <li><strong className="text-white">Payment information</strong> — handled by Stripe. We do not store card numbers.</li>
-              <li><strong className="text-white">Technical data</strong> — IP address, browser type, and device information for security and performance.</li>
+              <li>
+                <strong className="text-white">Account information</strong> — email address and password (encrypted)
+                upon registration.
+              </li>
+              <li>
+                <strong className="text-white">Company information</strong> — company name, registration number,
+                address, and bank details that you enter in settings.
+              </li>
+              <li>
+                <strong className="text-white">Gigs and invoices</strong> — dates, fees, client names, and invoice data
+                that you create in the service.
+              </li>
+              <li>
+                <strong className="text-white">Receipts and attachments</strong> — images you upload for receipt
+                scanning or as attachments to gigs.
+              </li>
+              <li>
+                <strong className="text-white">Payment information</strong> — handled by Stripe (web) or Apple In-App
+                Purchase (iOS app). We do not store card numbers.
+              </li>
+              <li>
+                <strong className="text-white">Technical data</strong> — IP address, browser type, and device
+                information for security and performance.
+              </li>
             </ul>
           </section>
 
@@ -61,20 +84,34 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-white">4. Third Parties</h2>
             <p>We share data with the following services, all with adequate safeguards:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong className="text-white">Supabase</strong> (EU) — database and authentication.</li>
-              <li><strong className="text-white">Stripe</strong> (USA, EU SCC) — payment processing.</li>
-              <li><strong className="text-white">Resend</strong> (USA, EU SCC) — email delivery of invoices.</li>
-              <li><strong className="text-white">Anthropic</strong> (USA, EU SCC) — AI analysis of receipts. Image data is not used for model training.</li>
-              <li><strong className="text-white">Vercel</strong> (USA, EU SCC) — hosting and CDN.</li>
+              <li>
+                <strong className="text-white">Supabase</strong> (EU) — database and authentication.
+              </li>
+              <li>
+                <strong className="text-white">Stripe</strong> (USA, EU SCC) — payment processing (web).
+              </li>
+              <li>
+                <strong className="text-white">Apple</strong> (USA, EU SCC) — in-app purchase processing (iOS app).
+              </li>
+              <li>
+                <strong className="text-white">Resend</strong> (USA, EU SCC) — email delivery of invoices.
+              </li>
+              <li>
+                <strong className="text-white">Anthropic</strong> (USA, EU SCC) — AI analysis of receipts. Image data is
+                not used for model training.
+              </li>
+              <li>
+                <strong className="text-white">Vercel</strong> (USA, EU SCC) — hosting and CDN.
+              </li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white">5. Storage and Deletion</h2>
             <p>
-              Your data is stored as long as you have an active account. If you delete your account,
-              we will remove all personal data within 30 days, except for data we are required to
-              retain under accounting regulations (7 years for invoice data).
+              Your data is stored as long as you have an active account. If you delete your account, we will remove all
+              personal data within 30 days, except for data we are required to retain under accounting regulations (7
+              years for invoice data).
             </p>
           </section>
 
@@ -82,31 +119,49 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-white">6. Your Rights (GDPR)</h2>
             <p>You have the right to:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong className="text-white">Access</strong> your personal data.</li>
-              <li><strong className="text-white">Rectify</strong> inaccurate data.</li>
-              <li><strong className="text-white">Erase</strong> your data (&quot;right to be forgotten&quot;).</li>
-              <li><strong className="text-white">Export</strong> your data in a machine-readable format.</li>
-              <li><strong className="text-white">Object</strong> to processing based on legitimate interest.</li>
-              <li><strong className="text-white">Lodge a complaint</strong> with the Swedish Authority for Privacy Protection (IMY).</li>
+              <li>
+                <strong className="text-white">Access</strong> your personal data.
+              </li>
+              <li>
+                <strong className="text-white">Rectify</strong> inaccurate data.
+              </li>
+              <li>
+                <strong className="text-white">Erase</strong> your data (&quot;right to be forgotten&quot;).
+              </li>
+              <li>
+                <strong className="text-white">Export</strong> your data in a machine-readable format.
+              </li>
+              <li>
+                <strong className="text-white">Object</strong> to processing based on legitimate interest.
+              </li>
+              <li>
+                <strong className="text-white">Lodge a complaint</strong> with the Swedish Authority for Privacy
+                Protection (IMY).
+              </li>
             </ul>
-            <p>Contact <a href="mailto:support@babalisk.com" className="text-[#F59E0B] hover:underline">support@babalisk.com</a> to exercise your rights.</p>
+            <p>
+              Contact{' '}
+              <a href="mailto:support@babalisk.com" className="text-[#F59E0B] hover:underline">
+                support@babalisk.com
+              </a>{' '}
+              to exercise your rights.
+            </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white">7. Cookies</h2>
             <p>
-              Amida only uses essential cookies for authentication (Supabase session cookies)
-              and language preferences. We do not use tracking cookies or third-party cookies for advertising.
-              Vercel Analytics collects anonymized performance data without cookies.
+              Amida only uses essential cookies for authentication (Supabase session cookies) and language preferences.
+              We do not use tracking cookies or third-party cookies for advertising. Vercel Analytics collects
+              anonymized performance data without cookies.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white">8. Changes</h2>
             <p>
-              We may update this policy. Material changes will be communicated via email or
-              within the service. Continued use after changes constitutes acceptance of the
-              updated policy.
+              We may update this policy. Material changes will be communicated via email or within the service.
+              Continued use after changes constitutes acceptance of the updated policy.
             </p>
           </section>
         </div>
@@ -119,7 +174,9 @@ export default function PrivacyPage() {
             <span>Amida</span>
           </Link>
           <div className="flex gap-4">
-            <Link href="/terms" className="hover:text-[#C7D2FE]">Terms of Service</Link>
+            <Link href="/terms" className="hover:text-[#C7D2FE]">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </footer>
