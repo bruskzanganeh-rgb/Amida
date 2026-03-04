@@ -119,13 +119,6 @@ export default function SettingsPage() {
   const defaultTab = searchParams.get('tab') || (searchParams.get('upgrade') ? 'subscription' : 'company')
   const [activeTab, setActiveTab] = useState(defaultTab)
 
-  // Get user ID for calendar URL
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
-    })
-  }, [supabase.auth])
-
   // Generate calendar URLs with user parameter and auth token
   const calendarToken = settings?.calendar_token || ''
   const calendarBaseUrl =
@@ -163,6 +156,16 @@ export default function SettingsPage() {
     async function loadSettings() {
       setLoading(true)
 
+      // Get current user first
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+      setUserId(user.id)
+
       // Load personal prefs from company_settings
       const { data: personalSettings, error: psError } = await supabase
         .from('company_settings')
@@ -180,7 +183,7 @@ export default function SettingsPage() {
       const { data: membership } = await supabase
         .from('company_members')
         .select('company_id, full_name')
-        .limit(1)
+        .eq('user_id', user.id)
         .single()
       if (membership?.full_name) setFullName(membership.full_name)
 
