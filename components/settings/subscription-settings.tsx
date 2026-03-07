@@ -9,7 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, ArrowDown, Check, Crown, HardDrive, Info, Loader2, RefreshCw, Users } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowDown,
+  Check,
+  Crown,
+  ExternalLink,
+  HardDrive,
+  Info,
+  Loader2,
+  RefreshCw,
+  Users,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -23,6 +34,7 @@ export function SubscriptionSettings() {
   const { subscription, usage, isPro, isTeam, limits, loading, refresh, syncWithStripe, storageQuota, tierConfig } =
     useSubscription()
   const { isOwner } = useCompany()
+  const isAppleSubscriber = subscription?.payment_provider === 'apple'
   const [upgrading, setUpgrading] = useState(false)
   const [changingPlan, setChangingPlan] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -134,16 +146,16 @@ export function SubscriptionSettings() {
 
   /**
    * Apple In-App Purchase handler for native iOS app.
-   * Uses StoreKit via Capacitor plugin to initiate purchase,
-   * then validates the receipt server-side.
+   * Uses @capgo/native-purchases (thin StoreKit 2 wrapper).
    */
   async function handleAppleIAP(productId: string) {
     setUpgrading(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { Purchases } = (await import('@capawesome-team/capacitor-purchases')) as any
+      const { NativePurchases } = await import('@capgo/native-purchases')
 
-      const { transactionId } = await Purchases.purchase({ productId })
+      const { transactionId } = await NativePurchases.purchaseProduct({
+        productIdentifier: productId,
+      })
 
       // Validate with our server
       const res = await fetch('/api/iap/validate', {
@@ -159,7 +171,7 @@ export function SubscriptionSettings() {
       refresh()
     } catch (err: unknown) {
       // User cancelled purchase — not an error
-      if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'USER_CANCELLED') {
+      if (err && typeof err === 'object' && 'message' in err && /cancel/i.test(String((err as Error).message))) {
         setUpgrading(false)
         return
       }
@@ -172,8 +184,8 @@ export function SubscriptionSettings() {
   async function handleRestorePurchases() {
     setRestoring(true)
     try {
-      const { Purchases } = await import('@capawesome-team/capacitor-purchases')
-      await Purchases.restorePurchases()
+      const { NativePurchases } = await import('@capgo/native-purchases')
+      await NativePurchases.restorePurchases()
       toast.success(t('restoreSuccess'))
       refresh()
     } catch {
@@ -257,24 +269,47 @@ export function SubscriptionSettings() {
               {subscription?.cancel_at_period_end && (
                 <div className="mt-2">
                   <p className="text-xs text-amber-600 dark:text-amber-400">{t('cancelledActiveUntil')}</p>
-                  <Button onClick={handleReactivate} size="sm" className="mt-2" disabled={reactivating}>
-                    {reactivating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
-                    {t('reactivate')}
-                  </Button>
+                  {isAppleSubscriber ? (
+                    <Button
+                      onClick={() => window.open('https://apps.apple.com/account/subscriptions', '_blank')}
+                      size="sm"
+                      className="mt-2"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-2" />
+                      {t('manageInAppStore')}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleReactivate} size="sm" className="mt-2" disabled={reactivating}>
+                      {reactivating ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
+                      {t('reactivate')}
+                    </Button>
+                  )}
                 </div>
               )}
               {!subscription?.cancel_at_period_end && (
                 <div className="mt-4 pt-4 border-t">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => setShowCancelConfirm(true)}
-                    disabled={cancelling}
-                  >
-                    {cancelling ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
-                    {t('cancelSubscription')}
-                  </Button>
+                  {isAppleSubscriber ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground"
+                      onClick={() => window.open('https://apps.apple.com/account/subscriptions', '_blank')}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-2" />
+                      {t('manageInAppStore')}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setShowCancelConfirm(true)}
+                      disabled={cancelling}
+                    >
+                      {cancelling ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
+                      {t('cancelSubscription')}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -562,8 +597,8 @@ export function SubscriptionSettings() {
         </div>
       )}
 
-      {/* Downgrade to Pro (shown to Team users) */}
-      {isTeam && !subscription?.pending_plan && (
+      {/* Downgrade to Pro (shown to Team users, Stripe only — Apple manages downgrades in iOS Settings) */}
+      {isTeam && !subscription?.pending_plan && !isAppleSubscriber && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">

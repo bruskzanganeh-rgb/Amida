@@ -914,6 +914,7 @@
     "limitReached": "Du har nått gränsen för din gratisplan.",
     "upgradeForMore": "Uppgradera till Pro för obegränsad åtkomst.",
     "cancelSubscription": "Avbryt prenumeration",
+    "manageInAppStore": "Hantera i App Store",
     "cancelConfirmTitle": "Avbryt prenumeration?",
     "cancelConfirmDesc": "Din Pro-access fortsätter till periodens slut. Därefter nedgraderas du till gratisplanen.",
     "cancelling": "Avslutar...",

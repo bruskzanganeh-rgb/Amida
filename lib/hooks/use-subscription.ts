@@ -13,6 +13,7 @@ type Subscription = {
   cancel_at_period_end: boolean | null
   pending_plan: string | null
   admin_override: boolean | null
+  payment_provider: string | null
 }
 
 type Usage = {

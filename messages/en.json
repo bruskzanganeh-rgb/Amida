@@ -914,6 +914,7 @@
     "limitReached": "You've reached the limit of your free plan.",
     "upgradeForMore": "Upgrade to Pro for unlimited access.",
     "cancelSubscription": "Cancel subscription",
+    "manageInAppStore": "Manage in App Store",
     "cancelConfirmTitle": "Cancel subscription?",
     "cancelConfirmDesc": "Your Pro access continues until the end of the current period. After that, you'll be downgraded to the free plan.",
     "cancelling": "Cancelling...",

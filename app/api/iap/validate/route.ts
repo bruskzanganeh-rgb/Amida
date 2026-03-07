@@ -41,26 +41,32 @@ export async function POST(request: Request) {
     }
 
     // Validate the transaction with Apple's App Store Server API v2
-    const isValid = await verifyWithApple(transactionId)
-    if (!isValid) {
+    const txnInfo = await verifyWithApple(transactionId)
+    if (!txnInfo) {
       return NextResponse.json({ error: 'Invalid transaction' }, { status: 400 })
     }
 
     // Update subscription using admin client (bypasses RLS for server-side updates)
     const admin = createAdminClient()
 
-    await admin
-      .from('subscriptions')
-      .update({
-        plan,
-        status: 'active',
-        payment_provider: 'apple',
-        apple_product_id: productId,
-        apple_transaction_id: transactionId,
-        cancel_at_period_end: false,
-        admin_override: false,
-      })
-      .eq('user_id', user.id)
+    const update: Record<string, unknown> = {
+      plan,
+      status: 'active',
+      payment_provider: 'apple',
+      apple_product_id: productId,
+      apple_transaction_id: transactionId,
+      cancel_at_period_end: false,
+      pending_plan: null,
+      admin_override: false,
+      current_period_start: new Date().toISOString(),
+    }
+
+    // Set period end from Apple's transaction data if available
+    if (txnInfo.expiresDate) {
+      update.current_period_end = new Date(txnInfo.expiresDate).toISOString()
+    }
+
+    await admin.from('subscriptions').update(update).eq('user_id', user.id)
 
     return NextResponse.json({ success: true, plan })
   } catch (err) {
@@ -69,28 +75,27 @@ export async function POST(request: Request) {
   }
 }
 
+type TransactionInfo = {
+  expiresDate?: number
+  originalTransactionId?: string
+}
+
 /**
  * Verify transaction with Apple App Store Server API v2.
- * Uses the signed transaction info endpoint.
- *
- * Requires APPLE_IAP_KEY_ID, APPLE_IAP_ISSUER_ID, and APPLE_IAP_PRIVATE_KEY
- * environment variables for JWT authentication with Apple.
- *
- * Returns true if the transaction is valid and not revoked.
+ * Returns transaction info if valid, null if invalid.
  */
-async function verifyWithApple(transactionId: string): Promise<boolean> {
+async function verifyWithApple(transactionId: string): Promise<TransactionInfo | null> {
   const keyId = process.env.APPLE_IAP_KEY_ID
   const issuerId = process.env.APPLE_IAP_ISSUER_ID
   const privateKey = process.env.APPLE_IAP_PRIVATE_KEY
 
-  // If Apple credentials aren't configured yet, log warning and allow (dev/staging)
+  // If Apple credentials aren't configured yet, allow in dev mode
   if (!keyId || !issuerId || !privateKey) {
     console.warn('Apple IAP credentials not configured — skipping verification (dev mode)')
-    return true
+    return {}
   }
 
   try {
-    // Generate JWT for Apple API authentication
     const token = await generateAppleJWT(keyId, issuerId, privateKey)
 
     const isSandbox = process.env.NODE_ENV !== 'production'
@@ -104,18 +109,37 @@ async function verifyWithApple(transactionId: string): Promise<boolean> {
 
     if (!response.ok) {
       console.error('Apple API error:', response.status, await response.text())
-      return false
+      return null
     }
 
     const data = await response.json()
 
-    // The response contains a signed transaction — decode the payload
-    // For now we trust the transaction ID lookup succeeding as validation
-    // Full JWS verification can be added later with Apple's root certificates
-    return !!data.signedTransactionInfo
+    if (!data.signedTransactionInfo) return null
+
+    // Decode the signed transaction JWS to extract period info
+    const decoded = decodeJWSPayload(data.signedTransactionInfo)
+
+    return {
+      expiresDate: decoded?.expiresDate as number | undefined,
+      originalTransactionId: decoded?.originalTransactionId as string | undefined,
+    }
   } catch (err) {
     console.error('Apple verification failed:', err)
-    return false
+    return null
+  }
+}
+
+/**
+ * Decode a JWS payload (without full signature verification).
+ * Full JWS verification with Apple's root certificate can be added later.
+ */
+function decodeJWSPayload(jws: string): Record<string, unknown> | null {
+  try {
+    const parts = jws.split('.')
+    if (parts.length !== 3) return null
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'))
+  } catch {
+    return null
   }
 }
 
@@ -140,7 +164,6 @@ async function generateAppleJWT(keyId: string, issuerId: string, privateKey: str
   const payloadB64 = enc(payload)
   const signingInput = `${headerB64}.${payloadB64}`
 
-  // Import the private key and sign
   const crypto = await import('crypto')
   const sign = crypto.createSign('SHA256')
   sign.update(signingInput)
