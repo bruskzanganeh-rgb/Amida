@@ -11,6 +11,7 @@ const config: CapacitorConfig = {
   ios: {
     scheme: 'Amida',
     contentInset: 'automatic',
+    preferredContentMode: 'mobile',
   },
   plugins: {
     SplashScreen: {

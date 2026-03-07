@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Prevent iOS WebView from scaling text based on Dynamic Type */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
