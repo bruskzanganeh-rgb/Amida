@@ -5,6 +5,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overscroll-behavior: none;
 }
 
 @custom-variant dark (&:is(.dark *));

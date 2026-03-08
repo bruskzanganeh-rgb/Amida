@@ -46,7 +46,7 @@ export function Header() {
       className="fixed top-0 left-0 right-0 z-50 w-full border-b pt-[env(safe-area-inset-top)] transform-gpu"
       style={{ backgroundColor: '#0B1E3A', borderColor: '#102544' }}
     >
-      <div className="flex h-11 items-center gap-3 px-4 md:px-6 overflow-hidden">
+      <div className="flex h-[44px] items-center gap-3 px-4 md:px-6 overflow-hidden">
         {/* Spacer for mobile (logo centered) */}
         <div className="md:hidden" />
 
