@@ -157,7 +157,7 @@ html {
 
 /* Compact density — smaller base font shrinks all rem-based sizing */
 html {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 /* Smooth card transitions */
