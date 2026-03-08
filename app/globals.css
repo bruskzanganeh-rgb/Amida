@@ -155,11 +155,9 @@ html {
   }
 }
 
-/* Compact desktop density — smaller base font shrinks all rem-based sizing */
-@media (min-width: 1024px) {
-  html {
-    font-size: 13px;
-  }
+/* Compact density — smaller base font shrinks all rem-based sizing */
+html {
+  font-size: 13px;
 }
 
 /* Smooth card transitions */

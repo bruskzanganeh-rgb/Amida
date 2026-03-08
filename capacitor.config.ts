@@ -11,7 +11,6 @@ const config: CapacitorConfig = {
   ios: {
     scheme: 'Amida',
     contentInset: 'automatic',
-    preferredContentMode: 'mobile',
     backgroundColor: '#0B1E3A',
   },
   plugins: {
