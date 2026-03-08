@@ -90,9 +90,9 @@ export default async function RootLayout({
             {user ? (
               <div className="h-screen flex flex-col overflow-hidden">
                 <Header />
-                <main className="flex-1 overflow-y-auto bg-background pt-[calc(44px+env(safe-area-inset-top))]">
+                <main className="flex-1 overflow-y-auto overscroll-none bg-background">
                   <SessionTracker />
-                  <div className="p-4 pb-[96px] md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
+                  <div className="p-4 pt-2 pb-4 md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
                 </main>
                 <BottomNav />
               </div>

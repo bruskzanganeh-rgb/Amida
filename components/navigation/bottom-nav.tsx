@@ -19,7 +19,7 @@ export function BottomNav() {
   const actionCount = useActionCount()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe md:hidden transform-gpu">
+    <nav className="z-50 shrink-0 border-t bg-background pb-safe md:hidden transform-gpu">
       <div className="flex h-[72px] items-center justify-around px-1">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
