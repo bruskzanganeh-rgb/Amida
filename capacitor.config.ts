@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
     scheme: 'Amida',
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
+    backgroundColor: '#0B1E3A',
   },
   plugins: {
     SplashScreen: {

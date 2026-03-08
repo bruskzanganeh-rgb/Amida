@@ -104,9 +104,9 @@ export function UserMenu() {
           <span className="flex items-center gap-1.5 text-[12px]">
             {userName && companyName ? (
               <>
-                <span className="truncate max-w-[60px] sm:max-w-[100px]">{userName.split(' ')[0]}</span>
+                <span className="truncate max-w-[50px] sm:max-w-[100px]">{userName.split(' ')[0]}</span>
                 <span className="opacity-40">·</span>
-                <span className="truncate max-w-[80px] sm:max-w-[140px]">{companyName}</span>
+                <span className="truncate max-w-[60px] sm:max-w-[140px]">{companyName}</span>
               </>
             ) : (
               <span className="truncate max-w-[100px] sm:max-w-[180px]">{companyName || userEmail}</span>
