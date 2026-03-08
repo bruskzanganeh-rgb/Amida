@@ -88,11 +88,10 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             {user ? (
-              <div className="flex min-h-screen flex-col">
+              <div className="h-screen flex flex-col overflow-hidden">
                 <Header />
-                <div className="shrink-0 h-[calc(44px+env(safe-area-inset-top))]" />
-                <SessionTracker />
-                <main className="flex-1 bg-background">
+                <main className="flex-1 overflow-y-auto bg-background pt-[calc(44px+env(safe-area-inset-top))]">
+                  <SessionTracker />
                   <div className="p-4 pb-[96px] md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
                 </main>
                 <BottomNav />
