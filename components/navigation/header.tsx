@@ -51,11 +51,8 @@ export function Header() {
         <div className="md:hidden" />
 
         {/* Logo */}
-        <Link href="/dashboard" className="mr-4 flex items-center gap-2 shrink-0">
+        <Link href="/dashboard" className="mr-2 shrink-0">
           <Image src="/logo.png" alt="Amida" width={24} height={24} />
-          <span className="text-[15px] font-bold tracking-tight" style={{ color: '#ffffff' }}>
-            Amida
-          </span>
         </Link>
 
         {/* Desktop nav */}
