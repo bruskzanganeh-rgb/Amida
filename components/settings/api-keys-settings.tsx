@@ -61,7 +61,7 @@ export function ApiKeysSettings() {
       if (error) throw error
       return (data || []) as ApiKey[]
     },
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: true },
   )
 
   async function createKey() {

@@ -31,6 +31,11 @@ export function useActionCount() {
     }
 
     load()
+    function onVisibility() {
+      if (!document.hidden) load()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [shouldFilter, currentUserId])
 
   return count

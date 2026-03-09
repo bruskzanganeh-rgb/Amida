@@ -54,7 +54,6 @@ import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { PageTransition } from '@/components/ui/page-transition'
-import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 
 function fmtFee(amount: number, currency?: string | null): string {
   return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
@@ -301,7 +300,7 @@ export default function GigsPage() {
       if (error) throw error
       return (data || []) as unknown as Gig[]
     },
-    { revalidateOnFocus: false, dedupingInterval: 10_000 },
+    { revalidateOnFocus: true, dedupingInterval: 10_000 },
   )
 
   const loadGigs = useCallback(() => mutateGigs(), [mutateGigs])
@@ -575,11 +574,7 @@ export default function GigsPage() {
   })
 
   return (
-    <PullToRefresh
-      onRefresh={async () => {
-        await loadGigs()
-      }}
-    >
+    <>
       <PageTransition>
         <div className="lg:flex lg:h-[calc(100vh-7rem)]" style={{ gap: '16px' }}>
           {/* Main content */}
@@ -2390,6 +2385,6 @@ export default function GigsPage() {
           />
         </div>
       </PageTransition>
-    </PullToRefresh>
+    </>
   )
 }

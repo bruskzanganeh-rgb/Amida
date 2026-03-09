@@ -97,7 +97,7 @@ export function useCompany() {
       }
     },
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,
       dedupingInterval: 30_000,
     },
   )

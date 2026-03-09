@@ -28,7 +28,7 @@ export function useSupabaseQuery<T>(
       return data as T
     },
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,
       dedupingInterval: 5000,
       ...config,
     },

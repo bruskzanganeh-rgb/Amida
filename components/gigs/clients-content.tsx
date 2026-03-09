@@ -68,7 +68,7 @@ export default function ClientsPage() {
       if (error) throw error
       return (data || []) as unknown as Client[]
     },
-    { revalidateOnFocus: false, dedupingInterval: 10_000 },
+    { revalidateOnFocus: true, dedupingInterval: 10_000 },
   )
 
   function confirmDelete(id: string) {

@@ -52,7 +52,7 @@ export default function PositionsPage() {
       if (error) throw error
       return (data || []) as Position[]
     },
-    { revalidateOnFocus: false, dedupingInterval: 30_000 },
+    { revalidateOnFocus: true, dedupingInterval: 30_000 },
   )
 
   async function handleCreate() {
