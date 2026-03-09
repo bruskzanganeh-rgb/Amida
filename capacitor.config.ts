@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'Amida',
-    contentInset: 'automatic',
+    contentInset: 'never',
     backgroundColor: '#0B1E3A',
     scrollEnabled: false,
   },
