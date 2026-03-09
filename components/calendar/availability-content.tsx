@@ -74,6 +74,9 @@ export default function AvailabilityPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [selectedWeek, setSelectedWeek] = useState<WeekInfo | null>(null)
+  const now = new Date()
+  const currentWeekNumber = getWeek(now, { weekStartsOn: 1 })
+  const isCurrentYear = now.getFullYear() === currentYear
   const detailScrollRef = useRef<HTMLDivElement>(null)
 
   const supabase = createClient()
@@ -366,6 +369,12 @@ export default function AvailabilityPage() {
                       onClick={() => setSelectedWeek(selectedWeek?.weekNumber === week.weekNumber ? null : week)}
                       className={`p-2 rounded-lg border transition-all text-left ${getStatusColor(week.status)} ${
                         selectedWeek?.weekNumber === week.weekNumber ? 'border-blue-500 border-2 shadow-sm' : ''
+                      } ${
+                        isCurrentYear &&
+                        week.weekNumber === currentWeekNumber &&
+                        selectedWeek?.weekNumber !== week.weekNumber
+                          ? 'border-l-[3px] border-l-primary shadow-md'
+                          : ''
                       }`}
                     >
                       <div className="text-xs font-semibold">
