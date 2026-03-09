@@ -88,7 +88,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             {user ? (
-              <div className="h-screen flex flex-col overflow-hidden">
+              <div className="h-full flex flex-col overflow-hidden">
                 <Header />
                 <main className="flex-1 overflow-y-auto overscroll-none bg-background">
                   <SessionTracker />
