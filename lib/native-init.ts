@@ -8,6 +8,26 @@ import { isNative } from './capacitor'
 export async function initNativePlugins() {
   if (!isNative()) return
 
+  // Prevent pull-to-refresh by blocking downward touchmove on body
+  let startY = 0
+  document.addEventListener(
+    'touchstart',
+    (e) => {
+      startY = e.touches[0].clientY
+    },
+    { passive: true },
+  )
+  document.addEventListener(
+    'touchmove',
+    (e) => {
+      const y = e.touches[0].clientY
+      if (y > startY && (document.scrollingElement?.scrollTop ?? 0) === 0) {
+        e.preventDefault()
+      }
+    },
+    { passive: false },
+  )
+
   try {
     // Dark status bar to match Amida's dark theme
     const { StatusBar, Style } = await import('@capacitor/status-bar')
