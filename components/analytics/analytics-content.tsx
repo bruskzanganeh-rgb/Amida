@@ -25,6 +25,8 @@ type Gig = {
   id: string
   date: string
   fee: number | null
+  fee_base: number | null
+  currency: string | null
   total_days: number
   project_name: string | null
   status: string
@@ -73,6 +75,8 @@ export function AnalyticsContent() {
           id,
           date,
           fee,
+          fee_base,
+          currency,
           total_days,
           project_name,
           status,
@@ -135,19 +139,20 @@ export function AnalyticsContent() {
 
   const tentativeGigs = filteredGigs.filter((g) => g.status === 'tentative' && new Date(g.date) >= today)
 
-  const totalRevenue = completedGigs.reduce((sum, g) => sum + (g.fee || 0), 0)
+  const feeInBase = (g: Gig) => g.fee_base ?? g.fee ?? 0
+  const totalRevenue = completedGigs.reduce((sum, g) => sum + feeInBase(g), 0)
   const totalDays = completedGigs.reduce((sum, g) => sum + g.total_days, 0)
-  const declinedAmount = declinedGigs.reduce((sum, g) => sum + (g.fee || 0), 0)
+  const declinedAmount = declinedGigs.reduce((sum, g) => sum + feeInBase(g), 0)
   const avgPerDay = totalDays > 0 ? totalRevenue / totalDays : 0
 
-  const upcomingRevenue = upcomingGigs.reduce((sum, g) => sum + (g.fee || 0), 0)
+  const upcomingRevenue = upcomingGigs.reduce((sum, g) => sum + feeInBase(g), 0)
   const upcomingDays = upcomingGigs.reduce((sum, g) => sum + g.total_days, 0)
   const nextGig =
     upcomingGigs.length > 0
       ? upcomingGigs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
       : null
 
-  const tentativeRevenue = tentativeGigs.reduce((sum, g) => sum + (g.fee || 0), 0)
+  const tentativeRevenue = tentativeGigs.reduce((sum, g) => sum + feeInBase(g), 0)
   const tentativeDays = tentativeGigs.reduce((sum, g) => sum + g.total_days, 0)
 
   // Calculate best paying gigs per day
@@ -155,7 +160,8 @@ export function AnalyticsContent() {
     .filter((g) => g.fee && g.total_days > 0)
     .map((g) => ({
       ...g,
-      dayRate: (g.fee || 0) / g.total_days,
+      feeBase: feeInBase(g),
+      dayRate: feeInBase(g) / g.total_days,
     }))
     .sort((a, b) => b.dayRate - a.dayRate)
     .slice(0, 10)
@@ -164,7 +170,7 @@ export function AnalyticsContent() {
   const positionStats = positions
     .map((position) => {
       const positionGigs = completedGigs.filter((g) => g.position_id === position.id)
-      const totalFee = positionGigs.reduce((sum, g) => sum + (g.fee || 0), 0)
+      const totalFee = positionGigs.reduce((sum, g) => sum + feeInBase(g), 0)
       const totalDaysForPosition = positionGigs.reduce((sum, g) => sum + g.total_days, 0)
       const avgPerDayForPosition = totalDaysForPosition > 0 ? totalFee / totalDaysForPosition : 0
       return {
@@ -186,10 +192,10 @@ export function AnalyticsContent() {
     name: t('noPosition'),
     gigCount: noPositionGigs.length,
     totalDays: noPositionGigs.reduce((sum, g) => sum + g.total_days, 0),
-    totalRevenue: noPositionGigs.reduce((sum, g) => sum + (g.fee || 0), 0),
+    totalRevenue: noPositionGigs.reduce((sum, g) => sum + feeInBase(g), 0),
     avgPerDay:
       noPositionGigs.reduce((sum, g) => sum + g.total_days, 0) > 0
-        ? noPositionGigs.reduce((sum, g) => sum + (g.fee || 0), 0) /
+        ? noPositionGigs.reduce((sum, g) => sum + feeInBase(g), 0) /
           noPositionGigs.reduce((sum, g) => sum + g.total_days, 0)
         : 0,
   }
@@ -418,7 +424,7 @@ export function AnalyticsContent() {
                         </TableCell>
                         <TableCell>{gig.gig_type.name}</TableCell>
                         <TableCell className="text-right">
-                          {(gig.fee || 0).toLocaleString(formatLocale)} {tc('kr')}
+                          {Math.round(gig.feeBase).toLocaleString(formatLocale)} {tc('kr')}
                         </TableCell>
                         <TableCell className="text-right">{gig.total_days}</TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
