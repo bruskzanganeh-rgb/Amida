@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
 
       await resend.emails.send({
         from: fromAddress,
+        replyTo: user.email || undefined,
         to: [to],
         subject,
         text: message || '',
