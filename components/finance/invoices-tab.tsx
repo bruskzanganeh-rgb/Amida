@@ -1002,7 +1002,7 @@ export default function InvoicesTab() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-[700px] p-0">
+          <DialogContent className="sm:max-w-[700px] p-0" showCloseButton={false}>
             <DialogTitle className="sr-only">
               {t('invoice')} #{pdfPreviewInvoiceNumber}
             </DialogTitle>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,10 +13,7 @@ import {
   Settings,
   Building2,
   CreditCard,
-  Image as ImageIcon,
   Loader2,
-  Upload,
-  Trash2,
   Calendar,
   Copy,
   Check,
@@ -34,8 +31,6 @@ import {
 import { SubscriptionSettings } from '@/components/settings/subscription-settings'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
 import { TeamSettings } from '@/components/settings/team-settings'
-import NextImage from 'next/image'
-import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useTranslations, useLocale } from 'next-intl'
@@ -96,7 +91,6 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [calendarCopied, setCalendarCopied] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
   const [emailProvider, setEmailProvider] = useState<string>('platform')
@@ -109,7 +103,6 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { isPro, isTeam } = useSubscription()
   const searchParams = useSearchParams()
@@ -227,7 +220,6 @@ export default function SettingsPage() {
             calendar_token: personalSettings.calendar_token,
             timezone: personalSettings.timezone || 'Europe/Stockholm',
           })
-          setLogoPreview(company.logo_url || null)
           setEmailProvider(company.email_provider || 'platform')
           setCompanyId(membership.company_id)
         }
@@ -259,10 +251,8 @@ export default function SettingsPage() {
           bankgiro: settings.bankgiro,
           iban: settings.iban,
           bic: settings.bic,
-          logo_url: logoPreview,
           vat_registration_number: settings.vat_registration_number,
           late_payment_interest_text: settings.late_payment_interest_text,
-          show_logo_on_invoice: settings.show_logo_on_invoice,
           our_reference: settings.our_reference,
           smtp_host: settings.smtp_host,
           smtp_port: settings.smtp_port,
@@ -357,37 +347,6 @@ export default function SettingsPage() {
       toast.error(tToast('testEmailGenericError'))
     }
     setTestingEmail(false)
-  }
-
-  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Check file size (max 500KB)
-    if (file.size > 500 * 1024) {
-      toast.error(tToast('logoTooLarge'))
-      return
-    }
-
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      toast.error(tToast('onlyImages'))
-      return
-    }
-
-    // Convert to base64
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setLogoPreview(reader.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  function handleRemoveLogo() {
-    setLogoPreview(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   if (loading) {
@@ -717,81 +676,6 @@ export default function SettingsPage() {
             </Card>
 
             {/* Logo */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" />
-                  {t('logo')}
-                </CardTitle>
-                <CardDescription>{t('logoDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start gap-6">
-                  {/* Preview */}
-                  <div className="w-48 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/50">
-                    {logoPreview ? (
-                      <div className="relative w-full h-full">
-                        <NextImage
-                          src={logoPreview}
-                          alt="Company logo"
-                          fill
-                          className="object-contain p-2"
-                          unoptimized
-                        />
-                      </div>
-                    ) : (
-                      <div className="text-center text-muted-foreground">
-                        <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-xs">{t('noLogo')}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Upload controls */}
-                  <div className="space-y-3">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                    />
-                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="h-4 w-4 mr-2" />
-                      {tc('chooseImage')}
-                    </Button>
-
-                    {logoPreview && (
-                      <Button variant="ghost" size="sm" onClick={handleRemoveLogo} className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {tc('delete')}
-                      </Button>
-                    )}
-
-                    <p className="text-xs text-muted-foreground">
-                      {t('logoSizeRecommendation')}
-                      <br />
-                      {t('logoFormats')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Show logo on invoice toggle */}
-                <div className="flex items-center justify-between pt-4 border-t mt-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="show_logo_on_invoice">{t('showLogoOnInvoice')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('showLogoOnInvoiceHint')}</p>
-                  </div>
-                  <Switch
-                    id="show_logo_on_invoice"
-                    checked={settings?.show_logo_on_invoice ?? true}
-                    onCheckedChange={(checked) =>
-                      setSettings((s) => (s ? { ...s, show_logo_on_invoice: checked } : null))
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Change password */}

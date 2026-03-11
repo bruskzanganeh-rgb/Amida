@@ -14,10 +14,8 @@ type CompanySettings = {
   bankgiro?: string | null
   iban?: string | null
   bic?: string | null
-  logo_url: string | null
   vat_registration_number?: string | null
   late_payment_interest_text?: string | null
-  show_logo_on_invoice?: boolean | null
   our_reference?: string | null
 }
 
@@ -65,7 +63,6 @@ type GeneratePdfParams = {
   sponsor?: SponsorData | null
   locale?: string
   brandingName?: string
-  resolvedLogoSrc?: { data: Buffer; format: 'png' | 'jpg' } | null
 }
 
 // Localized labels for PDF generation
@@ -139,29 +136,6 @@ function getLabels(locale: string) {
   return PDF_LABELS[locale] || PDF_LABELS.sv
 }
 
-// Convert base64 data URI to a source object for @react-pdf/renderer
-// SVG is not supported by @react-pdf/renderer Image, so we convert to PNG
-async function resolveImageSrc(dataUri: string): Promise<{ data: Buffer; format: 'png' | 'jpg' }> {
-  // SVG: convert to PNG using @napi-rs/canvas
-  if (dataUri.startsWith('data:image/svg+xml')) {
-    const { createCanvas, loadImage } = await import('@napi-rs/canvas')
-    const img = await loadImage(Buffer.from(dataUri.split(',')[1], 'base64'))
-    const canvas = createCanvas(img.width, img.height)
-    const ctx = canvas.getContext('2d')
-    ctx.drawImage(img, 0, 0)
-    return { data: canvas.toBuffer('image/png'), format: 'png' }
-  }
-  // PNG/JPG: extract buffer directly
-  const match = dataUri.match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/)
-  if (match) {
-    const format = match[1] === 'jpeg' || match[1] === 'jpg' ? 'jpg' : 'png'
-    return { data: Buffer.from(match[2], 'base64'), format }
-  }
-  // Fallback: treat as PNG
-  const base64 = dataUri.includes(',') ? dataUri.split(',')[1] : dataUri
-  return { data: Buffer.from(base64, 'base64'), format: 'png' }
-}
-
 // Premium color palette
 const colors = {
   primary: '#111827',
@@ -194,12 +168,6 @@ const styles = StyleSheet.create({
   headerRight: {
     textAlign: 'right',
   },
-  // Footer logo
-  footerLogo: {
-    maxWidth: 60,
-    maxHeight: 35,
-  },
-
   // Company name
   companyName: {
     fontFamily: 'Helvetica-Bold',
@@ -518,7 +486,6 @@ function InvoicePDF({
   sponsor,
   locale = 'sv',
   brandingName = 'Amida',
-  resolvedLogoSrc,
 }: GeneratePdfParams) {
   const fmt = (amount: number) => formatCurrencyPdf(amount, currency)
   const l = getLabels(locale)
@@ -717,7 +684,7 @@ function InvoicePDF({
           </View>
         )}
 
-        {/* Footer - 4 column layout */}
+        {/* Footer - 3 column layout */}
         <View style={styles.footer}>
           {/* Payment reference text */}
           <Text style={styles.paymentReferenceText}>{l.paymentRef.replace('#{n}', `#${invoice.invoice_number}`)}</Text>
@@ -728,15 +695,7 @@ function InvoicePDF({
           )}
 
           <View style={styles.footerRow}>
-            {/* Column 1: Logo (only if show_logo_on_invoice is true and logo exists) */}
-            {company.show_logo_on_invoice !== false && resolvedLogoSrc && (
-              <View style={styles.footerColumn}>
-                {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image does not support alt */}
-                <Image src={resolvedLogoSrc} style={styles.footerLogo} />
-              </View>
-            )}
-
-            {/* Column 2: Company name and address */}
+            {/* Column 1: Company name and address */}
             <View style={styles.footerColumn}>
               <Text style={styles.footerValueBold}>{company.company_name}</Text>
               {company.address?.split('\n').map((line, i) => (
@@ -746,7 +705,7 @@ function InvoicePDF({
               ))}
             </View>
 
-            {/* Column 3: Contact info */}
+            {/* Column 2: Contact info */}
             <View style={styles.footerColumn}>
               <Text style={styles.footerLabel}>{l.phone}</Text>
               <Text style={styles.footerValue}>{company.phone}</Text>
@@ -754,7 +713,7 @@ function InvoicePDF({
               <Text style={styles.footerValue}>{company.email}</Text>
             </View>
 
-            {/* Column 4: Payment info */}
+            {/* Column 3: Payment info */}
             <View style={styles.footerColumnRight}>
               {company.bankgiro ? (
                 <>
@@ -826,16 +785,6 @@ function InvoicePDF({
 
 // Export function to generate PDF buffer
 export async function generateInvoicePdf(params: GeneratePdfParams): Promise<Buffer> {
-  // Pre-resolve logo (SVG → PNG conversion, base64 → Buffer)
-  let resolvedLogoSrc: { data: Buffer; format: 'png' | 'jpg' } | null = null
-  if (params.company.show_logo_on_invoice !== false && params.company.logo_url) {
-    try {
-      resolvedLogoSrc = await resolveImageSrc(params.company.logo_url)
-    } catch (e) {
-      console.error('Failed to resolve logo image:', e)
-    }
-  }
-
-  const buffer = await renderToBuffer(<InvoicePDF {...params} resolvedLogoSrc={resolvedLogoSrc} />)
+  const buffer = await renderToBuffer(<InvoicePDF {...params} />)
   return Buffer.from(buffer)
 }

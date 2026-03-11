@@ -1,7 +1,6 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import NextImage from 'next/image'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 // Premium color palette (same as PDF)
@@ -85,10 +84,8 @@ type CompanySettings = {
   bankgiro?: string | null
   iban?: string | null
   bic?: string | null
-  logo_url: string | null
   vat_registration_number?: string | null
   late_payment_interest_text?: string | null
-  show_logo_on_invoice?: boolean
   our_reference?: string | null
 }
 
@@ -519,21 +516,7 @@ export function InvoicePreview({
               )}
 
               <div style={{ display: 'flex', gap: '15px' }}>
-                {/* Column 1: Logo (only if show_logo_on_invoice is true and logo exists) */}
-                {company?.show_logo_on_invoice !== false && company?.logo_url && (
-                  <div style={{ flex: 1 }}>
-                    <NextImage
-                      src={company.logo_url}
-                      alt="Company logo"
-                      width={60}
-                      height={35}
-                      style={{ maxWidth: '60px', maxHeight: '35px', objectFit: 'contain' }}
-                      unoptimized
-                    />
-                  </div>
-                )}
-
-                {/* Column 2: Company name and address */}
+                {/* Column 1: Company name and address */}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '7px', color: colors.primary, marginBottom: '3px' }}>
                     {company?.company_name || '-'}
@@ -545,7 +528,7 @@ export function InvoicePreview({
                   ))}
                 </div>
 
-                {/* Column 3: Contact info */}
+                {/* Column 2: Contact info */}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '7px', color: colors.secondary, marginBottom: '1px' }}>{l.phone}</div>
                   <div style={{ fontSize: '7px', color: colors.primary, marginBottom: '3px' }}>
@@ -557,7 +540,7 @@ export function InvoicePreview({
                   </div>
                 </div>
 
-                {/* Column 4: Payment info */}
+                {/* Column 3: Payment info */}
                 <div style={{ flex: 1, textAlign: 'right' }}>
                   {company?.bankgiro ? (
                     <>

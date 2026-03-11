@@ -85,11 +85,9 @@ type CompanySettings = {
   email: string
   phone: string
   bank_account: string
-  logo_url: string | null
   vat_registration_number: string | null
   late_payment_interest_text: string | null
   country_code: string | null
-  show_logo_on_invoice: boolean | null
   bankgiro: string | null
   iban: string | null
   bic: string | null
@@ -243,7 +241,7 @@ export function CreateInvoiceDialog({
           const { data } = await supabase
             .from('companies')
             .select(
-              'company_name, org_number, address, email, phone, bank_account, bankgiro, iban, bic, logo_url, vat_registration_number, late_payment_interest_text, show_logo_on_invoice, country_code',
+              'company_name, org_number, address, email, phone, bank_account, bankgiro, iban, bic, vat_registration_number, late_payment_interest_text, country_code',
             )
             .eq('id', membership.company_id)
             .single()
@@ -540,11 +538,7 @@ export function CreateInvoiceDialog({
             <div className="flex-1 flex items-start justify-center">
               <div className="w-full">
                 <InvoicePreview
-                  company={
-                    companySettings
-                      ? { ...companySettings, show_logo_on_invoice: companySettings.show_logo_on_invoice ?? undefined }
-                      : null
-                  }
+                  company={companySettings ?? null}
                   client={
                     selectedClient
                       ? {
