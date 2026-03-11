@@ -8,7 +8,9 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate user
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -20,7 +22,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten().fieldErrors }, { status: 400 })
     }
 
-    const { provider, to_email, smtp_host, smtp_port, smtp_user, smtp_password, smtp_from_email, smtp_from_name } = parsed.data
+    const { provider, to_email, smtp_host, smtp_port, smtp_user, smtp_password, smtp_from_email, smtp_from_name } =
+      parsed.data
 
     const serviceSupabase = createAdminClient()
 
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
         .select('key, value')
         .in('key', ['resend_api_key', 'resend_from_email'])
 
-      const config = Object.fromEntries((configRows || []).map(r => [r.key, r.value]))
+      const config = Object.fromEntries((configRows || []).map((r) => [r.key, r.value]))
 
       if (!config.resend_api_key) {
         return NextResponse.json({ error: 'Platform email is not configured. Contact admin.' }, { status: 400 })
@@ -62,27 +65,24 @@ export async function POST(request: NextRequest) {
 
     // Test via SMTP
     if (!smtp_host || !smtp_from_email) {
-      return NextResponse.json(
-        { error: 'SMTP host and sender email required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'SMTP host and sender email required' }, { status: 400 })
     }
 
     const transporter = nodemailer.createTransport({
-      host: smtp_host,
+      host: smtp_host.trim(),
       port: smtp_port || 587,
       secure: smtp_port === 465,
-      auth: smtp_user ? {
-        user: smtp_user,
-        pass: smtp_password || '',
-      } : undefined,
+      auth: smtp_user
+        ? {
+            user: smtp_user.trim(),
+            pass: smtp_password || '',
+          }
+        : undefined,
     })
 
     await transporter.verify()
 
-    const fromAddress = smtp_from_name
-      ? `"${smtp_from_name}" <${smtp_from_email}>`
-      : smtp_from_email
+    const fromAddress = smtp_from_name ? `"${smtp_from_name}" <${smtp_from_email}>` : smtp_from_email
 
     await transporter.sendMail({
       from: fromAddress,
@@ -110,14 +110,18 @@ export async function POST(request: NextRequest) {
 
     let errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    if (errorMessage.includes('ECONNREFUSED')) {
-      errorMessage = 'Could not connect to SMTP server. Check host and port.'
+    if (errorMessage.includes('EBADNAME') || errorMessage.includes('ENOTFOUND')) {
+      errorMessage = 'Could not find SMTP server. Check the hostname for typos or extra spaces.'
+    } else if (errorMessage.includes('ECONNREFUSED')) {
+      errorMessage = 'SMTP server refused the connection. Verify the port is correct (usually 465 or 587).'
     } else if (errorMessage.includes('EAUTH') || errorMessage.includes('Invalid login')) {
-      errorMessage = 'Invalid username or password.'
+      errorMessage = 'Wrong username or password. Use the full email address as username.'
     } else if (errorMessage.includes('ESOCKET') || errorMessage.includes('timeout')) {
-      errorMessage = 'Connection timeout. Check host and port.'
+      errorMessage = 'Connection timed out. Try switching between port 465 (SSL) and 587 (TLS).'
     } else if (errorMessage.includes('certificate')) {
-      errorMessage = 'SSL/TLS certificate error. Try another port (587 or 465).'
+      errorMessage = 'SSL/TLS certificate error. Try switching between port 465 (SSL) and 587 (TLS).'
+    } else if (errorMessage.includes('EENVELOPE') || errorMessage.includes('Invalid address')) {
+      errorMessage = 'Invalid sender or recipient email address. Check the "from" email field.'
     }
 
     return NextResponse.json({ error: errorMessage }, { status: 500 })

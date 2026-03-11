@@ -171,12 +171,12 @@ export async function POST(request: NextRequest) {
       }
 
       const transporter = nodemailer.createTransport({
-        host: company.smtp_host,
+        host: company.smtp_host.trim(),
         port: company.smtp_port || 587,
         secure: company.smtp_port === 465,
         auth: company.smtp_user
           ? {
-              user: company.smtp_user,
+              user: company.smtp_user.trim(),
               pass: company.smtp_password || '',
             }
           : undefined,
@@ -258,6 +258,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, reminderNumber })
   } catch (error) {
     console.error('Send reminder error:', error)
-    return NextResponse.json({ error: 'Could not send reminder' }, { status: 500 })
+    let errorMessage = 'Could not send reminder'
+    const msg = error instanceof Error ? error.message : ''
+    if (msg.includes('EBADNAME') || msg.includes('ENOTFOUND')) {
+      errorMessage = 'Could not find SMTP server. Check the hostname for typos or extra spaces in Settings.'
+    } else if (msg.includes('ECONNREFUSED')) {
+      errorMessage = 'SMTP server refused the connection. Verify the port in Settings (usually 465 or 587).'
+    } else if (msg.includes('EAUTH') || msg.includes('Invalid login')) {
+      errorMessage = 'SMTP login failed. Check username and password in Settings.'
+    } else if (msg.includes('ESOCKET') || msg.includes('timeout')) {
+      errorMessage = 'SMTP connection timed out. Try switching between port 465 and 587 in Settings.'
+    } else if (msg.includes('certificate')) {
+      errorMessage = 'SSL/TLS certificate error. Try switching between port 465 and 587 in Settings.'
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
