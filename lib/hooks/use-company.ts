@@ -23,14 +23,7 @@ export type Company = {
   next_invoice_number: number
   payment_terms_default: number
   base_currency: string
-  email_provider: string | null
   email_inbound_address: string | null
-  smtp_host: string | null
-  smtp_port: number | null
-  smtp_user: string | null
-  smtp_password: string | null
-  smtp_from_email: string | null
-  smtp_from_name: string | null
   gig_visibility: 'personal' | 'shared'
 }
 

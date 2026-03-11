@@ -867,30 +867,8 @@ describe('onboarding schemas', () => {
 // ---------------------------------------------------------------------------
 describe('settings schemas', () => {
   describe('testEmailSchema', () => {
-    it('accepts minimal valid data (to_email only)', () => {
+    it('accepts valid to_email', () => {
       expect(testEmailSchema.safeParse({ to_email: 'test@example.com' }).success).toBe(true)
-    })
-
-    it('accepts all fields', () => {
-      const result = testEmailSchema.safeParse({
-        provider: 'smtp',
-        to_email: 'test@example.com',
-        smtp_host: 'smtp.example.com',
-        smtp_port: 587,
-        smtp_user: 'user',
-        smtp_password: 'pass',
-        smtp_from_email: 'noreply@example.com',
-        smtp_from_name: 'Amida',
-      })
-      expect(result.success).toBe(true)
-    })
-
-    it.each(['platform', 'smtp'] as const)('accepts provider=%s', (provider) => {
-      expect(testEmailSchema.safeParse({ to_email: 'a@b.com', provider }).success).toBe(true)
-    })
-
-    it('rejects invalid provider enum', () => {
-      expect(testEmailSchema.safeParse({ to_email: 'a@b.com', provider: 'sendgrid' }).success).toBe(false)
     })
 
     it('rejects invalid to_email', () => {
@@ -903,14 +881,6 @@ describe('settings schemas', () => {
 
     it('rejects missing to_email', () => {
       expect(testEmailSchema.safeParse({}).success).toBe(false)
-    })
-
-    it('rejects non-number smtp_port', () => {
-      expect(testEmailSchema.safeParse({ to_email: 'a@b.com', smtp_port: '587' }).success).toBe(false)
-    })
-
-    it('accepts omitted smtp fields', () => {
-      expect(testEmailSchema.safeParse({ to_email: 'a@b.com' }).success).toBe(true)
     })
   })
 })

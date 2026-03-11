@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
-  Settings,
   Building2,
   CreditCard,
   Loader2,
@@ -67,15 +66,8 @@ type CompanySettings = {
   late_payment_interest_text: string | null
   show_logo_on_invoice: boolean | null
   our_reference: string | null
-  smtp_host: string | null
-  smtp_port: number | null
-  smtp_user: string | null
-  smtp_password: string | null
-  smtp_from_email: string | null
-  smtp_from_name: string | null
   base_currency: string | null
   locale: string | null
-  email_provider: string | null
   country_code: string | null
   calendar_token: string | null
   timezone: string | null
@@ -93,7 +85,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [calendarCopied, setCalendarCopied] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
-  const [emailProvider, setEmailProvider] = useState<string>('platform')
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
   const [newPassword, setNewPassword] = useState('')
@@ -207,20 +198,12 @@ export default function SettingsPage() {
             late_payment_interest_text: company.late_payment_interest_text,
             show_logo_on_invoice: company.show_logo_on_invoice,
             our_reference: company.our_reference,
-            smtp_host: company.smtp_host,
-            smtp_port: company.smtp_port,
-            smtp_user: company.smtp_user,
-            smtp_password: company.smtp_password,
-            smtp_from_email: company.smtp_from_email,
-            smtp_from_name: company.smtp_from_name,
             base_currency: company.base_currency,
             locale: personalSettings.locale || 'sv',
-            email_provider: company.email_provider,
             country_code: company.country_code,
             calendar_token: personalSettings.calendar_token,
             timezone: personalSettings.timezone || 'Europe/Stockholm',
           })
-          setEmailProvider(company.email_provider || 'platform')
           setCompanyId(membership.company_id)
         }
       }
@@ -254,14 +237,7 @@ export default function SettingsPage() {
           vat_registration_number: settings.vat_registration_number,
           late_payment_interest_text: settings.late_payment_interest_text,
           our_reference: settings.our_reference,
-          smtp_host: settings.smtp_host?.trim(),
-          smtp_port: settings.smtp_port,
-          smtp_user: settings.smtp_user?.trim(),
-          smtp_password: settings.smtp_password,
-          smtp_from_email: settings.smtp_from_email?.trim(),
-          smtp_from_name: settings.smtp_from_name,
           base_currency: settings.base_currency,
-          email_provider: emailProvider,
           country_code: settings.country_code,
         })
         .eq('id', companyId)
@@ -301,40 +277,17 @@ export default function SettingsPage() {
   }
 
   async function handleTestEmail() {
-    if (emailProvider === 'smtp' && (!settings?.smtp_host || !settings?.smtp_from_email)) {
-      toast.error(t('fillSmtpFirst'))
-      return
-    }
-
     setTestingEmail(true)
     try {
-      // Send test email to the logged-in user's own email, not the company email
       const {
         data: { user },
       } = await supabase.auth.getUser()
       const toEmail = user?.email || settings?.email
 
-      const body =
-        emailProvider === 'platform'
-          ? {
-              provider: 'platform',
-              to_email: toEmail,
-            }
-          : {
-              provider: 'smtp',
-              smtp_host: settings?.smtp_host,
-              smtp_port: settings?.smtp_port || 587,
-              smtp_user: settings?.smtp_user,
-              smtp_password: settings?.smtp_password,
-              smtp_from_email: settings?.smtp_from_email,
-              smtp_from_name: settings?.smtp_from_name || settings?.company_name,
-              to_email: toEmail,
-            }
-
       const response = await fetch('/api/settings/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ to_email: toEmail }),
       })
 
       const result = await response.json()
@@ -768,158 +721,27 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <>
-                  {/* Provider selector */}
-                  <div className="space-y-2">
-                    <Label>{t('emailProvider')}</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={emailProvider === 'platform' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setEmailProvider('platform')}
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        {t('platformEmail')}
-                      </Button>
-                      <Button
-                        variant={emailProvider === 'smtp' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setEmailProvider('smtp')}
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        {t('ownSmtp')}
-                      </Button>
-                    </div>
+                  <div className="p-4 rounded-lg bg-muted/50 flex items-start gap-3">
+                    <Mail className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                    <p className="text-sm text-muted-foreground">{t('platformEmailInfo')}</p>
                   </div>
 
-                  {emailProvider === 'platform' ? (
-                    <>
-                      <div className="p-4 rounded-lg bg-muted/50 flex items-start gap-3">
-                        <Mail className="h-5 w-5 mt-0.5 text-primary shrink-0" />
-                        <p className="text-sm text-muted-foreground">{t('platformEmailInfo')}</p>
-                      </div>
-
-                      <div className="pt-4 border-t flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-medium">{t('testConnection')}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t('testConnectionHint', { email: settings?.email || '' })}
-                          </p>
-                        </div>
-                        <Button variant="outline" onClick={handleTestEmail} disabled={testingEmail}>
-                          {testingEmail ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4 mr-2" />
-                          )}
-                          {t('sendTestEmail')}
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_host">{t('smtpHost')}</Label>
-                          <Input
-                            id="smtp_host"
-                            value={settings?.smtp_host || ''}
-                            onChange={(e) => setSettings((s) => (s ? { ...s, smtp_host: e.target.value } : null))}
-                            placeholder="smtp.gmail.com"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_port">{t('smtpPort')}</Label>
-                          <Input
-                            id="smtp_port"
-                            type="number"
-                            value={settings?.smtp_port || 587}
-                            onChange={(e) =>
-                              setSettings((s) => (s ? { ...s, smtp_port: parseInt(e.target.value) || 587 } : null))
-                            }
-                            placeholder="587"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_user">{t('smtpUser')}</Label>
-                          <Input
-                            id="smtp_user"
-                            value={settings?.smtp_user || ''}
-                            onChange={(e) => setSettings((s) => (s ? { ...s, smtp_user: e.target.value } : null))}
-                            placeholder={t('smtpUserPlaceholder')}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_password">{t('smtpPassword')}</Label>
-                          <Input
-                            id="smtp_password"
-                            type="password"
-                            value={settings?.smtp_password || ''}
-                            onChange={(e) => setSettings((s) => (s ? { ...s, smtp_password: e.target.value } : null))}
-                            placeholder="••••••••"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_from_email">{t('smtpFromEmail')}</Label>
-                          <Input
-                            id="smtp_from_email"
-                            type="email"
-                            value={settings?.smtp_from_email || ''}
-                            onChange={(e) => setSettings((s) => (s ? { ...s, smtp_from_email: e.target.value } : null))}
-                            placeholder={t('smtpFromPlaceholder')}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="smtp_from_name">{t('smtpFromName')}</Label>
-                          <Input
-                            id="smtp_from_name"
-                            value={settings?.smtp_from_name || ''}
-                            onChange={(e) => setSettings((s) => (s ? { ...s, smtp_from_name: e.target.value } : null))}
-                            placeholder={t('smtpFromNamePlaceholder')}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-medium">{t('testConnection')}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t('testConnectionHint', { email: settings?.email || '' })}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={handleTestEmail}
-                          disabled={testingEmail || !settings?.smtp_host}
-                        >
-                          {testingEmail ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4 mr-2" />
-                          )}
-                          {t('sendTestEmail')}
-                        </Button>
-                      </div>
-
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">
-                          <strong>Gmail:</strong> {t('smtpGmail')}
-                          <br />
-                          <strong>Outlook:</strong> {t('smtpOutlook')}
-                          <br />
-                          <strong>{t('smtpCustom')}</strong>
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  <div className="pt-4 border-t flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">{t('testConnection')}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('testConnectionHint', { email: settings?.email || '' })}
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={handleTestEmail} disabled={testingEmail}>
+                      {testingEmail ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {t('sendTestEmail')}
+                    </Button>
+                  </div>
                 </>
               )}
             </CardContent>

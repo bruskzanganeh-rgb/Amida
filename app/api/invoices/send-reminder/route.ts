@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { logActivity } from '@/lib/activity'
 import { generateInvoicePdf } from '@/lib/pdf/generator'
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select(
-        'smtp_host, smtp_port, smtp_user, smtp_password, smtp_from_email, smtp_from_name, company_name, email_provider, org_number, address, email, phone, bank_account, bankgiro, iban, bic, vat_registration_number, late_payment_interest_text, our_reference',
+        'company_name, org_number, address, email, phone, bank_account, bankgiro, iban, bic, vat_registration_number, late_payment_interest_text, our_reference',
       )
       .eq('id', membership.company_id)
       .single()
@@ -129,76 +128,38 @@ export async function POST(request: NextRequest) {
       },
     ]
 
-    const provider = company.email_provider || 'platform'
     const htmlBody = message ? `<p>${message.replace(/\n/g, '<br>')}</p>` : undefined
 
-    if (provider === 'platform') {
-      const { data: configRows } = await serviceSupabase
-        .from('platform_config')
-        .select('key, value')
-        .in('key', ['resend_api_key', 'resend_from_email'])
+    // Send via Resend (platform email)
+    const { data: configRows } = await serviceSupabase
+      .from('platform_config')
+      .select('key, value')
+      .in('key', ['resend_api_key', 'resend_from_email'])
 
-      const config = Object.fromEntries((configRows || []).map((r) => [r.key, r.value]))
+    const config = Object.fromEntries((configRows || []).map((r) => [r.key, r.value]))
 
-      if (!config.resend_api_key) {
-        return NextResponse.json({ error: 'Platform email is not configured. Contact admin.' }, { status: 400 })
-      }
-
-      const resend = new Resend(config.resend_api_key)
-      const fromEmail = config.resend_from_email || 'noreply@babalisk.com'
-      const fromName = company.company_name || 'Amida'
-      const fromAddress = `${fromName} <${fromEmail}>`
-
-      await resend.emails.send({
-        from: fromAddress,
-        replyTo: user.email || undefined,
-        to: [to],
-        subject,
-        text: message || '',
-        html: htmlBody,
-        attachments: fileAttachments.map((a) => ({
-          filename: a.filename,
-          content: a.content,
-          contentType: a.contentType,
-        })),
-      })
-    } else {
-      if (!company.smtp_host || !company.smtp_from_email) {
-        return NextResponse.json(
-          { error: 'SMTP is not configured. Go to Settings and fill in email details.' },
-          { status: 400 },
-        )
-      }
-
-      const transporter = nodemailer.createTransport({
-        host: company.smtp_host.trim(),
-        port: company.smtp_port || 587,
-        secure: company.smtp_port === 465,
-        auth: company.smtp_user
-          ? {
-              user: company.smtp_user.trim(),
-              pass: company.smtp_password || '',
-            }
-          : undefined,
-      })
-
-      const fromAddress = company.smtp_from_name
-        ? `"${company.smtp_from_name}" <${company.smtp_from_email}>`
-        : company.smtp_from_email
-
-      await transporter.sendMail({
-        from: fromAddress,
-        to,
-        subject,
-        text: message || '',
-        html: htmlBody,
-        attachments: fileAttachments.map((a) => ({
-          filename: a.filename,
-          content: a.content,
-          contentType: a.contentType,
-        })),
-      })
+    if (!config.resend_api_key) {
+      return NextResponse.json({ error: 'Platform email is not configured. Contact admin.' }, { status: 400 })
     }
+
+    const resend = new Resend(config.resend_api_key)
+    const fromEmail = config.resend_from_email || 'noreply@babalisk.com'
+    const fromName = company.company_name || 'Amida'
+    const fromAddress = `${fromName} <${fromEmail}>`
+
+    await resend.emails.send({
+      from: fromAddress,
+      replyTo: user.email || undefined,
+      to: [to],
+      subject,
+      text: message || '',
+      html: htmlBody,
+      attachments: fileAttachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+      })),
+    })
 
     // Store sent PDF if not already stored
     try {
@@ -252,25 +213,13 @@ export async function POST(request: NextRequest) {
       eventType: 'invoice_reminder_sent',
       entityType: 'invoice',
       entityId: invoiceId,
-      metadata: { to, invoice_number: invoice.invoice_number, reminder_number: reminderNumber, provider },
+      metadata: { to, invoice_number: invoice.invoice_number, reminder_number: reminderNumber },
     })
 
     return NextResponse.json({ success: true, reminderNumber })
   } catch (error) {
     console.error('Send reminder error:', error)
-    let errorMessage = 'Could not send reminder'
-    const msg = error instanceof Error ? error.message : ''
-    if (msg.includes('EBADNAME') || msg.includes('ENOTFOUND')) {
-      errorMessage = 'Could not find SMTP server. Check the hostname for typos or extra spaces in Settings.'
-    } else if (msg.includes('ECONNREFUSED')) {
-      errorMessage = 'SMTP server refused the connection. Verify the port in Settings (usually 465 or 587).'
-    } else if (msg.includes('EAUTH') || msg.includes('Invalid login')) {
-      errorMessage = 'SMTP login failed. Check username and password in Settings.'
-    } else if (msg.includes('ESOCKET') || msg.includes('timeout')) {
-      errorMessage = 'SMTP connection timed out. Try switching between port 465 and 587 in Settings.'
-    } else if (msg.includes('certificate')) {
-      errorMessage = 'SSL/TLS certificate error. Try switching between port 465 and 587 in Settings.'
-    }
+    const errorMessage = error instanceof Error ? error.message : 'Could not send reminder'
     return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

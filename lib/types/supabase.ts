@@ -246,14 +246,7 @@ export type Database = {
           next_invoice_number: number | null
           payment_terms_default: number | null
           base_currency: string | null
-          email_provider: string | null
           email_inbound_address: string | null
-          smtp_host: string | null
-          smtp_port: number | null
-          smtp_user: string | null
-          smtp_password: string | null
-          smtp_from_email: string | null
-          smtp_from_name: string | null
 
           gig_visibility: string
           created_at: string | null
@@ -282,14 +275,7 @@ export type Database = {
           next_invoice_number?: number | null
           payment_terms_default?: number | null
           base_currency?: string | null
-          email_provider?: string | null
           email_inbound_address?: string | null
-          smtp_host?: string | null
-          smtp_port?: number | null
-          smtp_user?: string | null
-          smtp_password?: string | null
-          smtp_from_email?: string | null
-          smtp_from_name?: string | null
 
           gig_visibility?: string
           created_at?: string | null
@@ -318,14 +304,7 @@ export type Database = {
           next_invoice_number?: number | null
           payment_terms_default?: number | null
           base_currency?: string | null
-          email_provider?: string | null
           email_inbound_address?: string | null
-          smtp_host?: string | null
-          smtp_port?: number | null
-          smtp_user?: string | null
-          smtp_password?: string | null
-          smtp_from_email?: string | null
-          smtp_from_name?: string | null
 
           gig_visibility?: string
           created_at?: string | null
@@ -423,17 +402,10 @@ export type Database = {
           late_payment_interest_text: string | null
           show_logo_on_invoice: boolean | null
           our_reference: string | null
-          smtp_host: string | null
-          smtp_port: number | null
-          smtp_user: string | null
-          smtp_password: string | null
-          smtp_from_email: string | null
-          smtp_from_name: string | null
           base_currency: string | null
           user_id: string | null
           onboarding_completed: boolean | null
           locale: string | null
-          email_provider: string | null
           country_code: string | null
           calendar_token: string | null
           calendar_show_all_members: boolean | null
@@ -461,17 +433,10 @@ export type Database = {
           late_payment_interest_text?: string | null
           show_logo_on_invoice?: boolean | null
           our_reference?: string | null
-          smtp_host?: string | null
-          smtp_port?: number | null
-          smtp_user?: string | null
-          smtp_password?: string | null
-          smtp_from_email?: string | null
-          smtp_from_name?: string | null
           base_currency?: string | null
           user_id?: string | null
           onboarding_completed?: boolean | null
           locale?: string | null
-          email_provider?: string | null
           country_code?: string | null
           calendar_token?: string | null
           calendar_show_all_members?: boolean | null
@@ -499,17 +464,10 @@ export type Database = {
           late_payment_interest_text?: string | null
           show_logo_on_invoice?: boolean | null
           our_reference?: string | null
-          smtp_host?: string | null
-          smtp_port?: number | null
-          smtp_user?: string | null
-          smtp_password?: string | null
-          smtp_from_email?: string | null
-          smtp_from_name?: string | null
           base_currency?: string | null
           user_id?: string | null
           onboarding_completed?: boolean | null
           locale?: string | null
-          email_provider?: string | null
           country_code?: string | null
           calendar_token?: string | null
           calendar_show_all_members?: boolean | null
