@@ -47,6 +47,7 @@ type InitialGig = {
   client_payment_terms: number
   invoice_notes?: string | null
   expenses?: GigExpense[]
+  currency?: string
 }
 
 type CreateInvoiceDialogProps = {
@@ -153,14 +154,23 @@ export function CreateInvoiceDialog({
     return clients.find((c) => c.id === formData.client_id) || null
   }, [clients, formData.client_id])
 
-  // Derive currency from company's country
+  // Derive currency from company's country as fallback
   const companyCurrency = useMemo(() => {
     const cc = companySettings?.country_code
     if (!cc) return 'SEK'
     return COUNTRY_CONFIGS[cc]?.currency || 'SEK'
   }, [companySettings])
 
-  const currencyLabel = companyCurrency === 'SEK' ? 'kr' : companyCurrency
+  // Use gig currency if all selected gigs share the same currency, otherwise company default
+  const invoiceCurrency = useMemo(() => {
+    const selectedGigs = clientGigs.filter((g) => selectedGigIds.has(g.id))
+    if (selectedGigs.length === 0) return companyCurrency
+    const currencies = new Set(selectedGigs.map((g) => g.currency || companyCurrency))
+    if (currencies.size === 1) return currencies.values().next().value!
+    return companyCurrency
+  }, [clientGigs, selectedGigIds, companyCurrency])
+
+  const currencyLabel = invoiceCurrency === 'SEK' ? 'kr' : invoiceCurrency
 
   // Auto-detect reverse charge
   const isReverseCharge = useMemo(() => {
@@ -336,7 +346,7 @@ export function CreateInvoiceDialog({
       .select(
         `
         id, fee, travel_expense, date, start_date, end_date, total_days,
-        project_name, invoice_notes, client_id,
+        project_name, invoice_notes, client_id, currency,
         client:clients(name, payment_terms),
         gig_type:gig_types(id, name, name_en, vat_rate)
       `,
@@ -373,6 +383,7 @@ export function CreateInvoiceDialog({
           gig_type_name_en: gigType?.name_en || null,
           gig_type_vat_rate: gigType?.vat_rate || 25,
           client_payment_terms: client?.payment_terms || 30,
+          currency: g.currency || undefined,
         }
       })
 
@@ -437,7 +448,7 @@ export function CreateInvoiceDialog({
           vat_amount: vatAmount,
           total,
           total_base: total,
-          currency: companyCurrency,
+          currency: invoiceCurrency,
           exchange_rate: 1.0,
           status: 'draft',
           reference_person_override: referencePersonOverride,
@@ -556,7 +567,7 @@ export function CreateInvoiceDialog({
                   notes={formData.notes}
                   reverseCharge={isReverseCharge}
                   locale={selectedClient?.invoice_language || undefined}
-                  currency={companyCurrency}
+                  currency={invoiceCurrency}
                 />
               </div>
             </div>
