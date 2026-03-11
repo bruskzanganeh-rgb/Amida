@@ -290,7 +290,7 @@ export default function DashboardPage() {
             {isEmpty ? (
               <div className="py-4">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                  {t('welcome', { name: company?.company_name || '' })}
+                  {t('welcome', { name: firstName || '' })}
                 </h1>
                 <p className="text-muted-foreground mt-1 text-sm">{t('welcomeHint')}</p>
                 <div className="hidden lg:grid grid-cols-3 gap-3 mt-5">
