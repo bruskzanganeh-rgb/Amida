@@ -65,6 +65,7 @@ type GeneratePdfParams = {
   sponsor?: SponsorData | null
   locale?: string
   brandingName?: string
+  resolvedLogoSrc?: { data: Buffer; format: 'png' | 'jpg' } | null
 }
 
 // Localized labels for PDF generation
@@ -139,13 +140,26 @@ function getLabels(locale: string) {
 }
 
 // Convert base64 data URI to a source object for @react-pdf/renderer
-function resolveImageSrc(dataUri: string): string | { data: Buffer; format: 'png' | 'jpg' } {
+// SVG is not supported by @react-pdf/renderer Image, so we convert to PNG
+async function resolveImageSrc(dataUri: string): Promise<{ data: Buffer; format: 'png' | 'jpg' }> {
+  // SVG: convert to PNG using @napi-rs/canvas
+  if (dataUri.startsWith('data:image/svg+xml')) {
+    const { createCanvas, loadImage } = await import('@napi-rs/canvas')
+    const img = await loadImage(Buffer.from(dataUri.split(',')[1], 'base64'))
+    const canvas = createCanvas(img.width, img.height)
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(img, 0, 0)
+    return { data: canvas.toBuffer('image/png'), format: 'png' }
+  }
+  // PNG/JPG: extract buffer directly
   const match = dataUri.match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/)
   if (match) {
     const format = match[1] === 'jpeg' || match[1] === 'jpg' ? 'jpg' : 'png'
     return { data: Buffer.from(match[2], 'base64'), format }
   }
-  return dataUri
+  // Fallback: treat as PNG
+  const base64 = dataUri.includes(',') ? dataUri.split(',')[1] : dataUri
+  return { data: Buffer.from(base64, 'base64'), format: 'png' }
 }
 
 // Premium color palette
@@ -482,7 +496,7 @@ function formatCurrencyPdf(amount: number, currency = 'SEK'): string {
   const symbol = PDF_CURRENCY_SUFFIX[currency] || currency
   if (currency === 'EUR' || currency === 'USD' || currency === 'GBP') {
     const prefix = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'
-    return `${prefix}${formatted}`
+    return `${prefix}\u00A0${formatted}`
   }
   return `${formatted} ${symbol}`
 }
@@ -504,6 +518,7 @@ function InvoicePDF({
   sponsor,
   locale = 'sv',
   brandingName = 'Amida',
+  resolvedLogoSrc,
 }: GeneratePdfParams) {
   const fmt = (amount: number) => formatCurrencyPdf(amount, currency)
   const l = getLabels(locale)
@@ -714,10 +729,10 @@ function InvoicePDF({
 
           <View style={styles.footerRow}>
             {/* Column 1: Logo (only if show_logo_on_invoice is true and logo exists) */}
-            {company.show_logo_on_invoice !== false && company.logo_url && (
+            {company.show_logo_on_invoice !== false && resolvedLogoSrc && (
               <View style={styles.footerColumn}>
                 {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image does not support alt */}
-                <Image src={resolveImageSrc(company.logo_url)} style={styles.footerLogo} />
+                <Image src={resolvedLogoSrc} style={styles.footerLogo} />
               </View>
             )}
 
@@ -811,6 +826,16 @@ function InvoicePDF({
 
 // Export function to generate PDF buffer
 export async function generateInvoicePdf(params: GeneratePdfParams): Promise<Buffer> {
-  const buffer = await renderToBuffer(<InvoicePDF {...params} />)
+  // Pre-resolve logo (SVG → PNG conversion, base64 → Buffer)
+  let resolvedLogoSrc: { data: Buffer; format: 'png' | 'jpg' } | null = null
+  if (params.company.show_logo_on_invoice !== false && params.company.logo_url) {
+    try {
+      resolvedLogoSrc = await resolveImageSrc(params.company.logo_url)
+    } catch (e) {
+      console.error('Failed to resolve logo image:', e)
+    }
+  }
+
+  const buffer = await renderToBuffer(<InvoicePDF {...params} resolvedLogoSrc={resolvedLogoSrc} />)
   return Buffer.from(buffer)
 }

@@ -378,7 +378,7 @@ export default function InvoicesTab() {
       setPdfPreviewFilename(filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`)
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
-      setPdfPreviewUrl(url)
+      setPdfPreviewUrl(url + '#toolbar=0')
     } catch {
       toast.error(t('errorLoadingPdf'))
       setPdfPreviewOpen(false)
