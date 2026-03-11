@@ -16,7 +16,6 @@ import {
   Calendar,
   Copy,
   Check,
-  Mail,
   Send,
   Crown,
   Globe,
@@ -84,7 +83,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [calendarCopied, setCalendarCopied] = useState(false)
-  const [testingEmail, setTestingEmail] = useState(false)
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
   const [newPassword, setNewPassword] = useState('')
@@ -276,32 +274,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleTestEmail() {
-    setTestingEmail(true)
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      const toEmail = user?.email || settings?.email
-
-      const response = await fetch('/api/settings/test-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to_email: toEmail }),
-      })
-
-      const result = await response.json()
-      if (response.ok) {
-        toast.success(tToast('testEmailSent', { email: toEmail || '' }))
-      } else {
-        toast.error(tToast('testEmailError', { error: result.error || 'Unknown error' }))
-      }
-    } catch {
-      toast.error(tToast('testEmailGenericError'))
-    }
-    setTestingEmail(false)
-  }
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -333,10 +305,6 @@ export default function SettingsPage() {
           <TabsTrigger value="company" className="gap-2" title={t('tabCompany')}>
             <Building2 className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t('tabCompany')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="email" className="gap-2" title={t('tabEmail')}>
-            <Mail className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">{t('tabEmail')}</span>
           </TabsTrigger>
           <TabsTrigger value="calendar" className="gap-2" title={t('tabCalendar')}>
             <Calendar className="h-4 w-4 shrink-0" />
@@ -692,62 +660,6 @@ export default function SettingsPage() {
           </Card>
 
           {/* Save button */}
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} size="lg">
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {tc('saveSettings')}
-            </Button>
-          </div>
-        </TabsContent>
-
-        {/* Email Tab */}
-        <TabsContent value="email" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                {t('emailSettings')}
-              </CardTitle>
-              <CardDescription>{t('emailSettingsDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!isPro ? (
-                <div className="p-4 rounded-lg bg-muted/50 text-center space-y-2">
-                  <Crown className="h-8 w-8 mx-auto text-yellow-500" />
-                  <p className="text-sm font-medium">{t('emailRequiresPro')}</p>
-                  <button onClick={() => setActiveTab('subscription')} className="text-sm text-primary underline">
-                    {t('subscription')}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="p-4 rounded-lg bg-muted/50 flex items-start gap-3">
-                    <Mail className="h-5 w-5 mt-0.5 text-primary shrink-0" />
-                    <p className="text-sm text-muted-foreground">{t('platformEmailInfo')}</p>
-                  </div>
-
-                  <div className="pt-4 border-t flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium">{t('testConnection')}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('testConnectionHint', { email: settings?.email || '' })}
-                      </p>
-                    </div>
-                    <Button variant="outline" onClick={handleTestEmail} disabled={testingEmail}>
-                      {testingEmail ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      {t('sendTestEmail')}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Save button for email */}
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={saving} size="lg">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
