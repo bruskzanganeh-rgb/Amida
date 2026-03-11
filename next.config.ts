@@ -10,7 +10,7 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.anthropic.com",
-  'frame-src blob: https://js.stripe.com https://*.supabase.co',
+  "frame-src 'self' blob: https://js.stripe.com https://*.supabase.co",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
