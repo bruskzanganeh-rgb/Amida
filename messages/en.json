@@ -224,6 +224,7 @@
     "unpaid": "Unpaid",
     "paidTotal": "Paid",
     "invoiceCount": "Number of invoices",
+    "sentOn": "Sent {date}",
     "markPaid": "Mark paid",
     "markPaidConfirmTitle": "Mark as paid",
     "markPaidConfirmDescription": "The invoice will be marked as paid with today's date. Continue?",

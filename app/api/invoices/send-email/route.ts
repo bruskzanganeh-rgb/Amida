@@ -256,9 +256,19 @@ export async function POST(request: NextRequest) {
       console.error('PDF storage exception:', storageErr)
     }
 
-    // Update invoice status - scope to user for safety
+    // Update invoice status and sent_date - scope to user for safety
     if (invoice.status === 'draft') {
-      await supabase.from('invoices').update({ status: 'sent' }).eq('id', invoiceId).eq('user_id', user.id)
+      await supabase
+        .from('invoices')
+        .update({ status: 'sent', sent_date: new Date().toISOString() })
+        .eq('id', invoiceId)
+        .eq('user_id', user.id)
+    } else if (!invoice.sent_date) {
+      await supabase
+        .from('invoices')
+        .update({ sent_date: new Date().toISOString() })
+        .eq('id', invoiceId)
+        .eq('user_id', user.id)
     }
 
     // Log activity

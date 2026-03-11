@@ -224,6 +224,7 @@
     "unpaid": "Obetalda",
     "paidTotal": "Betalda",
     "invoiceCount": "Antal fakturor",
+    "sentOn": "Skickad {date}",
     "markPaid": "Markera betald",
     "markPaidConfirmTitle": "Markera som betald",
     "markPaidConfirmDescription": "Fakturan markeras som betald med dagens datum. Vill du fortsätta?",

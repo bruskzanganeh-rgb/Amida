@@ -48,6 +48,7 @@ type Invoice = {
   invoice_date: string
   due_date: string
   paid_date: string | null
+  sent_date: string | null
   subtotal: number
   vat_rate: number
   vat_amount: number
@@ -679,8 +680,18 @@ export default function InvoicesTab() {
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-xs text-muted-foreground">
                           {format(new Date(invoice.due_date), 'd MMM yyyy', { locale: dateLocale })}
+                          {invoice.sent_date && (invoice.status === 'sent' || invoice.status === 'paid') && (
+                            <span className="text-muted-foreground ml-1">
+                              ·{' '}
+                              {t('sentOn', {
+                                date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }),
+                              })}
+                            </span>
+                          )}
                           {invoice.status === 'overdue' && (
                             <span className="text-red-600 ml-1">
+                              {invoice.sent_date &&
+                                `· ${t('sentOn', { date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} `}
                               · {differenceInDays(new Date(), new Date(invoice.due_date))}d
                             </span>
                           )}
@@ -811,16 +822,26 @@ export default function InvoicesTab() {
                                   <Badge className={statusConfig[invoice.status as keyof typeof statusConfig]?.color}>
                                     {t(`status.${invoice.status}`)}
                                   </Badge>
-                                  {invoice.status === 'overdue' && (
+                                  {invoice.status === 'overdue' ? (
                                     <span className="text-[10px] text-red-600">
-                                      {differenceInDays(new Date(), new Date(invoice.due_date))}d ·{' '}
+                                      {invoice.sent_date &&
+                                        `${t('sentOn', { date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} · `}
+                                      {differenceInDays(new Date(), new Date(invoice.due_date))}d
                                       {reminderCounts[invoice.id]
-                                        ? reminderCounts[invoice.id] === 1
-                                          ? t('reminder.oneReminderSent')
-                                          : t('reminder.remindersSent', { count: reminderCounts[invoice.id] })
+                                        ? ` · ${
+                                            reminderCounts[invoice.id] === 1
+                                              ? t('reminder.oneReminderSent')
+                                              : t('reminder.remindersSent', { count: reminderCounts[invoice.id] })
+                                          }`
                                         : ''}
                                     </span>
-                                  )}
+                                  ) : (invoice.status === 'sent' || invoice.status === 'paid') && invoice.sent_date ? (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {t('sentOn', {
+                                        date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }),
+                                      })}
+                                    </span>
+                                  ) : null}
                                 </div>
                               </TableCell>
                               <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
