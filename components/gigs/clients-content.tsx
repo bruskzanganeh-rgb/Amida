@@ -6,11 +6,12 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Building2, Edit, Trash2, Search } from 'lucide-react'
+import { Building2, Edit, Trash2, Search, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { CreateClientDialog } from '@/components/clients/create-client-dialog'
+import { ImportClientsDialog } from '@/components/clients/import-clients-dialog'
 import { EditClientDialog } from '@/components/clients/edit-client-dialog'
 import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import Link from 'next/link'
@@ -35,6 +36,7 @@ type Client = {
 
 export default function ClientsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
 
   useEffect(() => {
     const handler = () => setShowCreateDialog(true)
@@ -110,6 +112,10 @@ export default function ClientsPage() {
             className="pl-8 h-9 text-sm"
           />
         </div>
+        <Button variant="outline" size="sm" className="h-9" onClick={() => setShowImportDialog(true)}>
+          <Upload className="h-3.5 w-3.5 mr-1.5" />
+          {t('importClients')}
+        </Button>
       </div>
 
       <Card>
@@ -237,6 +243,8 @@ export default function ClientsPage() {
       </Card>
 
       <CreateClientDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={() => mutate()} />
+
+      <ImportClientsDialog open={showImportDialog} onOpenChange={setShowImportDialog} onSuccess={() => mutate()} />
 
       <EditClientDialog
         client={editingClient}

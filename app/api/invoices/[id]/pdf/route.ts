@@ -188,10 +188,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     // Return PDF
+    const locale = clientData.invoice_language || 'sv'
+    const prefix = locale === 'en' ? 'Invoice' : 'Faktura'
+    const filename = `${prefix}-${invoice.invoice_number}_${invoice.invoice_date}.pdf`
+
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Faktura-${invoice.invoice_number}.pdf"`,
+        'Content-Disposition': `inline; filename="${filename}"`,
       },
     })
   } catch (error: unknown) {

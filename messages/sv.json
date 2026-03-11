@@ -1281,7 +1281,22 @@
     "totalYear": "Totalt i år",
     "unpaidInvoices": "Obetalda fakturor",
     "updateClientError": "Kunde inte uppdatera kund",
-    "yearLabel": "År"
+    "yearLabel": "År",
+    "importClients": "Importera kunder",
+    "importDescription": "Klistra in data från Excel eller ladda upp en CSV-fil för att importera kunder i bulk.",
+    "importPlaceholder": "Klistra in data här...\n\nExempel:\nNamn;Org.nummer;E-post;Adress\nKungliga Filharmonikerna;802005-8915;faktura@kf.se;Stockholm",
+    "importOrUpload": "eller",
+    "importUploadCSV": "Ladda upp CSV",
+    "importFormatHint": "Stödda format: CSV, TSV, eller semikolonseparerad data",
+    "importFormatColumns": "Kolumner: Namn (obligatorisk), Org.nummer, E-post, Adress, Betalningsvillkor, Referensperson, Kundkod, Anteckningar",
+    "importPreview": "Förhandsgranska",
+    "importButton": "Importera {count} kunder",
+    "importNoValidRows": "Ingen giltig data hittades",
+    "importError": "Kunde inte importera kunder",
+    "importSuccess": "{count} kunder importerade",
+    "importWarnings": "Varningar",
+    "importRowCount": "{count} kunder att importera",
+    "importEditData": "Redigera data"
   },
   "toast": {
     "settingsSaved": "Inställningar sparade!",

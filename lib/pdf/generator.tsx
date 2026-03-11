@@ -138,6 +138,16 @@ function getLabels(locale: string) {
   return PDF_LABELS[locale] || PDF_LABELS.sv
 }
 
+// Convert base64 data URI to a source object for @react-pdf/renderer
+function resolveImageSrc(dataUri: string): string | { data: Buffer; format: 'png' | 'jpg' } {
+  const match = dataUri.match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/)
+  if (match) {
+    const format = match[1] === 'jpeg' || match[1] === 'jpg' ? 'jpg' : 'png'
+    return { data: Buffer.from(match[2], 'base64'), format }
+  }
+  return dataUri
+}
+
 // Premium color palette
 const colors = {
   primary: '#111827',
@@ -707,7 +717,7 @@ function InvoicePDF({
             {company.show_logo_on_invoice !== false && company.logo_url && (
               <View style={styles.footerColumn}>
                 {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image does not support alt */}
-                <Image src={company.logo_url} style={styles.footerLogo} />
+                <Image src={resolveImageSrc(company.logo_url)} style={styles.footerLogo} />
               </View>
             )}
 

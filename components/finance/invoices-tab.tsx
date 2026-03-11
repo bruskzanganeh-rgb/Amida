@@ -12,21 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Plus,
-  FileText,
-  Download,
-  Mail,
-  Check,
-  Trash2,
-  ClipboardList,
-  ChevronDown,
-  Bell,
-  Search,
-  Loader2,
-  X,
-  Eye,
-} from 'lucide-react'
+import { Plus, FileText, Mail, Check, Trash2, ClipboardList, ChevronDown, Bell, Search, X, Eye } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog'
 import { SendInvoiceDialog } from '@/components/invoices/send-invoice-dialog'
@@ -41,7 +27,6 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { PageTransition } from '@/components/ui/page-transition'
-import { downloadFile } from '@/lib/download'
 
 type Invoice = {
   id: string
@@ -139,7 +124,6 @@ export default function InvoicesTab() {
   const [confirmPaidInvoice, setConfirmPaidInvoice] = useState<string | null>(null)
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
-  const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
   const [mobileInvoiceLimit, setMobileInvoiceLimit] = useState(20)
   const supabase = createClient()
@@ -360,24 +344,10 @@ export default function InvoicesTab() {
     overscan: 5,
   })
 
-  async function openPdfPreview(invoiceId: string, invoiceNumber: number) {
+  function openPdfPreview(invoiceId: string, invoiceNumber: number) {
     setPdfPreviewInvoiceNumber(invoiceNumber)
+    setPdfPreviewUrl(`/api/invoices/${invoiceId}/pdf`)
     setPdfPreviewOpen(true)
-    setPdfPreviewLoading(true)
-    setPdfPreviewUrl(null)
-
-    try {
-      const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
-      if (!res.ok) throw new Error()
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      setPdfPreviewUrl(url)
-    } catch {
-      toast.error(t('errorLoadingPdf'))
-      setPdfPreviewOpen(false)
-    } finally {
-      setPdfPreviewLoading(false)
-    }
   }
 
   async function markAsPaid(id: string) {
@@ -989,10 +959,7 @@ export default function InvoicesTab() {
           open={pdfPreviewOpen}
           onOpenChange={(open) => {
             setPdfPreviewOpen(open)
-            if (!open && pdfPreviewUrl) {
-              URL.revokeObjectURL(pdfPreviewUrl)
-              setPdfPreviewUrl(null)
-            }
+            if (!open) setPdfPreviewUrl(null)
           }}
         >
           <DialogContent className="sm:max-w-[700px] p-0">
@@ -1000,16 +967,7 @@ export default function InvoicesTab() {
               {t('invoice')} #{pdfPreviewInvoiceNumber}
             </DialogTitle>
             <div className="relative">
-              <div className="absolute top-2 right-2 z-10 flex gap-1">
-                {pdfPreviewUrl && (
-                  <button
-                    onClick={() => downloadFile(pdfPreviewUrl, `Faktura-${pdfPreviewInvoiceNumber}.pdf`)}
-                    className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-                    title={tc('download')}
-                  >
-                    <Download className="h-5 w-5" />
-                  </button>
-                )}
+              <div className="absolute top-2 right-2 z-10">
                 <button
                   onClick={() => setPdfPreviewOpen(false)}
                   className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
@@ -1017,11 +975,7 @@ export default function InvoicesTab() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              {pdfPreviewLoading ? (
-                <div className="flex items-center justify-center h-96">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                </div>
-              ) : pdfPreviewUrl ? (
+              {pdfPreviewUrl ? (
                 <iframe
                   src={pdfPreviewUrl}
                   className="w-full h-[80vh] rounded-lg"

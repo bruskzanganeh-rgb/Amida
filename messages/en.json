@@ -1282,7 +1282,22 @@
     "totalYear": "Total this year",
     "unpaidInvoices": "Unpaid invoices",
     "updateClientError": "Could not update client",
-    "yearLabel": "Year"
+    "yearLabel": "Year",
+    "importClients": "Import clients",
+    "importDescription": "Paste data from Excel or upload a CSV file to import clients in bulk.",
+    "importPlaceholder": "Paste data here...\n\nExample:\nName;Org number;Email;Address\nRoyal Philharmonic;802005-8915;invoice@rpo.com;London",
+    "importOrUpload": "or",
+    "importUploadCSV": "Upload CSV",
+    "importFormatHint": "Supported formats: CSV, TSV, or semicolon-separated data",
+    "importFormatColumns": "Columns: Name (required), Org number, Email, Address, Payment terms, Reference person, Client code, Notes",
+    "importPreview": "Preview",
+    "importButton": "Import {count} clients",
+    "importNoValidRows": "No valid data found",
+    "importError": "Could not import clients",
+    "importSuccess": "{count} clients imported",
+    "importWarnings": "Warnings",
+    "importRowCount": "{count} clients to import",
+    "importEditData": "Edit data"
   },
   "toast": {
     "settingsSaved": "Settings saved!",
