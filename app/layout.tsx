@@ -27,25 +27,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Amida — Gig & invoice management for musicians',
+    default: 'Amida — Event & invoice management for musicians',
     template: '%s — Amida',
   },
   description:
-    'Gig and invoice management for freelance musicians. Track gigs, generate invoices, scan receipts — all in one place.',
+    'Event and invoice management for freelance musicians. Track events, generate invoices, scan receipts — all in one place.',
   metadataBase: new URL('https://amida.babalisk.com'),
   openGraph: {
     title: 'Amida',
-    description: 'Gig and invoice management for freelance musicians',
+    description: 'Event and invoice management for freelance musicians',
     url: 'https://amida.babalisk.com',
     siteName: 'Amida',
     locale: 'sv_SE',
     type: 'website',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Amida — Gig & invoice management for musicians' }],
+    images: [
+      { url: '/og-image.png', width: 1200, height: 630, alt: 'Amida — Event & invoice management for musicians' },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Amida',
-    description: 'Gig and invoice management for freelance musicians',
+    description: 'Event and invoice management for freelance musicians',
     images: ['/og-image.png'],
   },
   manifest: '/manifest.json',

@@ -1,7 +1,7 @@
 {
   "name": "Amida",
   "short_name": "Amida",
-  "description": "Gig and invoice management for musicians",
+  "description": "Event and invoice management for musicians",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0B1E3A",

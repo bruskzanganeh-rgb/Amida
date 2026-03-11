@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
         const clientName = gig.client?.name || labels.unknownClient
         const baseSummary = gig.project_name
           ? `${gig.project_name} (${clientName})`
-          : `${gig.gig_type?.name || 'Gig'} (${clientName})`
+          : `${gig.gig_type?.name || 'Event'} (${clientName})`
 
         const descParts: string[] = []
         descParts.push(`${labels.client}: ${clientName}`)
@@ -195,11 +195,11 @@ END:VEVENT`,
     const calName =
       scope === 'shared'
         ? locale === 'en'
-          ? 'Amida — Team gigs'
-          : 'Amida — Teamets gigs'
+          ? 'Amida — Team events'
+          : 'Amida — Teamets events'
         : locale === 'en'
-          ? 'Amida — My gigs'
-          : 'Amida — Mina gigs'
+          ? 'Amida — My events'
+          : 'Amida — Mina events'
 
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -215,7 +215,7 @@ END:VCALENDAR`
     return new NextResponse(icsContent, {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'inline; filename="amida-gigs.ics"',
+        'Content-Disposition': 'inline; filename="amida-events.ics"',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     })

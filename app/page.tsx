@@ -7,16 +7,17 @@ import { AnimatedSection, AnimatedDiv, AnimatedP, AnimatedH1, AnimatedH2 } from 
 import { PricingSection } from '@/components/landing/pricing-section'
 
 export const metadata: Metadata = {
-  title: 'Gig & invoice management for freelance musicians',
-  description: 'Stop juggling spreadsheets. Track gigs, generate invoices and scan receipts — all in one place built for freelance musicians.',
+  title: 'Event & invoice management for freelance musicians',
+  description:
+    'Stop juggling spreadsheets. Track events, generate invoices and scan receipts — all in one place built for freelance musicians.',
   alternates: { canonical: 'https://amida.babalisk.com' },
 }
 
 const features = [
   {
     icon: Calendar,
-    title: 'Gig management',
-    desc: 'Track every gig, rehearsal and session — dates, fees and status at a glance.',
+    title: 'Event management',
+    desc: 'Track every event, rehearsal and session — dates, fees and status at a glance.',
   },
   {
     icon: FileText,
@@ -31,7 +32,7 @@ const features = [
   {
     icon: CalendarDays,
     title: 'Calendar sync',
-    desc: 'See all your gigs in a calendar. Syncs with Apple Calendar and Google Calendar.',
+    desc: 'See all your events in a calendar. Syncs with Apple Calendar and Google Calendar.',
   },
 ]
 
@@ -56,7 +57,8 @@ export default function LandingPage() {
               priceCurrency: 'USD',
               offerCount: '3',
             },
-            description: 'Gig and invoice management for freelance musicians. Track gigs, generate invoices and scan receipts.',
+            description:
+              'Event and invoice management for freelance musicians. Track events, generate invoices and scan receipts.',
           }),
         }}
       />
@@ -85,10 +87,11 @@ export default function LandingPage() {
           Built for freelance musicians
         </AnimatedP>
         <AnimatedH1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-2xl leading-[1.1]">
-          Gigs, invoices and finances — all in one place.
+          Events, invoices and finances — all in one place.
         </AnimatedH1>
         <AnimatedP className="mt-6 text-lg text-[#C7D2FE] max-w-xl leading-relaxed">
-          Stop juggling spreadsheets. Amida gives you everything you need to manage your music career — so you can focus on playing.
+          Stop juggling spreadsheets. Amida gives you everything you need to manage your music career — so you can focus
+          on playing.
         </AnimatedP>
         <AnimatedDiv className="mt-10 flex gap-3">
           <Button size="lg" className="bg-[#F59E0B] text-[#0B1E3A] hover:bg-[#F59E0B]/90 font-semibold" asChild>
@@ -102,9 +105,7 @@ export default function LandingPage() {
       {/* Features */}
       <AnimatedSection className="border-t border-[#1a3a5c] bg-[#102544]">
         <div className="mx-auto max-w-5xl px-6 py-24">
-          <AnimatedP className="text-sm font-medium text-[#F59E0B] tracking-wide uppercase mb-3">
-            Features
-          </AnimatedP>
+          <AnimatedP className="text-sm font-medium text-[#F59E0B] tracking-wide uppercase mb-3">Features</AnimatedP>
           <AnimatedH2 className="text-3xl font-bold tracking-tight text-white mb-14">
             Everything you need, nothing you don&apos;t.
           </AnimatedH2>
@@ -129,12 +130,8 @@ export default function LandingPage() {
       {/* Pricing */}
       <section>
         <div className="mx-auto max-w-5xl px-6 py-24">
-          <p className="text-sm font-medium text-[#F59E0B] tracking-wide uppercase mb-3">
-            Pricing
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-white mb-14">
-            Simple, transparent pricing.
-          </h2>
+          <p className="text-sm font-medium text-[#F59E0B] tracking-wide uppercase mb-3">Pricing</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white mb-14">Simple, transparent pricing.</h2>
           <PricingSection />
         </div>
       </section>
@@ -166,10 +163,18 @@ export default function LandingPage() {
             <span>&copy; {new Date().getFullYear()} Amida</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/blog" className="hover:text-[#C7D2FE] transition-colors">Blog</Link>
-            <Link href="/founding-members" className="hover:text-[#C7D2FE] transition-colors">Founding Members</Link>
-            <Link href="/privacy" className="hover:text-[#C7D2FE] transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-[#C7D2FE] transition-colors">Terms</Link>
+            <Link href="/blog" className="hover:text-[#C7D2FE] transition-colors">
+              Blog
+            </Link>
+            <Link href="/founding-members" className="hover:text-[#C7D2FE] transition-colors">
+              Founding Members
+            </Link>
+            <Link href="/privacy" className="hover:text-[#C7D2FE] transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-[#C7D2FE] transition-colors">
+              Terms
+            </Link>
           </div>
         </div>
       </footer>
