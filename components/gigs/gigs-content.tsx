@@ -573,6 +573,15 @@ export default function GigsPage() {
     overscan: 5,
   })
 
+  // Re-measure virtualizers when tab changes (scroll container may have been hidden)
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (activeTab === 'history') historyVirtualizer.measure()
+      if (activeTab === 'declined') declinedVirtualizer.measure()
+      if (activeTab === 'upcoming') upcomingVirtualizer.measure()
+    })
+  }, [activeTab, historyVirtualizer, declinedVirtualizer, upcomingVirtualizer])
+
   return (
     <>
       <PageTransition>
