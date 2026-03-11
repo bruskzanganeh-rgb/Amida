@@ -460,7 +460,9 @@ const PDF_CURRENCY_SUFFIX: Record<string, string> = {
 
 // Format currency for PDF — uses the invoice currency
 function formatCurrencyPdf(amount: number, currency = 'SEK'): string {
-  const formatted = amount.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const formatted = amount
+    .toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .replace(/\u2212/g, '-') // Node.js sv-SE uses Unicode minus which Helvetica can't render
   const symbol = PDF_CURRENCY_SUFFIX[currency] || currency
   if (currency === 'EUR' || currency === 'USD' || currency === 'GBP') {
     const prefix = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$'
