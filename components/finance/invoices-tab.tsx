@@ -82,6 +82,7 @@ type PendingGig = {
   client_payment_terms: number
   invoice_notes: string | null
   expenses: GigExpense[]
+  currency: string
 }
 
 const statusConfig = {
@@ -236,6 +237,7 @@ export default function InvoicesTab() {
           project_name,
           invoice_notes,
           client_id,
+          currency,
           client:clients(name, payment_terms),
           gig_type:gig_types(id, name, name_en, vat_rate)
         `,
@@ -313,6 +315,7 @@ export default function InvoicesTab() {
           gig_type_vat_rate: gigType?.vat_rate || 25,
           client_payment_terms: client?.payment_terms || 30,
           expenses: expensesByGig[gig.id] || [],
+          currency: gig.currency || 'SEK',
         }
       })
     },
@@ -544,7 +547,7 @@ export default function InvoicesTab() {
                             {gig.project_name || '-'}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {gig.fee.toLocaleString(formatLocale)} {tc('kr')}
+                            {formatCurrency(gig.fee, gig.currency as SupportedCurrency)}
                             {gig.travel_expense && gig.travel_expense > 0 && (
                               <span className="text-muted-foreground text-sm ml-1">
                                 (+{gig.travel_expense.toLocaleString(formatLocale)} {tGig('travelShort')})
