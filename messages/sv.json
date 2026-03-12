@@ -10,6 +10,7 @@
     "newGig": "Nytt event",
     "menu": "Meny",
     "logout": "Logga ut",
+    "upgradeToPro": "Uppgradera till Pro",
     "showingMyGigs": "Visar bara mina event",
     "showingTeamGigs": "Visar alla teammedlemmars event",
     "allShort": "Alla",
@@ -303,7 +304,7 @@
     "invoicedYear": "Fakturerat {year}",
     "paidYear": "Betalt {year}",
     "emailDefaultSubject": "Faktura #{number} - {company}",
-    "emailDefaultBody": "Hej,\n\nBifogat finner du faktura #{number} på {total} kr.\n\nFörfallodatum: {dueDate}\n\nMed vänliga hälsningar,\n{company}",
+    "emailDefaultBody": "Hej,\n\nBifogat finner du faktura #{number} på {total}.\n\nFörfallodatum: {dueDate}\n\nMed vänliga hälsningar,\n{company}",
     "companyName": "Företagsnamn",
     "emailRequiresPro": "Uppgradera till Pro för att skicka fakturor via e-post",
     "emailsRemaining": "{remaining} av {limit} e-postutskick kvar denna månad",
@@ -320,7 +321,7 @@
       "reminderSent": "Påminnelse skickad!",
       "couldNotSend": "Kunde inte skicka påminnelse",
       "emailDefaultSubject": "Påminnelse - Faktura #{number}",
-      "emailDefaultBodySv": "Hej,\n\nVi vill påminna om att faktura #{number} på {total} kr förföll till betalning den {dueDate}, dvs för {daysOverdue} dagar sedan.\n\nVi ber vänligen om att betalningen sker omgående.\n\nBankgiro: {bankAccount}\nAnge fakturanummer #{number} som referens vid betalning.\n\nFakturan bifogas för er bekvämlighet.\n\nMed vänliga hälsningar,\n{company}",
+      "emailDefaultBodySv": "Hej,\n\nVi vill påminna om att faktura #{number} på {total} förföll till betalning den {dueDate}, dvs för {daysOverdue} dagar sedan.\n\nVi ber vänligen om att betalningen sker omgående.\n\nBankgiro: {bankAccount}\nAnge fakturanummer #{number} som referens vid betalning.\n\nFakturan bifogas för er bekvämlighet.\n\nMed vänliga hälsningar,\n{company}",
       "emailDefaultSubjectEn": "Reminder - Invoice #{number}",
       "emailDefaultBodyEn": "Dear Sir/Madam,\n\nThis is a friendly reminder that invoice #{number} for {total} was due on {dueDate}, which is now {daysOverdue} days overdue.\n\nWe kindly ask that payment be made at your earliest convenience.\n\nBank account: {bankAccount}\nPlease reference invoice #{number} when making payment.\n\nThe invoice is attached for your convenience.\n\nBest regards,\n{company}",
       "sendingReminder": "Skickar påminnelse..."
@@ -938,7 +939,8 @@
     "enterManually": "Mata in manuellt",
     "emailsRemaining": "{remaining} av {limit} e-postutskick kvar denna månad",
     "usageSummaryTitle": "Din användning denna månad",
-    "emailSends": "E-postutskick"
+    "emailSends": "E-postutskick",
+    "usageNudge80": "Uppgradera för obegränsad åtkomst"
   },
   "admin": {
     "title": "Superadmin",

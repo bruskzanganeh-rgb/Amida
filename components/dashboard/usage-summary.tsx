@@ -36,6 +36,14 @@ export function UsageSummary() {
   const storageMb = storageQuota ? Math.round(storageQuota.usedBytes / (1024 * 1024)) : 0
   const storageLimitMb = storageQuota ? Math.round(storageQuota.limitBytes / (1024 * 1024)) : 50
 
+  const invoiceLimit = limits.invoices === Infinity ? 0 : limits.invoices
+  const scanLimit = limits.receiptScans === Infinity ? 0 : limits.receiptScans
+
+  const invoiceRatio = invoiceLimit > 0 ? (usage?.invoice_count || 0) / invoiceLimit : 0
+  const scanRatio = scanLimit > 0 ? (usage?.receipt_scan_count || 0) / scanLimit : 0
+  const storageRatio = storageLimitMb > 0 ? storageMb / storageLimitMb : 0
+  const maxRatio = Math.max(invoiceRatio, scanRatio, storageRatio)
+
   return (
     <Link
       href="/settings?tab=subscription"
@@ -49,18 +57,11 @@ export function UsageSummary() {
         </span>
       </div>
       <div className="flex gap-4">
-        <UsageBar
-          label={t('invoicesUsage')}
-          current={usage?.invoice_count || 0}
-          limit={limits.invoices === Infinity ? 0 : limits.invoices}
-        />
-        <UsageBar
-          label={t('receiptScans')}
-          current={usage?.receipt_scan_count || 0}
-          limit={limits.receiptScans === Infinity ? 0 : limits.receiptScans}
-        />
+        <UsageBar label={t('invoicesUsage')} current={usage?.invoice_count || 0} limit={invoiceLimit} />
+        <UsageBar label={t('receiptScans')} current={usage?.receipt_scan_count || 0} limit={scanLimit} />
         <UsageBar label={t('storage')} current={storageMb} limit={storageLimitMb} unit="MB" />
       </div>
+      {maxRatio >= 0.8 && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">{t('usageNudge80')}</p>}
     </Link>
   )
 }

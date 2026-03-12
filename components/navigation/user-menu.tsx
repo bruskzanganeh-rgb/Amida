@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
-import { Shield, LogOut, Moon, Sun, ChevronDown, Settings } from 'lucide-react'
+import { Shield, LogOut, Moon, Sun, ChevronDown, Settings, Crown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useSponsor } from '@/lib/hooks/use-sponsor'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +26,6 @@ export function UserMenu() {
   const [userEmail, setUserEmail] = useState('')
   const [plan, setPlan] = useState<string>('free')
   const [isAdmin, setIsAdmin] = useState(false)
-  const { sponsor, isFree } = useSponsor()
-  const [impressionLogged, setImpressionLogged] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -76,18 +73,6 @@ export function UserMenu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Log impression once when sponsor becomes visible
-  useEffect(() => {
-    if (sponsor && !impressionLogged) {
-      setImpressionLogged(true)
-      fetch('/api/sponsor-impression', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sponsor_id: sponsor.id }),
-      }).catch(() => {})
-    }
-  }, [sponsor, impressionLogged])
-
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/login')
@@ -111,46 +96,19 @@ export function UserMenu() {
             ) : (
               <span className="truncate max-w-[100px] sm:max-w-[180px]">{companyName || userEmail}</span>
             )}
-            {plan !== 'free' && (
-              <span
-                className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none shrink-0"
-                style={{
-                  background: plan === 'team' ? 'rgba(139,92,246,0.25)' : 'rgba(99,102,241,0.25)',
-                  color: plan === 'team' ? '#c4b5fd' : '#a5b4fc',
-                }}
-              >
-                {plan === 'team' ? 'Business' : 'Pro'}
-              </span>
-            )}
-          </span>
-          {isFree && sponsor && (
-            <a
-              href={
-                sponsor.website_url
-                  ? sponsor.website_url.match(/^https?:\/\//)
-                    ? sponsor.website_url
-                    : `https://${sponsor.website_url}`
-                  : '#'
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none shrink-0"
+              style={
+                plan === 'free'
+                  ? { background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }
+                  : plan === 'team'
+                    ? { background: 'rgba(139,92,246,0.25)', color: '#c4b5fd' }
+                    : { background: 'rgba(99,102,241,0.25)', color: '#a5b4fc' }
               }
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation()
-                fetch('/api/sponsor-impression', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sponsor_id: sponsor.id, type: 'click' }),
-                }).catch(() => {})
-              }}
-              className="hidden md:inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none transition-opacity hover:opacity-80"
-              style={{
-                background: 'rgba(217,173,66,0.15)',
-                color: '#d4a843',
-              }}
             >
-              {sponsor.display_prefix || 'Sponsored by'} {sponsor.name}
-            </a>
-          )}
+              {plan === 'free' ? 'Free' : plan === 'team' ? 'Business' : 'Pro'}
+            </span>
+          </span>
           <ChevronDown className="h-3 w-3" />
         </button>
       </DropdownMenuTrigger>
@@ -168,6 +126,14 @@ export function UserMenu() {
             {t('settings')}
           </Link>
         </DropdownMenuItem>
+        {plan === 'free' && (
+          <DropdownMenuItem asChild>
+            <Link href="/settings?tab=subscription" className="flex items-center gap-2">
+              <Crown className="h-4 w-4" style={{ color: '#f59e0b' }} />
+              {t('upgradeToPro')}
+            </Link>
+          </DropdownMenuItem>
+        )}
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link href="/admin" className="flex items-center gap-2">

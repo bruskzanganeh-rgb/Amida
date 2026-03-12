@@ -10,6 +10,7 @@
     "newGig": "New event",
     "menu": "Menu",
     "logout": "Log out",
+    "upgradeToPro": "Upgrade to Pro",
     "showingMyGigs": "Showing only my events",
     "showingTeamGigs": "Showing all team members' events",
     "allShort": "All",
@@ -303,7 +304,7 @@
     "invoicedYear": "Invoiced {year}",
     "paidYear": "Paid {year}",
     "emailDefaultSubject": "Invoice #{number} - {company}",
-    "emailDefaultBody": "Hi,\n\nPlease find attached invoice #{number} for {total} kr.\n\nDue date: {dueDate}\n\nBest regards,\n{company}",
+    "emailDefaultBody": "Hi,\n\nPlease find attached invoice #{number} for {total}.\n\nDue date: {dueDate}\n\nBest regards,\n{company}",
     "companyName": "Company name",
     "emailRequiresPro": "Upgrade to Pro to send invoices via email",
     "emailsRemaining": "{remaining} of {limit} email sends left this month",
@@ -320,7 +321,7 @@
       "reminderSent": "Reminder sent!",
       "couldNotSend": "Could not send reminder",
       "emailDefaultSubject": "Reminder - Invoice #{number}",
-      "emailDefaultBodySv": "Hi,\n\nThis is a friendly reminder that invoice #{number} for {total} kr was due on {dueDate}, which is now {daysOverdue} days overdue.\n\nWe kindly ask that payment be made at your earliest convenience.\n\nBank account: {bankAccount}\nPlease reference invoice #{number} when making payment.\n\nThe invoice is attached for your convenience.\n\nBest regards,\n{company}",
+      "emailDefaultBodySv": "Hi,\n\nThis is a friendly reminder that invoice #{number} for {total} was due on {dueDate}, which is now {daysOverdue} days overdue.\n\nWe kindly ask that payment be made at your earliest convenience.\n\nBank account: {bankAccount}\nPlease reference invoice #{number} when making payment.\n\nThe invoice is attached for your convenience.\n\nBest regards,\n{company}",
       "emailDefaultSubjectEn": "Reminder - Invoice #{number}",
       "emailDefaultBodyEn": "Dear Sir/Madam,\n\nThis is a friendly reminder that invoice #{number} for {total} was due on {dueDate}, which is now {daysOverdue} days overdue.\n\nWe kindly ask that payment be made at your earliest convenience.\n\nBank account: {bankAccount}\nPlease reference invoice #{number} when making payment.\n\nThe invoice is attached for your convenience.\n\nBest regards,\n{company}",
       "sendingReminder": "Sending reminder..."
@@ -939,7 +940,8 @@
     "emailsRemaining": "{remaining} of {limit} email sends left this month",
     "usageSummaryTitle": "Your usage this month",
     "emailSends": "Email sends",
-    "upgradeToTeam": "Upgrade to Business"
+    "upgradeToTeam": "Upgrade to Business",
+    "usageNudge80": "Upgrade for unlimited access"
   },
   "admin": {
     "title": "Superadmin",
