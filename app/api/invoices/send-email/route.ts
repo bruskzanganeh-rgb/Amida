@@ -215,15 +215,15 @@ export async function POST(request: NextRequest) {
       console.error('PDF storage exception:', storageErr)
     }
 
-    // Update invoice status and sent_date - scope to user for safety
+    // Update invoice status and sent_date - use admin client (RLS client can lose auth context after long async chain)
     if (invoice.status === 'draft') {
-      await supabase
+      await serviceSupabase
         .from('invoices')
         .update({ status: 'sent', sent_date: new Date().toISOString() })
         .eq('id', invoiceId)
         .eq('user_id', user.id)
     } else if (!invoice.sent_date) {
-      await supabase
+      await serviceSupabase
         .from('invoices')
         .update({ sent_date: new Date().toISOString() })
         .eq('id', invoiceId)
