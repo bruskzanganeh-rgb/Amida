@@ -11,6 +11,8 @@ type Invoice = {
   invoice_number: number
   invoice_date: string
   total: number
+  subtotal: number
+  exchange_rate: number | null
   status: string | null
 }
 
@@ -50,7 +52,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
       })
       .forEach((inv) => {
         const month = new Date(inv.invoice_date).getMonth()
-        monthlyData[month] += inv.total
+        monthlyData[month] += (inv.subtotal || 0) * (inv.exchange_rate || 1)
       })
 
     return Object.entries(monthlyData).map(([month, total]) => ({

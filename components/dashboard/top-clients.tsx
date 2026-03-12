@@ -39,9 +39,9 @@ export function TopClients() {
 
       const { data: invoices } = (await supabase
         .from('invoices')
-        .select('total, total_base, client:clients(id, name)')
+        .select('subtotal, exchange_rate, client:clients(id, name)')
         .in('status', ['sent', 'paid'])) as unknown as {
-        data: { total: number; total_base: number | null; client: { id: string; name: string } | null }[] | null
+        data: { subtotal: number; exchange_rate: number | null; client: { id: string; name: string } | null }[] | null
       }
 
       if (invoices) {
@@ -54,7 +54,7 @@ export function TopClients() {
             if (!clientTotals[clientId]) {
               clientTotals[clientId] = { name: clientName, revenue: 0 }
             }
-            clientTotals[clientId].revenue += inv.total_base || inv.total
+            clientTotals[clientId].revenue += (inv.subtotal || 0) * (inv.exchange_rate || 1)
           }
         })
 

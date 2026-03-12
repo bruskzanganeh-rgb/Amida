@@ -31,7 +31,7 @@ type Client = {
   country_code: string | null
   vat_number: string | null
   created_at: string
-  invoices: { total: number }[]
+  invoices: { subtotal: number; exchange_rate: number | null }[]
 }
 
 export default function ClientsPage() {
@@ -63,7 +63,7 @@ export default function ClientsPage() {
         .select(
           `
           *,
-          invoices(total)
+          invoices(subtotal, exchange_rate)
         `,
         )
         .order('name')
@@ -140,7 +140,8 @@ export default function ClientsPage() {
               <div className="lg:hidden space-y-2">
                 {filteredClients.map((client) => {
                   const invoiceCount = client.invoices?.length || 0
-                  const totalInvoiced = client.invoices?.reduce((sum, inv) => sum + (inv.total || 0), 0) || 0
+                  const totalInvoiced =
+                    client.invoices?.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0) || 0
                   return (
                     <div key={client.id} className="p-3 rounded-lg border bg-card">
                       <div className="flex items-start justify-between gap-2">
@@ -196,7 +197,11 @@ export default function ClientsPage() {
                   <TableBody>
                     {filteredClients.map((client) => {
                       const invoiceCount = client.invoices?.length || 0
-                      const totalInvoiced = client.invoices?.reduce((sum, inv) => sum + (inv.total || 0), 0) || 0
+                      const totalInvoiced =
+                        client.invoices?.reduce(
+                          (sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1),
+                          0,
+                        ) || 0
 
                       return (
                         <TableRow key={client.id}>

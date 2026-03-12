@@ -55,6 +55,7 @@ type Invoice = {
   total: number
   currency: string | null
   total_base: number | null
+  exchange_rate: number | null
   status: string
   gig_id: string | null
   client_id: string
@@ -446,13 +447,14 @@ export default function InvoicesTab() {
           const yearInvoices = allInvoices.filter(
             (i) => new Date(i.invoice_date).getFullYear() === currentYear && i.status !== 'draft',
           )
-          const invoicedThisYear = yearInvoices.reduce((sum, i) => sum + (i.total_base || i.total), 0)
+          const invoicedThisYear = yearInvoices.reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
+          const invoicedThisYearInkl = yearInvoices.reduce((sum, i) => sum + (i.total_base || i.total), 0)
           const paidThisYear = yearInvoices
             .filter((i) => i.status === 'paid')
-            .reduce((sum, i) => sum + (i.total_base || i.total), 0)
+            .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
           const unpaidTotal = allInvoices
             .filter((i) => i.status === 'sent' || i.status === 'overdue')
-            .reduce((sum, i) => sum + (i.total_base || i.total), 0)
+            .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
 
           return (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -464,8 +466,11 @@ export default function InvoicesTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {invoicedThisYear.toLocaleString(formatLocale)} {tc('kr')}
+                    {Math.round(invoicedThisYear).toLocaleString(formatLocale)} {tc('kr')}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {tc('inclVat')}: {Math.round(invoicedThisYearInkl).toLocaleString(formatLocale)} {tc('kr')}
+                  </p>
                 </CardContent>
               </Card>
 

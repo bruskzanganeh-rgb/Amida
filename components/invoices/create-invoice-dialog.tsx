@@ -18,6 +18,7 @@ import { InvoicePreview } from './invoice-preview'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { getRate, type SupportedCurrency } from '@/lib/currency/exchange'
 import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
 
 type GigExpense = {
@@ -432,6 +433,21 @@ export function CreateInvoiceDialog({
     const referencePersonOverride =
       formData.reference_person !== (client?.reference_person || '') ? formData.reference_person || null : null
 
+    // Convert to base currency (SEK) if invoice is in foreign currency
+    let exchangeRate = 1.0
+    let totalBase = total
+    if (invoiceCurrency !== 'SEK') {
+      try {
+        exchangeRate = await getRate(invoiceCurrency as SupportedCurrency, 'SEK', formData.invoice_date)
+        totalBase = Math.round(total * exchangeRate * 100) / 100
+      } catch (err) {
+        console.error('Exchange rate fetch failed:', err)
+        toast.error(t('exchangeRateError') || 'Could not fetch exchange rate')
+        setLoading(false)
+        return
+      }
+    }
+
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert([
@@ -445,9 +461,9 @@ export function CreateInvoiceDialog({
           vat_rate: primaryVatRate,
           vat_amount: vatAmount,
           total,
-          total_base: total,
+          total_base: totalBase,
           currency: invoiceCurrency,
-          exchange_rate: 1.0,
+          exchange_rate: exchangeRate,
           status: 'draft',
           reference_person_override: referencePersonOverride,
           notes: formData.notes || null,

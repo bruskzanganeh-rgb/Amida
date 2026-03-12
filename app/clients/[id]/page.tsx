@@ -37,6 +37,8 @@ type Invoice = {
   due_date: string
   paid_date: string | null
   total: number
+  subtotal: number
+  exchange_rate: number | null
   status: 'draft' | 'sent' | 'paid' | 'overdue' | null
 }
 
@@ -66,7 +68,7 @@ export default function ClientDetailPage() {
         // Load invoices for this client
         const { data: invoicesData } = await supabase
           .from('invoices')
-          .select('id, invoice_number, invoice_date, due_date, paid_date, total, status')
+          .select('id, invoice_number, invoice_date, due_date, paid_date, total, subtotal, exchange_rate, status')
           .eq('client_id', clientId)
           .order('invoice_date', { ascending: false })
 
@@ -81,11 +83,11 @@ export default function ClientDetailPage() {
   // Calculate statistics
   const totalRevenue = invoices
     .filter((inv) => inv.status === 'paid' || inv.status === 'sent')
-    .reduce((sum, inv) => sum + inv.total, 0)
+    .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0)
 
   const unpaidAmount = invoices
     .filter((inv) => inv.status === 'sent' || inv.status === 'overdue')
-    .reduce((sum, inv) => sum + inv.total, 0)
+    .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0)
 
   const invoiceCount = invoices.length
 

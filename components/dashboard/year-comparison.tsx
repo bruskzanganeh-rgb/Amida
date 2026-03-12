@@ -91,7 +91,7 @@ export function YearComparison() {
       // Fetch invoices
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('invoice_date, total, total_base')
+        .select('invoice_date, subtotal, exchange_rate')
         .in('status', ['sent', 'paid'])
         .gte('invoice_date', `${previousYearNum}-01-01`)
         .lte('invoice_date', `${currentYearNum}-12-31`)
@@ -137,8 +137,8 @@ export function YearComparison() {
 
         setCurrentYear({
           year: currentYearNum,
-          revenue: currentYearInvoices.reduce((sum, inv) => sum + (inv.total_base || inv.total), 0),
-          ytdRevenue: currentYearInvoices.reduce((sum, inv) => sum + (inv.total_base || inv.total), 0),
+          revenue: currentYearInvoices.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
+          ytdRevenue: currentYearInvoices.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
           gigCount: currentYearGigs.length,
           ytdGigCount: currentYearGigs.length,
           workDays: currentYearGigs.reduce((sum, g) => sum + (g.total_days || 1), 0),
@@ -148,8 +148,11 @@ export function YearComparison() {
 
         setPreviousYear({
           year: previousYearNum,
-          revenue: previousYearInvoices.reduce((sum, inv) => sum + (inv.total_base || inv.total), 0),
-          ytdRevenue: previousYearYTDInvoices.reduce((sum, inv) => sum + (inv.total_base || inv.total), 0),
+          revenue: previousYearInvoices.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
+          ytdRevenue: previousYearYTDInvoices.reduce(
+            (sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1),
+            0,
+          ),
           gigCount: previousYearGigs.length,
           ytdGigCount: previousYearYTDGigs.length,
           workDays: previousYearGigs.reduce((sum, g) => sum + (g.total_days || 1), 0),

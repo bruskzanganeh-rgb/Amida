@@ -38,8 +38,8 @@ type ChartMode = 'timeline' | 'compare'
 
 type InvoiceRow = {
   invoice_date: string
-  total: number
-  total_base: number | null
+  subtotal: number
+  exchange_rate: number | null
   gig_id?: string | null
   gig?: { position_id: string | null } | null
 }
@@ -167,8 +167,8 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       .from('invoices')
       .select(
         needsPositionFilter
-          ? 'invoice_date, total, total_base, gig_id, gig:gigs(position_id)'
-          : 'invoice_date, total, total_base',
+          ? 'invoice_date, subtotal, exchange_rate, gig_id, gig:gigs(position_id)'
+          : 'invoice_date, subtotal, exchange_rate',
       )
       .in('status', ['sent', 'paid'])
 
@@ -201,7 +201,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       invoices?.forEach((inv) => {
         const d = new Date(inv.invoice_date)
         const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-        timelineData[key] = (timelineData[key] || 0) + (inv.total_base || inv.total)
+        timelineData[key] = (timelineData[key] || 0) + (inv.subtotal || 0) * (inv.exchange_rate || 1)
       })
 
       // Build compare data
@@ -245,7 +245,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
       invoices?.forEach((inv) => {
         const month = new Date(inv.invoice_date).getMonth()
-        monthlyData[month] += inv.total_base || inv.total
+        monthlyData[month] += (inv.subtotal || 0) * (inv.exchange_rate || 1)
       })
 
       let cumulative = 0
