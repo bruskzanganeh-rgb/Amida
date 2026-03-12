@@ -213,7 +213,7 @@ export function AnalyticsContent() {
     if (inv.client) {
       const id = inv.client.id
       if (!clientRevenue[id]) clientRevenue[id] = { name: inv.client.name, revenue: 0 }
-      clientRevenue[id].revenue += (inv.subtotal || 0) * (inv.exchange_rate || 1)
+      clientRevenue[id].revenue += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
     }
   })
   const topClients = Object.values(clientRevenue)

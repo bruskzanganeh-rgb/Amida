@@ -18,6 +18,7 @@ const ClientInvoiceChart = dynamic(
   { ssr: false, loading: () => <div className="h-[200px] animate-pulse bg-muted rounded" /> },
 )
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 
 type Client = {
   id: string
@@ -38,6 +39,7 @@ type Invoice = {
   paid_date: string | null
   total: number
   subtotal: number
+  currency: string | null
   exchange_rate: number | null
   status: 'draft' | 'sent' | 'paid' | 'overdue' | null
 }
@@ -68,7 +70,9 @@ export default function ClientDetailPage() {
         // Load invoices for this client
         const { data: invoicesData } = await supabase
           .from('invoices')
-          .select('id, invoice_number, invoice_date, due_date, paid_date, total, subtotal, exchange_rate, status')
+          .select(
+            'id, invoice_number, invoice_date, due_date, paid_date, total, subtotal, currency, exchange_rate, status',
+          )
           .eq('client_id', clientId)
           .order('invoice_date', { ascending: false })
 
@@ -81,13 +85,20 @@ export default function ClientDetailPage() {
   }, [clientId, supabase])
 
   // Calculate statistics
-  const totalRevenue = invoices
-    .filter((inv) => inv.status === 'paid' || inv.status === 'sent')
-    .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0)
+  const totalRevenue = Math.round(
+    invoices
+      .filter((inv) => inv.status === 'paid' || inv.status === 'sent')
+      .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
+  )
 
-  const unpaidAmount = invoices
-    .filter((inv) => inv.status === 'sent' || inv.status === 'overdue')
-    .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0)
+  const unpaidAmount = Math.round(
+    invoices
+      .filter((inv) => inv.status === 'sent' || inv.status === 'overdue')
+      .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
+  )
+
+  const hasConverted = invoices.some((inv) => inv.currency && inv.currency !== 'SEK')
+  const approx = hasConverted ? '≈ ' : ''
 
   const invoiceCount = invoices.length
 
@@ -171,6 +182,7 @@ export default function ClientDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
+              {approx}
               {totalRevenue.toLocaleString(formatLocale)} {tc('kr')}
             </div>
             <p className="text-xs text-muted-foreground">{t('allPaidSentInvoices')}</p>
@@ -184,6 +196,7 @@ export default function ClientDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
+              {approx}
               {unpaidAmount.toLocaleString(formatLocale)} {tc('kr')}
             </div>
             <p className="text-xs text-muted-foreground">{t('awaitingPayment')}</p>
@@ -252,7 +265,7 @@ export default function ClientDetailPage() {
                     <TableCell>{format(new Date(invoice.invoice_date), 'PPP', { locale: dateLocale })}</TableCell>
                     <TableCell>{format(new Date(invoice.due_date), 'PPP', { locale: dateLocale })}</TableCell>
                     <TableCell className="font-medium">
-                      {invoice.total.toLocaleString(formatLocale)} {tc('kr')}
+                      {formatCurrency(invoice.total, (invoice.currency || 'SEK') as SupportedCurrency, formatLocale)}
                     </TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                   </TableRow>

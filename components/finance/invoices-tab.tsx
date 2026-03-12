@@ -447,14 +447,20 @@ export default function InvoicesTab() {
           const yearInvoices = allInvoices.filter(
             (i) => new Date(i.invoice_date).getFullYear() === currentYear && i.status !== 'draft',
           )
-          const invoicedThisYear = yearInvoices.reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
-          const invoicedThisYearInkl = yearInvoices.reduce((sum, i) => sum + (i.total_base || i.total), 0)
-          const paidThisYear = yearInvoices
-            .filter((i) => i.status === 'paid')
-            .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
-          const unpaidTotal = allInvoices
-            .filter((i) => i.status === 'sent' || i.status === 'overdue')
-            .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0)
+          const invoicedThisYear = Math.round(
+            yearInvoices.reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
+          )
+          const invoicedThisYearInkl = Math.round(yearInvoices.reduce((sum, i) => sum + (i.total_base || i.total), 0))
+          const paidThisYear = Math.round(
+            yearInvoices
+              .filter((i) => i.status === 'paid')
+              .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
+          )
+          const unpaidTotal = Math.round(
+            allInvoices
+              .filter((i) => i.status === 'sent' || i.status === 'overdue')
+              .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
+          )
 
           return (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

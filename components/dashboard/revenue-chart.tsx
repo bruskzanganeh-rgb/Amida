@@ -201,7 +201,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       invoices?.forEach((inv) => {
         const d = new Date(inv.invoice_date)
         const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-        timelineData[key] = (timelineData[key] || 0) + (inv.subtotal || 0) * (inv.exchange_rate || 1)
+        timelineData[key] = (timelineData[key] || 0) + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
       })
 
       // Build compare data
@@ -245,7 +245,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
       invoices?.forEach((inv) => {
         const month = new Date(inv.invoice_date).getMonth()
-        monthlyData[month] += (inv.subtotal || 0) * (inv.exchange_rate || 1)
+        monthlyData[month] += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
       })
 
       let cumulative = 0

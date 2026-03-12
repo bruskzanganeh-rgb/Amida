@@ -31,7 +31,7 @@ type Client = {
   country_code: string | null
   vat_number: string | null
   created_at: string
-  invoices: { subtotal: number; exchange_rate: number | null }[]
+  invoices: { subtotal: number; exchange_rate: number | null; currency: string | null }[]
 }
 
 export default function ClientsPage() {
@@ -63,7 +63,7 @@ export default function ClientsPage() {
         .select(
           `
           *,
-          invoices(subtotal, exchange_rate)
+          invoices(subtotal, exchange_rate, currency)
         `,
         )
         .order('name')
@@ -140,8 +140,10 @@ export default function ClientsPage() {
               <div className="lg:hidden space-y-2">
                 {filteredClients.map((client) => {
                   const invoiceCount = client.invoices?.length || 0
-                  const totalInvoiced =
-                    client.invoices?.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0) || 0
+                  const totalInvoiced = Math.round(
+                    client.invoices?.reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0) || 0,
+                  )
+                  const hasConverted = client.invoices?.some((inv) => inv.currency && inv.currency !== 'SEK')
                   return (
                     <div key={client.id} className="p-3 rounded-lg border bg-card">
                       <div className="flex items-start justify-between gap-2">
@@ -154,7 +156,9 @@ export default function ClientsPage() {
                           </Link>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {invoiceCount} {t('invoicesColumn').toLowerCase()} ·{' '}
-                            {totalInvoiced > 0 ? `${totalInvoiced.toLocaleString('sv-SE')} ${tc('kr')}` : '-'}
+                            {totalInvoiced > 0
+                              ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString('sv-SE')} ${tc('kr')}`
+                              : '-'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
@@ -197,11 +201,13 @@ export default function ClientsPage() {
                   <TableBody>
                     {filteredClients.map((client) => {
                       const invoiceCount = client.invoices?.length || 0
-                      const totalInvoiced =
+                      const totalInvoiced = Math.round(
                         client.invoices?.reduce(
                           (sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1),
                           0,
-                        ) || 0
+                        ) || 0,
+                      )
+                      const hasConverted = client.invoices?.some((inv) => inv.currency && inv.currency !== 'SEK')
 
                       return (
                         <TableRow key={client.id}>
@@ -215,7 +221,9 @@ export default function ClientsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <span className="text-sm font-medium">
-                              {totalInvoiced > 0 ? `${totalInvoiced.toLocaleString('sv-SE')} ${tc('kr')}` : '-'}
+                              {totalInvoiced > 0
+                                ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString('sv-SE')} ${tc('kr')}`
+                                : '-'}
                             </span>
                           </TableCell>
                           <TableCell>

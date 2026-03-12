@@ -52,7 +52,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
       })
       .forEach((inv) => {
         const month = new Date(inv.invoice_date).getMonth()
-        monthlyData[month] += (inv.subtotal || 0) * (inv.exchange_rate || 1)
+        monthlyData[month] += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
       })
 
     return Object.entries(monthlyData).map(([month, total]) => ({

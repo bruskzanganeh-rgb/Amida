@@ -54,7 +54,7 @@ export function TopClients() {
             if (!clientTotals[clientId]) {
               clientTotals[clientId] = { name: clientName, revenue: 0 }
             }
-            clientTotals[clientId].revenue += (inv.subtotal || 0) * (inv.exchange_rate || 1)
+            clientTotals[clientId].revenue += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
           }
         })
 
