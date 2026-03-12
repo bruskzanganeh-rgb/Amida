@@ -78,6 +78,9 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
     }
     const clientLang = invoice.client.invoice_language || 'sv'
     const isEnglish = clientLang === 'en'
+    const currencyLabel =
+      invoice.currency === 'EUR' ? '€' : invoice.currency === 'USD' ? '$' : invoice.currency === 'GBP' ? '£' : 'kr'
+    const formattedTotal = `${invoice.total.toLocaleString(formatLocale)} ${currencyLabel}`
 
     setEmail(invoice.client.email || '')
 
@@ -86,7 +89,7 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
       setMessage(
         tr('emailDefaultBodyEn', {
           number: invoice.invoice_number,
-          total: invoice.total.toLocaleString(formatLocale),
+          total: formattedTotal,
           dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
           daysOverdue: String(daysOverdue),
           bankAccount,
@@ -98,7 +101,7 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
       setMessage(
         tr('emailDefaultBodySv', {
           number: invoice.invoice_number,
-          total: invoice.total.toLocaleString(formatLocale),
+          total: formattedTotal,
           dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
           daysOverdue: String(daysOverdue),
           bankAccount,

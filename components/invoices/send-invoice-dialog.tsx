@@ -22,6 +22,7 @@ import { format } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { getSignedUrl, type GigAttachment } from '@/lib/supabase/storage'
+import { useCompany } from '@/lib/hooks/use-company'
 
 type Expense = {
   id: string
@@ -42,6 +43,7 @@ type Invoice = {
   invoice_date: string
   due_date: string
   total: number
+  currency: string | null
   gig_id: string | null
   client: { name: string; email?: string | null }
 }
@@ -59,6 +61,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
   const tToast = useTranslations('toast')
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
+  const { company } = useCompany()
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [receipts, setReceipts] = useState<Expense[]>([])
@@ -74,20 +77,23 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
     if (open && invoice) {
       loadAttachments()
       setEmail(invoice.client.email || '')
-      setSubject(t('emailDefaultSubject', { number: invoice.invoice_number, company: 'Babalisk AB' }))
+      const companyName = company?.company_name || ''
+      const currencyLabel =
+        invoice.currency === 'EUR' ? '€' : invoice.currency === 'USD' ? '$' : invoice.currency === 'GBP' ? '£' : 'kr'
+      setSubject(t('emailDefaultSubject', { number: invoice.invoice_number, company: companyName }))
       setMessage(
         t('emailDefaultBody', {
           number: invoice.invoice_number,
-          total: invoice.total.toLocaleString(formatLocale),
+          total: `${invoice.total.toLocaleString(formatLocale)} ${currencyLabel}`,
           dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
-          company: 'Babalisk AB',
+          company: companyName,
         }),
       )
       setSelectedReceipts([]) // Reset selection
       setSelectedDocs([])
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAttachments uses invoice (already in deps); t/dateLocale/formatLocale are stable
-  }, [open, invoice, t, dateLocale, formatLocale])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadAttachments uses invoice (already in deps); t/dateLocale/formatLocale/company are stable
+  }, [open, invoice, t, dateLocale, formatLocale, company])
 
   async function loadAttachments() {
     if (!invoice) {
