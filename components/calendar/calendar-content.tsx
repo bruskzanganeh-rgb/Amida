@@ -32,6 +32,11 @@ import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { PageTransition } from '@/components/ui/page-transition'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+
+function fmtFee(amount: number, currency?: string | null): string {
+  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
+}
 
 type Gig = {
   id: string
@@ -41,6 +46,7 @@ type Gig = {
   total_days: number
   venue: string | null
   fee: number | null
+  currency: string | null
   travel_expense: number | null
   project_name: string | null
   status: string
@@ -710,14 +716,11 @@ export default function CalendarPage() {
                             {tGig('fee')}
                           </p>
                           <p className="text-sm font-bold text-emerald-700">
-                            {selectedGig.fee !== null
-                              ? `${selectedGig.fee.toLocaleString(formatLocale)} ${tc('kr')}`
-                              : '—'}
+                            {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                           </p>
                           {selectedGig.travel_expense && (
                             <p className="text-[10px] text-emerald-600 mt-0.5">
-                              + {selectedGig.travel_expense.toLocaleString(formatLocale)} {tc('kr')}{' '}
-                              {tGig('travelShort')}
+                              + {fmtFee(selectedGig.travel_expense, selectedGig.currency)} {tGig('travelShort')}
                             </p>
                           )}
                         </div>
@@ -983,9 +986,7 @@ export default function CalendarPage() {
                               {tGig('fee')}
                             </p>
                             <p className="text-base font-bold text-emerald-700">
-                              {selectedGig.fee !== null
-                                ? `${selectedGig.fee.toLocaleString(formatLocale)} ${tc('kr')}`
-                                : '—'}
+                              {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                             </p>
                           </div>
                           {selectedGig.venue ? (

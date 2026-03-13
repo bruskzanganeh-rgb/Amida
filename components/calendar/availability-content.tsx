@@ -36,6 +36,11 @@ import {
   endOfYear,
   getMonth,
 } from 'date-fns'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+
+function fmtFee(amount: number, currency?: string | null): string {
+  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
+}
 
 type GigDate = {
   date: string
@@ -45,6 +50,7 @@ type GigDate = {
     client: { name: string } | null
     project_name: string | null
     fee: number | null
+    currency: string | null
   }
 }
 
@@ -101,7 +107,7 @@ export default function AvailabilityPage() {
         .select(
           `
           date,
-          gig:gigs(id, status, project_name, fee, client:clients(name))
+          gig:gigs(id, status, project_name, fee, currency, client:clients(name))
         `,
         )
         .gte('date', format(start, 'yyyy-MM-dd'))
@@ -495,7 +501,7 @@ export default function AvailabilityPage() {
                                   </Badge>
                                   {gig.gig.fee && (
                                     <span className="text-muted-foreground">
-                                      {gig.gig.fee.toLocaleString('sv-SE')} {tc('kr')}
+                                      {fmtFee(gig.gig.fee, gig.gig.currency)}
                                     </span>
                                   )}
                                 </div>
@@ -559,9 +565,7 @@ export default function AvailabilityPage() {
                                   {tStatus(gig.gig.status)}
                                 </Badge>
                                 {gig.gig.fee && (
-                                  <span className="text-muted-foreground">
-                                    {gig.gig.fee.toLocaleString('sv-SE')} {tc('kr')}
-                                  </span>
+                                  <span className="text-muted-foreground">{fmtFee(gig.gig.fee, gig.gig.currency)}</span>
                                 )}
                               </div>
                             </div>
