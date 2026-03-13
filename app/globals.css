@@ -5,6 +5,10 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* Lock viewport scrolling only for authenticated app shell (iOS bounce prevention) */
+html:has(body[data-authed]) {
   overscroll-behavior: none;
   overflow: hidden;
   position: fixed;
@@ -12,7 +16,7 @@ html {
   height: 100%;
 }
 
-body {
+body[data-authed] {
   overflow: hidden;
   position: fixed;
   width: 100%;
