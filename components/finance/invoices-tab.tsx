@@ -26,6 +26,8 @@ import {
   Loader2,
   X,
   Eye,
+  Send,
+  CheckCircle,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog'
@@ -40,6 +42,7 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { PageTransition } from '@/components/ui/page-transition'
 
 type Invoice = {
@@ -387,6 +390,17 @@ export default function InvoicesTab() {
       setPdfPreviewOpen(false)
     } finally {
       setPdfPreviewLoading(false)
+    }
+  }
+
+  async function handleMarkAsSent(invoiceId: string) {
+    try {
+      const { error } = await supabase.from('invoices').update({ status: 'sent' }).eq('id', invoiceId)
+      if (error) throw error
+      toast.success(t('markedAsSent'))
+      mutateInvoices()
+    } catch {
+      toast.error(t('errorOccurred'))
     }
   }
 
@@ -742,17 +756,32 @@ export default function InvoicesTab() {
                               <Bell className="h-3.5 w-3.5" />
                             </Button>
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                              onClick={() => {
-                                setSelectedInvoice(invoice)
-                                setShowSendDialog(true)
-                              }}
-                            >
-                              <Mail className="h-3.5 w-3.5" />
-                            </Button>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9">
+                                  <Send className="h-3.5 w-3.5" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48 p-1" align="end">
+                                <button
+                                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                  onClick={() => {
+                                    setSelectedInvoice(invoice)
+                                    setShowSendDialog(true)
+                                  }}
+                                >
+                                  <Mail className="h-4 w-4" />
+                                  {t('sendViaEmail')}
+                                </button>
+                                <button
+                                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                  onClick={() => handleMarkAsSent(invoice.id)}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                  {t('markAsSent')}
+                                </button>
+                              </PopoverContent>
+                            </Popover>
                           )}
                         </div>
                       </div>
@@ -891,17 +920,32 @@ export default function InvoicesTab() {
                                       <Bell className="h-4 w-4" />
                                     </Button>
                                   ) : (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedInvoice(invoice)
-                                        setShowSendDialog(true)
-                                      }}
-                                      title={t('sendViaEmail')}
-                                    >
-                                      <Mail className="h-4 w-4" />
-                                    </Button>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                          <Send className="h-4 w-4" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-48 p-1" align="end">
+                                        <button
+                                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                          onClick={() => {
+                                            setSelectedInvoice(invoice)
+                                            setShowSendDialog(true)
+                                          }}
+                                        >
+                                          <Mail className="h-4 w-4" />
+                                          {t('sendViaEmail')}
+                                        </button>
+                                        <button
+                                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                          onClick={() => handleMarkAsSent(invoice.id)}
+                                        >
+                                          <CheckCircle className="h-4 w-4" />
+                                          {t('markAsSent')}
+                                        </button>
+                                      </PopoverContent>
+                                    </Popover>
                                   )}
                                   <Button
                                     variant="ghost"
