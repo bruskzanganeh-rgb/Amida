@@ -479,6 +479,7 @@
     "withoutGig": "Without event",
     "withReceipt": "With receipt",
     "year": "Year",
+    "createdBy": "Created by",
     "zip": "ZIP",
     "zipDescription": "ZIP archive with all receipts",
     "categories": {
@@ -863,7 +864,10 @@
     "city": "City",
     "selectYourCategories": "Select the categories that match your work",
     "otherSkills": "Other skills",
-    "otherSkillsHint": "Describe skills or specialties not listed above"
+    "otherSkillsHint": "Describe skills or specialties not listed above",
+    "allDone": "You're all set!",
+    "allDoneDesc": "Your profile is ready. Here's your calendar subscription URL — add it to your calendar app to see all your events.",
+    "goToDashboard": "Go to dashboard"
   },
   "subscription": {
     "yourPlan": "Your plan",

@@ -397,10 +397,8 @@ export default function ExpensesTab() {
                                 format(new Date(expense.gig.date), 'd MMM', { locale: dateLocale })}
                             </Badge>
                           )}
-                          {isSharedMode && expense.user_id !== currentUserId && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400">
-                              {getMemberLabel(expense.user_id)}
-                            </p>
+                          {isSharedMode && (
+                            <p className="text-xs text-muted-foreground">{getMemberLabel(expense.user_id)}</p>
                           )}
                         </div>
                         <div className="text-right shrink-0">
@@ -461,6 +459,7 @@ export default function ExpensesTab() {
                         <TableHead>{t('gig')}</TableHead>
                         <TableHead>{t('amount')}</TableHead>
                         <TableHead>{t('notes')}</TableHead>
+                        {isSharedMode && <TableHead>{t('createdBy')}</TableHead>}
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -472,16 +471,7 @@ export default function ExpensesTab() {
                           onClick={() => setSelectedExpense(expense)}
                         >
                           <TableCell>{format(new Date(expense.date), 'PPP', { locale: dateLocale })}</TableCell>
-                          <TableCell className="font-medium">
-                            <div>
-                              {expense.supplier}
-                              {isSharedMode && expense.user_id !== currentUserId && (
-                                <div className="text-xs text-blue-600 dark:text-blue-400">
-                                  {getMemberLabel(expense.user_id)}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
+                          <TableCell className="font-medium">{expense.supplier}</TableCell>
                           <TableCell>
                             {expense.category ? (
                               <Badge variant="outline">{expense.category}</Badge>
@@ -520,6 +510,11 @@ export default function ExpensesTab() {
                           <TableCell>
                             <span className="text-sm text-muted-foreground">{expense.notes || '-'}</span>
                           </TableCell>
+                          {isSharedMode && (
+                            <TableCell>
+                              <span className="text-xs text-muted-foreground">{getMemberLabel(expense.user_id)}</span>
+                            </TableCell>
+                          )}
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             {expense.attachment_url && (
                               <button

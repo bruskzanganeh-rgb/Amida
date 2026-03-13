@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const completeOnboardingSchema = z.object({
   full_name: z.string().optional(),
+  locale: z.enum(['sv', 'en']).optional(),
   company_info: z.object({
     company_name: z.string().optional(),
     org_number: z.string().optional(),
@@ -16,6 +17,7 @@ export const completeOnboardingSchema = z.object({
     country_code: z.string().optional(),
     postal_code: z.string().optional(),
     city: z.string().optional(),
+    vat_registration_number: z.string().optional(),
   }),
   instruments_text: z.string().optional(),
   category_ids: z.array(z.string()).optional(),

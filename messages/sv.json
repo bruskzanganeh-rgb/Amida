@@ -479,6 +479,7 @@
     "withoutGig": "Utan event",
     "withReceipt": "Med kvitto",
     "year": "År",
+    "createdBy": "Skapad av",
     "zip": "ZIP",
     "zipDescription": "ZIP-arkiv med alla kvitton",
     "categories": {
@@ -863,7 +864,10 @@
     "city": "Stad",
     "selectYourCategories": "Välj kategorier som matchar ditt arbete",
     "otherSkills": "Övriga kompetenser",
-    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan"
+    "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan",
+    "allDone": "Klart!",
+    "allDoneDesc": "Din profil är redo. Här är din kalenderprenumerations-URL — lägg till den i din kalenderapp för att se alla dina event.",
+    "goToDashboard": "Gå till dashboard"
   },
   "subscription": {
     "yourPlan": "Din plan",

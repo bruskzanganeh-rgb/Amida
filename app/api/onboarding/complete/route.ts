@@ -20,7 +20,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { full_name, company_info, instruments_text, category_ids, gig_types, positions } = parsed.data
+  const { full_name, locale, company_info, instruments_text, category_ids, gig_types, positions } = parsed.data
+
+  // Determine late payment interest text based on chosen locale
+  const latePaymentText =
+    locale === 'en'
+      ? 'Late payment interest of 10% will be charged after due date'
+      : 'Efter förfallodagen debiteras dröjsmålsränta med 10%'
 
   // Use admin client for company/members/data creation (bypasses RLS)
   const admin = createAdminClient()
@@ -48,7 +54,10 @@ export async function POST(request: Request) {
     isOwner = member?.role === 'owner'
 
     if (isOwner) {
-      await admin.from('companies').update(company_info).eq('id', existingMembership.company_id)
+      await admin
+        .from('companies')
+        .update({ ...company_info, late_payment_interest_text: latePaymentText })
+        .eq('id', existingMembership.company_id)
     }
   } else {
     // Create new company
@@ -56,6 +65,7 @@ export async function POST(request: Request) {
       .from('companies')
       .insert({
         ...company_info,
+        late_payment_interest_text: latePaymentText,
       })
       .select('id')
       .single()
@@ -98,6 +108,7 @@ export async function POST(request: Request) {
       onboarding_completed: true,
       country_code: company_info.country_code || 'SE',
       instruments_text: instruments_text || '',
+      locale: locale || 'sv',
     },
     { onConflict: 'user_id' },
   )
