@@ -24,7 +24,7 @@ export function UserMenu() {
   const [companyName, setCompanyName] = useState('')
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
-  const [plan, setPlan] = useState<string>('free')
+  const [plan, setPlan] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
 
@@ -96,18 +96,20 @@ export function UserMenu() {
             ) : (
               <span className="truncate max-w-[100px] sm:max-w-[180px]">{companyName || userEmail}</span>
             )}
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none shrink-0"
-              style={
-                plan === 'free'
-                  ? { background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }
-                  : plan === 'team'
-                    ? { background: 'rgba(139,92,246,0.25)', color: '#c4b5fd' }
-                    : { background: 'rgba(99,102,241,0.25)', color: '#a5b4fc' }
-              }
-            >
-              {plan === 'free' ? 'Free' : plan === 'team' ? 'Business' : 'Pro'}
-            </span>
+            {plan !== null && (
+              <span
+                className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none shrink-0"
+                style={
+                  plan === 'free'
+                    ? { background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }
+                    : plan === 'team'
+                      ? { background: 'rgba(139,92,246,0.25)', color: '#c4b5fd' }
+                      : { background: 'rgba(99,102,241,0.25)', color: '#a5b4fc' }
+                }
+              >
+                {plan === 'free' ? 'Free' : plan === 'team' ? 'Business' : 'Pro'}
+              </span>
+            )}
           </span>
           <ChevronDown className="h-3 w-3" />
         </button>
@@ -126,7 +128,7 @@ export function UserMenu() {
             {t('settings')}
           </Link>
         </DropdownMenuItem>
-        {plan === 'free' && (
+        {plan !== null && plan === 'free' && (
           <DropdownMenuItem asChild>
             <Link href="/settings?tab=subscription" className="flex items-center gap-2">
               <Crown className="h-4 w-4" style={{ color: '#f59e0b' }} />

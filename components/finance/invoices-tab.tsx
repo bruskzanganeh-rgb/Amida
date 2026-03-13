@@ -435,6 +435,7 @@ export default function InvoicesTab() {
       }
       mutateInvoices()
       mutatePendingGigs()
+      document.dispatchEvent(new Event('gig-status-changed'))
     }
   }
 
@@ -953,6 +954,7 @@ export default function InvoicesTab() {
             mutateInvoices()
             mutatePendingGigs()
             setSelectedPendingGigIds(new Set())
+            document.dispatchEvent(new Event('gig-status-changed'))
           }}
           initialGig={selectedGigForInvoice || undefined}
           initialGigs={

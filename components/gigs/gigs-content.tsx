@@ -382,6 +382,7 @@ export default function GigsPage() {
       toast.error(tToast('statusUpdateError'))
     } else {
       loadGigs()
+      document.dispatchEvent(new Event('gig-status-changed'))
       if (status === 'completed') {
         toast.success(tToast('gigCompleted'), {
           action: {

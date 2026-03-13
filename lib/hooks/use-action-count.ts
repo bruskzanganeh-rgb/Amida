@@ -35,7 +35,11 @@ export function useActionCount() {
       if (!document.hidden) load()
     }
     document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
+    document.addEventListener('gig-status-changed', load)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      document.removeEventListener('gig-status-changed', load)
+    }
   }, [shouldFilter, currentUserId])
 
   return count
