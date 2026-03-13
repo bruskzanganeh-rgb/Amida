@@ -26,8 +26,8 @@ import {
   Loader2,
   X,
   Eye,
-  Send,
   CheckCircle,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog'
@@ -42,7 +42,13 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { PageTransition } from '@/components/ui/page-transition'
 
 type Invoice = {
@@ -742,7 +748,7 @@ export default function InvoicesTab() {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {invoice.status === 'overdue' ? (
+                          {invoice.status === 'overdue' && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -755,34 +761,41 @@ export default function InvoicesTab() {
                             >
                               <Bell className="h-3.5 w-3.5" />
                             </Button>
-                          ) : (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9">
-                                  <Send className="h-3.5 w-3.5" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-48 p-1" align="end">
-                                <button
-                                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                  onClick={() => {
-                                    setSelectedInvoice(invoice)
-                                    setShowSendDialog(true)
-                                  }}
-                                >
-                                  <Mail className="h-4 w-4" />
-                                  {t('sendViaEmail')}
-                                </button>
-                                <button
-                                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                  onClick={() => handleMarkAsSent(invoice.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                  {t('markAsSent')}
-                                </button>
-                              </PopoverContent>
-                            </Popover>
                           )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-9 w-9">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {invoice.status !== 'sent' && invoice.status !== 'paid' && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedInvoice(invoice)
+                                      setShowSendDialog(true)
+                                    }}
+                                  >
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    {t('sendViaEmail')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleMarkAsSent(invoice.id)}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    {t('markAsSent')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => confirmDeleteInvoice(invoice)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {t('deleteInvoice')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
@@ -906,7 +919,7 @@ export default function InvoicesTab() {
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
-                                  {invoice.status === 'overdue' ? (
+                                  {invoice.status === 'overdue' && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -919,42 +932,41 @@ export default function InvoicesTab() {
                                     >
                                       <Bell className="h-4 w-4" />
                                     </Button>
-                                  ) : (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="sm">
-                                          <Send className="h-4 w-4" />
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-48 p-1" align="end">
-                                        <button
-                                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                          onClick={() => {
-                                            setSelectedInvoice(invoice)
-                                            setShowSendDialog(true)
-                                          }}
-                                        >
-                                          <Mail className="h-4 w-4" />
-                                          {t('sendViaEmail')}
-                                        </button>
-                                        <button
-                                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                          onClick={() => handleMarkAsSent(invoice.id)}
-                                        >
-                                          <CheckCircle className="h-4 w-4" />
-                                          {t('markAsSent')}
-                                        </button>
-                                      </PopoverContent>
-                                    </Popover>
                                   )}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => confirmDeleteInvoice(invoice)}
-                                    title={t('deleteInvoice')}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {invoice.status !== 'sent' && invoice.status !== 'paid' && (
+                                        <>
+                                          <DropdownMenuItem
+                                            onClick={() => {
+                                              setSelectedInvoice(invoice)
+                                              setShowSendDialog(true)
+                                            }}
+                                          >
+                                            <Mail className="mr-2 h-4 w-4" />
+                                            {t('sendViaEmail')}
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={() => handleMarkAsSent(invoice.id)}>
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            {t('markAsSent')}
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                        </>
+                                      )}
+                                      <DropdownMenuItem
+                                        className="text-destructive"
+                                        onClick={() => confirmDeleteInvoice(invoice)}
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        {t('deleteInvoice')}
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
                               </TableCell>
                             </TableRow>
