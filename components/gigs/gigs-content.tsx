@@ -314,6 +314,7 @@ export default function GigsPage() {
   function getMemberLabel(userId: string): string {
     if (userId === currentUserId) return tTeam('me')
     const member = allMembers.find((m) => m.user_id === userId)
+    if (member?.full_name) return member.full_name.split(' ')[0]
     if (member?.email) return member.email.split('@')[0]
     return userId.slice(0, 6)
   }
