@@ -42,13 +42,7 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { PageTransition } from '@/components/ui/page-transition'
 
 type Invoice = {
@@ -748,7 +742,7 @@ export default function InvoicesTab() {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {invoice.status === 'overdue' && (
+                          {invoice.status === 'overdue' ? (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -761,7 +755,19 @@ export default function InvoicesTab() {
                             >
                               <Bell className="h-3.5 w-3.5" />
                             </Button>
-                          )}
+                          ) : invoice.status !== 'sent' && invoice.status !== 'paid' ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => {
+                                setSelectedInvoice(invoice)
+                                setShowSendDialog(true)
+                              }}
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : null}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -769,24 +775,14 @@ export default function InvoicesTab() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {invoice.status !== 'sent' && invoice.status !== 'paid' && (
-                                <>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedInvoice(invoice)
-                                      setShowSendDialog(true)
-                                    }}
-                                  >
-                                    <Mail className="mr-2 h-4 w-4" />
-                                    {t('sendViaEmail')}
-                                  </DropdownMenuItem>
+                              {invoice.status !== 'sent' &&
+                                invoice.status !== 'paid' &&
+                                invoice.status !== 'overdue' && (
                                   <DropdownMenuItem onClick={() => handleMarkAsSent(invoice.id)}>
                                     <CheckCircle className="mr-2 h-4 w-4" />
                                     {t('markAsSent')}
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                </>
-                              )}
+                                )}
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => confirmDeleteInvoice(invoice)}
@@ -919,7 +915,7 @@ export default function InvoicesTab() {
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
-                                  {invoice.status === 'overdue' && (
+                                  {invoice.status === 'overdue' ? (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -932,7 +928,19 @@ export default function InvoicesTab() {
                                     >
                                       <Bell className="h-4 w-4" />
                                     </Button>
-                                  )}
+                                  ) : invoice.status !== 'sent' && invoice.status !== 'paid' ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedInvoice(invoice)
+                                        setShowSendDialog(true)
+                                      }}
+                                      title={t('sendViaEmail')}
+                                    >
+                                      <Mail className="h-4 w-4" />
+                                    </Button>
+                                  ) : null}
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="ghost" size="sm">
@@ -940,24 +948,14 @@ export default function InvoicesTab() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                      {invoice.status !== 'sent' && invoice.status !== 'paid' && (
-                                        <>
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              setSelectedInvoice(invoice)
-                                              setShowSendDialog(true)
-                                            }}
-                                          >
-                                            <Mail className="mr-2 h-4 w-4" />
-                                            {t('sendViaEmail')}
-                                          </DropdownMenuItem>
+                                      {invoice.status !== 'sent' &&
+                                        invoice.status !== 'paid' &&
+                                        invoice.status !== 'overdue' && (
                                           <DropdownMenuItem onClick={() => handleMarkAsSent(invoice.id)}>
                                             <CheckCircle className="mr-2 h-4 w-4" />
                                             {t('markAsSent')}
                                           </DropdownMenuItem>
-                                          <DropdownMenuSeparator />
-                                        </>
-                                      )}
+                                        )}
                                       <DropdownMenuItem
                                         className="text-destructive"
                                         onClick={() => confirmDeleteInvoice(invoice)}
