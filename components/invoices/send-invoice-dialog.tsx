@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Mail, Receipt, FileText, ExternalLink, FileCheck } from 'lucide-react'
+import { Loader2, Mail, Receipt, FileText, ExternalLink, FileCheck, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
@@ -64,6 +64,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
   const { company } = useCompany()
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [markingSent, setMarkingSent] = useState(false)
   const [receipts, setReceipts] = useState<Expense[]>([])
   const [invoiceDocs, setInvoiceDocs] = useState<InvoiceDoc[]>([])
   const [selectedReceipts, setSelectedReceipts] = useState<string[]>([])
@@ -232,6 +233,22 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
     }
   }
 
+  async function handleMarkAsSent() {
+    if (!invoice) return
+    setMarkingSent(true)
+    try {
+      const { error } = await supabase.from('invoices').update({ status: 'sent' }).eq('id', invoice.id)
+      if (error) throw error
+      toast.success(t('markedAsSent'))
+      onSuccess()
+      onOpenChange(false)
+    } catch {
+      toast.error(t('errorOccurred'))
+    } finally {
+      setMarkingSent(false)
+    }
+  }
+
   const selectedTotal = receipts
     .filter((r) => selectedReceipts.includes(r.id))
     .reduce((sum, r) => sum + (r.amount_base || r.amount), 0)
@@ -394,23 +411,39 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
         </div>
 
         <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
-              {tc('cancel')}
-            </Button>
-            <Button onClick={handleSend} disabled={sending || !email}>
-              {sending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('sending')}
-                </>
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMarkAsSent}
+              disabled={sending || markingSent}
+              className="text-muted-foreground"
+            >
+              {markingSent ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  {t('sendInvoice')}
-                </>
+                <CheckCircle className="mr-2 h-4 w-4" />
               )}
+              {t('markAsSent')}
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
+                {tc('cancel')}
+              </Button>
+              <Button onClick={handleSend} disabled={sending || !email}>
+                {sending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('sending')}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    {t('sendInvoice')}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogFooter>
       </DialogContent>

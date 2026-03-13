@@ -233,6 +233,8 @@
     "markPaidConfirmDescription": "The invoice will be marked as paid with today's date. Continue?",
     "sendInvoice": "Send invoice",
     "sendViaEmail": "Send via email",
+    "markAsSent": "Mark as sent",
+    "markedAsSent": "Invoice marked as sent",
     "downloadPdf": "Download PDF",
     "previewPdf": "Preview PDF",
     "errorLoadingPdf": "Could not load PDF",

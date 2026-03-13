@@ -233,6 +233,8 @@
     "markPaidConfirmDescription": "Fakturan markeras som betald med dagens datum. Vill du fortsätta?",
     "sendInvoice": "Skicka faktura",
     "sendViaEmail": "Skicka via e-post",
+    "markAsSent": "Markera som skickad",
+    "markedAsSent": "Faktura markerad som skickad",
     "downloadPdf": "Ladda ner PDF",
     "previewPdf": "Visa PDF",
     "errorLoadingPdf": "Kunde inte ladda PDF",
