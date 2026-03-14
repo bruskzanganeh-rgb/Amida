@@ -43,6 +43,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { PdfViewer } from '@/components/ui/pdf-viewer'
 import { PageTransition } from '@/components/ui/page-transition'
 
 type Invoice = {
@@ -143,7 +144,8 @@ export default function InvoicesTab() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
   const [confirmPaidInvoice, setConfirmPaidInvoice] = useState<string | null>(null)
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false)
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
+  const [pdfPreviewData, setPdfPreviewData] = useState<ArrayBuffer | null>(null)
+  const [pdfPreviewDownloadUrl, setPdfPreviewDownloadUrl] = useState<string | null>(null)
   const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
   const [pdfPreviewFilename, setPdfPreviewFilename] = useState<string>('')
@@ -373,18 +375,17 @@ export default function InvoicesTab() {
     setPdfPreviewInvoiceNumber(invoiceNumber)
     setPdfPreviewOpen(true)
     setPdfPreviewLoading(true)
-    setPdfPreviewUrl(null)
+    setPdfPreviewData(null)
 
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
       if (!res.ok) throw new Error()
-      // Extract filename from Content-Disposition header
       const disposition = res.headers.get('Content-Disposition') || ''
       const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
       setPdfPreviewFilename(filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`)
       const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      setPdfPreviewUrl(url + '#toolbar=0')
+      setPdfPreviewData(await blob.arrayBuffer())
+      setPdfPreviewDownloadUrl(URL.createObjectURL(blob))
     } catch {
       toast.error(t('errorLoadingPdf'))
       setPdfPreviewOpen(false)
@@ -1085,9 +1086,12 @@ export default function InvoicesTab() {
           open={pdfPreviewOpen}
           onOpenChange={(open) => {
             setPdfPreviewOpen(open)
-            if (!open && pdfPreviewUrl) {
-              URL.revokeObjectURL(pdfPreviewUrl)
-              setPdfPreviewUrl(null)
+            if (!open) {
+              if (pdfPreviewDownloadUrl) {
+                URL.revokeObjectURL(pdfPreviewDownloadUrl)
+                setPdfPreviewDownloadUrl(null)
+              }
+              setPdfPreviewData(null)
             }
           }}
         >
@@ -1097,9 +1101,9 @@ export default function InvoicesTab() {
             </DialogTitle>
             <div className="relative">
               <div className="absolute top-2 right-2 z-10 flex gap-1">
-                {pdfPreviewUrl && (
+                {pdfPreviewDownloadUrl && (
                   <a
-                    href={pdfPreviewUrl}
+                    href={pdfPreviewDownloadUrl}
                     download={pdfPreviewFilename}
                     className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
                     title={tc('download')}
@@ -1118,15 +1122,8 @@ export default function InvoicesTab() {
                 <div className="flex items-center justify-center h-96">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
-              ) : pdfPreviewUrl ? (
-                <div className="w-full h-[80vh] rounded-lg overflow-hidden">
-                  <iframe
-                    src={pdfPreviewUrl}
-                    className="w-full rounded-lg"
-                    style={{ height: 'calc(100% + 60px)' }}
-                    title={`${t('invoice')} #${pdfPreviewInvoiceNumber}`}
-                  />
-                </div>
+              ) : pdfPreviewData ? (
+                <PdfViewer data={pdfPreviewData} />
               ) : (
                 <div className="flex items-center justify-center h-96 text-gray-500">{t('errorLoadingPdf')}</div>
               )}
