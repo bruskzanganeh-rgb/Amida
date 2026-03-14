@@ -144,7 +144,7 @@ export default function InvoicesTab() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
   const [confirmPaidInvoice, setConfirmPaidInvoice] = useState<string | null>(null)
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false)
-  const [pdfPreviewData, setPdfPreviewData] = useState<ArrayBuffer | null>(null)
+  const [pdfPreviewData, setPdfPreviewData] = useState<Uint8Array | null>(null)
   const [pdfPreviewDownloadUrl, setPdfPreviewDownloadUrl] = useState<string | null>(null)
   const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
@@ -384,7 +384,7 @@ export default function InvoicesTab() {
       const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
       setPdfPreviewFilename(filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`)
       const blob = await res.blob()
-      setPdfPreviewData(await blob.arrayBuffer())
+      setPdfPreviewData(new Uint8Array(await blob.arrayBuffer()))
       setPdfPreviewDownloadUrl(URL.createObjectURL(blob))
     } catch {
       toast.error(t('errorLoadingPdf'))
