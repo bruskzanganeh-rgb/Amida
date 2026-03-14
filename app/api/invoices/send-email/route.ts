@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/activity'
 import { generateInvoicePdf } from '@/lib/pdf/generator'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { checkUsageLimit, incrementUsage } from '@/lib/usage'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -26,6 +27,15 @@ export async function POST(request: NextRequest) {
 
     if (!invoiceId || !to || !subject) {
       return NextResponse.json({ error: 'invoiceId, to and subject required' }, { status: 400 })
+    }
+
+    // Check email usage limit
+    const { allowed, current, limit } = await checkUsageLimit(user.id, 'email_send')
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Email limit reached (${current}/${limit} this month). Upgrade to send more.` },
+        { status: 403 },
+      )
     }
 
     const serviceSupabase = createAdminClient()
@@ -229,6 +239,9 @@ export async function POST(request: NextRequest) {
         .eq('id', invoiceId)
         .eq('user_id', user.id)
     }
+
+    // Track email usage
+    await incrementUsage(user.id, 'email_send')
 
     // Log activity
     if (user.id) {

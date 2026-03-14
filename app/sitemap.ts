@@ -7,5 +7,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: 'https://amida.babalisk.com/login', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
     { url: 'https://amida.babalisk.com/privacy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: 'https://amida.babalisk.com/terms', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: 'https://amida.babalisk.com/blog', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
+    {
+      url: 'https://amida.babalisk.com/blog/freelance-musician-invoice-template',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
   ]
 }
