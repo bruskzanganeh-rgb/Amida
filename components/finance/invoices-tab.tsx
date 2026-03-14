@@ -1119,11 +1119,14 @@ export default function InvoicesTab() {
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               ) : pdfPreviewUrl ? (
-                <iframe
-                  src={pdfPreviewUrl}
-                  className="w-full h-[80vh] rounded-lg"
-                  title={`${t('invoice')} #${pdfPreviewInvoiceNumber}`}
-                />
+                <div className="w-full h-[80vh] rounded-lg overflow-hidden">
+                  <iframe
+                    src={pdfPreviewUrl}
+                    className="w-full rounded-lg"
+                    style={{ height: 'calc(100% + 60px)' }}
+                    title={`${t('invoice')} #${pdfPreviewInvoiceNumber}`}
+                  />
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-96 text-gray-500">{t('errorLoadingPdf')}</div>
               )}
