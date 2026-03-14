@@ -23,14 +23,15 @@ import {
   Loader2,
   Sparkles,
   Globe,
-  MapPin,
   Copy,
   CalendarDays,
   PartyPopper,
+  Star,
 } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { toast } from 'sonner'
 import { COUNTRY_CONFIGS, getCountryConfig } from '@/lib/country-config'
+import { isNative } from '@/lib/capacitor'
 
 type GigTypeLocal = {
   tempId: string
@@ -90,12 +91,13 @@ export default function OnboardingPage() {
   const [completed, setCompleted] = useState(false)
   const [calendarUrl, setCalendarUrl] = useState('')
   const [calendarCopied, setCalendarCopied] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
+  const tSub = useTranslations('subscription')
   const router = useRouter()
   const supabase = createClient()
 
   const STEPS = [
-    { label: t('language'), icon: Globe },
-    { label: t('country'), icon: MapPin },
+    { label: t('languageAndCountry'), icon: Globe },
     { label: t('companyInfo'), icon: Building2 },
     { label: t('categories'), icon: Guitar },
     { label: t('gigTypes'), icon: Music },
@@ -106,19 +108,13 @@ export default function OnboardingPage() {
   const [countryCode, setCountryCode] = useState('SE')
   const countryConfig = getCountryConfig(countryCode)
 
-  // Step 2: Personal name + Company info
+  // Step 2: Personal name + Company info (reduced — bank/VAT filled in Settings)
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [orgNumber, setOrgNumber] = useState('')
   const [address, setAddress] = useState('')
-  const [postalCode, setPostalCode] = useState('')
   const [city, setCity] = useState('')
   const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [bankgiro, setBankgiro] = useState('')
-  const [iban, setIban] = useState('')
-  const [bic, setBic] = useState('')
-  const [vatNumber, setVatNumber] = useState('')
 
   // Step 3: Categories + free text
   const [instrumentsText, setInstrumentsText] = useState('')
@@ -162,7 +158,6 @@ export default function OnboardingPage() {
       setOrgNumber(settings.org_number || '')
       setAddress(settings.address || '')
       setEmail(settings.email || '')
-      setPhone(settings.phone || '')
       if (settings.country_code) setCountryCode(settings.country_code)
       setInstrumentsText(settings.instruments_text || '')
     }
@@ -267,16 +262,10 @@ export default function OnboardingPage() {
             company_name: companyName,
             org_number: orgNumber,
             address,
-            postal_code: postalCode,
             city,
             email,
-            phone,
-            bankgiro,
-            iban,
-            bic,
             country_code: countryCode,
             base_currency: countryConfig.currency,
-            vat_registration_number: vatNumber || undefined,
           },
           instruments_text: instrumentsText,
           category_ids: Array.from(selectedCategoryIds),
@@ -334,51 +323,131 @@ export default function OnboardingPage() {
 
         {/* Completion screen */}
         {completed && (
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                <PartyPopper className="h-7 w-7 text-green-600 dark:text-green-400" />
-              </div>
-              <CardTitle className="text-xl">{t('allDone')}</CardTitle>
-              <CardDescription>{t('allDoneDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {calendarUrl && (
-                <div className="text-left space-y-3 rounded-lg border p-4 bg-muted/50">
-                  <div className="flex items-center gap-2 font-medium">
-                    <CalendarDays className="h-4 w-4" />
-                    {tSettings('calendarSubscription')}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{tSettings('calendarSubscriptionDesc')}</p>
-                  <div className="flex gap-2">
-                    <Input value={calendarUrl} readOnly className="text-xs" />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(calendarUrl)
-                        setCalendarCopied(true)
-                        setTimeout(() => setCalendarCopied(false), 2000)
-                      }}
-                    >
-                      {calendarCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
+          <div className="space-y-6">
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                  <PartyPopper className="h-7 w-7 text-green-600 dark:text-green-400" />
                 </div>
-              )}
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={() => {
-                  router.push('/dashboard')
-                  router.refresh()
-                }}
-              >
-                {t('goToDashboard')}
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
+                <CardTitle className="text-xl">{t('allDone')}</CardTitle>
+                <CardDescription>{t('allDoneDesc')}</CardDescription>
+              </CardHeader>
+            </Card>
+
+            {/* Upgrade CTA */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Star className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">{tSub('upgradeToPro')}</h3>
+                </div>
+                <ul className="space-y-2 mb-6 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {tSub('proFeature1')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {tSub('proFeature2')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {tSub('proFeature3')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {tSub('proFeature4')}
+                  </li>
+                </ul>
+                <Button
+                  className="w-full"
+                  disabled={upgrading}
+                  onClick={async () => {
+                    if (isNative()) {
+                      setUpgrading(true)
+                      try {
+                        const { NativePurchases } = await import('@capgo/native-purchases')
+                        await NativePurchases.purchaseProduct({ productIdentifier: 'amida_pro_monthly' })
+                        router.push('/dashboard')
+                        router.refresh()
+                      } catch {
+                        toast.error(tToast('checkoutError'))
+                      } finally {
+                        setUpgrading(false)
+                      }
+                    } else {
+                      setUpgrading(true)
+                      try {
+                        const res = await fetch('/api/stripe/create-checkout', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID || '',
+                            plan: 'pro',
+                          }),
+                        })
+                        const data = await res.json()
+                        if (data.url) {
+                          window.location.href = data.url
+                        } else {
+                          throw new Error(data.error)
+                        }
+                      } catch {
+                        toast.error(tToast('checkoutError'))
+                        setUpgrading(false)
+                      }
+                    }
+                  }}
+                >
+                  {upgrading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {tSub('tryProFree')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Calendar URL */}
+            {calendarUrl && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <CalendarDays className="h-4 w-4" />
+                      {tSettings('calendarSubscription')}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{tSettings('calendarSubscriptionDesc')}</p>
+                    <div className="flex gap-2">
+                      <Input value={calendarUrl} readOnly className="text-xs" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(calendarUrl)
+                          setCalendarCopied(true)
+                          setTimeout(() => setCalendarCopied(false), 2000)
+                        }}
+                      >
+                        {calendarCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Continue with Free */}
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full text-muted-foreground"
+              onClick={() => {
+                router.push('/dashboard')
+                router.refresh()
+              }}
+            >
+              {t('continueWithFree')}
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         )}
 
         {/* Step indicator */}
@@ -409,17 +478,18 @@ export default function OnboardingPage() {
               })}
             </div>
 
-            {/* Step 0: Language */}
+            {/* Step 0: Language & Country */}
             {step === 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5" />
-                    {t('language')}
+                    {t('languageAndCountry')}
                   </CardTitle>
-                  <CardDescription>{t('languageDesc')}</CardDescription>
+                  <CardDescription>{t('languageAndCountryDesc')}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                  {/* Language selection */}
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { value: 'sv', label: 'Svenska', flag: '🇸🇪' },
@@ -433,54 +503,44 @@ export default function OnboardingPage() {
                             window.location.reload()
                           }
                         }}
-                        className={`flex flex-col items-center gap-2 p-6 rounded-lg border-2 text-lg font-medium transition-colors ${
+                        className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-base font-medium transition-colors ${
                           locale === lang.value
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border hover:border-primary/50 hover:bg-muted'
                         }`}
                       >
-                        <span className="text-3xl">{lang.flag}</span>
+                        <span className="text-2xl">{lang.flag}</span>
                         {lang.label}
                       </button>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Step 1: Country */}
-            {step === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    {t('country')}
-                  </CardTitle>
-                  <CardDescription>{t('countryDesc')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {Object.entries(COUNTRY_CONFIGS).map(([code, config]) => (
-                      <button
-                        key={code}
-                        onClick={() => setCountryCode(code)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
-                          countryCode === code
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border hover:border-primary/50 hover:bg-muted'
-                        }`}
-                      >
-                        <span className="text-lg">{config.flag}</span>
-                        {locale === 'sv' ? config.name.sv : config.name.en}
-                      </button>
-                    ))}
+                  {/* Country selection */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">{t('country')}</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {Object.entries(COUNTRY_CONFIGS).map(([code, config]) => (
+                        <button
+                          key={code}
+                          onClick={() => setCountryCode(code)}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
+                            countryCode === code
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/50 hover:bg-muted'
+                          }`}
+                        >
+                          <span className="text-lg">{config.flag}</span>
+                          {locale === 'sv' ? config.name.sv : config.name.en}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Step 2: Company Info */}
-            {step === 2 && (
+            {/* Step 1: Company Info (reduced) */}
+            {step === 1 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -520,22 +580,13 @@ export default function OnboardingPage() {
                     <Label htmlFor="address">{tSettings('address')}</Label>
                     <Textarea
                       id="address"
-                      rows={3}
+                      rows={2}
                       className="resize-none"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                     />
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="postalCode">{t('postalCode')}</Label>
-                      <Input
-                        id="postalCode"
-                        value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value)}
-                        placeholder={countryCode === 'SE' ? '123 45' : '10115'}
-                      />
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="city">{t('city')}</Label>
                       <Input
@@ -545,57 +596,17 @@ export default function OnboardingPage() {
                         placeholder={countryCode === 'SE' ? 'Stockholm' : 'Berlin'}
                       />
                     </div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">{tSettings('email')}</Label>
                       <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">{tSettings('phone')}</Label>
-                      <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="bankgiro">{tSettings('bankgiro')}</Label>
-                      <Input
-                        id="bankgiro"
-                        value={bankgiro}
-                        onChange={(e) => setBankgiro(e.target.value)}
-                        placeholder="XXXX-XXXX"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="iban">IBAN</Label>
-                      <Input
-                        id="iban"
-                        value={iban}
-                        onChange={(e) => setIban(e.target.value)}
-                        placeholder="SE00 0000 0000 0000 0000 0000"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="bic">BIC / SWIFT</Label>
-                      <Input id="bic" value={bic} onChange={(e) => setBic(e.target.value)} placeholder="XXXXSESS" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="vatNumber">{tSettings('vatRegNumber')}</Label>
-                    <Input
-                      id="vatNumber"
-                      value={vatNumber}
-                      onChange={(e) => setVatNumber(e.target.value)}
-                      placeholder="SE559087745101"
-                    />
-                    <p className="text-xs text-muted-foreground">{tSettings('vatRegNumberHint')}</p>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Step 3: Categories + free text */}
-            {step === 3 && (
+            {/* Step 2: Categories + free text */}
+            {step === 2 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -653,8 +664,8 @@ export default function OnboardingPage() {
               </Card>
             )}
 
-            {/* Step 4: Gig Types */}
-            {step === 4 && (
+            {/* Step 3: Gig Types */}
+            {step === 3 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -736,8 +747,8 @@ export default function OnboardingPage() {
               </Card>
             )}
 
-            {/* Step 5: Positions */}
-            {step === 5 && (
+            {/* Step 4: Positions */}
+            {step === 4 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -811,7 +822,7 @@ export default function OnboardingPage() {
               {step < STEPS.length - 1 ? (
                 <Button
                   onClick={() => setStep((s) => s + 1)}
-                  disabled={step === 3 && selectedCategoryIds.size === 0 && !instrumentsText.trim()}
+                  disabled={step === 2 && selectedCategoryIds.size === 0 && !instrumentsText.trim()}
                 >
                   {tc('next')}
                   <ChevronRight className="h-4 w-4 ml-1" />

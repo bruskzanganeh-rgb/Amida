@@ -867,9 +867,12 @@
     "selectYourCategories": "Select the categories that match your work",
     "otherSkills": "Other skills",
     "otherSkillsHint": "Describe skills or specialties not listed above",
+    "languageAndCountry": "Language & Country",
+    "languageAndCountryDesc": "Choose your language and the country you operate in.",
     "allDone": "You're all set!",
-    "allDoneDesc": "Your profile is ready. Here's your calendar subscription URL — add it to your calendar app to see all your events.",
-    "goToDashboard": "Go to dashboard"
+    "allDoneDesc": "Your profile is ready. Start creating your first gigs and invoices.",
+    "goToDashboard": "Go to dashboard",
+    "continueWithFree": "Continue with Free"
   },
   "subscription": {
     "yourPlan": "Your plan",

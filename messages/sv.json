@@ -867,9 +867,12 @@
     "selectYourCategories": "Välj kategorier som matchar ditt arbete",
     "otherSkills": "Övriga kompetenser",
     "otherSkillsHint": "Beskriv kompetenser som inte finns i listan ovan",
+    "languageAndCountry": "Språk & Land",
+    "languageAndCountryDesc": "Välj ditt språk och vilket land du verkar i.",
     "allDone": "Klart!",
-    "allDoneDesc": "Din profil är redo. Här är din kalenderprenumerations-URL — lägg till den i din kalenderapp för att se alla dina event.",
-    "goToDashboard": "Gå till dashboard"
+    "allDoneDesc": "Din profil är redo. Börja skapa dina första gig och fakturor.",
+    "goToDashboard": "Gå till dashboard",
+    "continueWithFree": "Fortsätt med Free"
   },
   "subscription": {
     "yourPlan": "Din plan",
