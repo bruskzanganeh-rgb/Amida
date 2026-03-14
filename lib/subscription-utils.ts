@@ -31,8 +31,8 @@ export function buildTier(prefix: string, config: Record<string, string>): TierD
     receiptScanLimit: parseInt(config[`${prefix}_receipt_scan_limit`] || '0'),
     emailSendLimit: parseInt(config[`${prefix}_email_send_limit`] || '0'),
     storageMb: parseInt(config[`${prefix}_storage_mb`] || '0'),
-    priceMonthly: parseInt(config[`${prefix}_price_monthly`] || '0'),
-    priceYearly: parseInt(config[`${prefix}_price_yearly`] || '0'),
+    priceMonthly: parseFloat(config[`${prefix}_price_monthly`] || '0'),
+    priceYearly: parseFloat(config[`${prefix}_price_yearly`] || '0'),
     features: parseJsonArray(config[`${prefix}_features`], []),
   }
 }

@@ -53,7 +53,7 @@ export default function LandingPage() {
             offers: {
               '@type': 'AggregateOffer',
               lowPrice: '0',
-              highPrice: '10',
+              highPrice: '19.99',
               priceCurrency: 'USD',
               offerCount: '3',
             },

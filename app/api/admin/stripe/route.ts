@@ -24,7 +24,7 @@ export async function GET() {
   const cancelingCount = proSubs.filter((s) => s.cancel_at_period_end).length
   const pastDueCount = allSubs.filter((s) => s.status === 'past_due').length
 
-  const mrr = monthlyCount * 49 + yearlyCount * Math.round(499 / 12)
+  const mrr = monthlyCount * 99 + yearlyCount * Math.round(719 / 12)
   const arr = mrr * 12
 
   // 2. Recent webhook events from audit_logs (exclude E2E test company)

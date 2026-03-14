@@ -21,8 +21,8 @@ type TierConfig = { free: TierData; pro: TierData; team: TierData }
 
 const DEFAULT_TIERS: TierConfig = {
   free: { priceMonthly: 0, priceYearly: 0, features: ['unlimitedGigs', 'basicInvoicing', 'calendarView'] },
-  pro: { priceMonthly: 5, priceYearly: 50, features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'] },
-  team: { priceMonthly: 10, priceYearly: 100, features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'] },
+  pro: { priceMonthly: 9.99, priceYearly: 71.88, features: ['unlimitedInvoices', 'unlimitedScans', 'noBranding'] },
+  team: { priceMonthly: 19.99, priceYearly: 143.88, features: ['everythingInPro', 'inviteMembers', 'sharedCalendar'] },
 }
 
 const featureLabels: Record<string, string> = {
@@ -53,13 +53,13 @@ export function PricingSection() {
               features: data.free?.features ?? DEFAULT_TIERS.free.features,
             },
             pro: {
-              priceMonthly: data.pro?.priceMonthly ?? 5,
-              priceYearly: data.pro?.priceYearly ?? 50,
+              priceMonthly: data.pro?.priceMonthly ?? 9.99,
+              priceYearly: data.pro?.priceYearly ?? 71.88,
               features: data.pro?.features ?? DEFAULT_TIERS.pro.features,
             },
             team: {
-              priceMonthly: data.team?.priceMonthly ?? 10,
-              priceYearly: data.team?.priceYearly ?? 100,
+              priceMonthly: data.team?.priceMonthly ?? 19.99,
+              priceYearly: data.team?.priceYearly ?? 143.88,
               features: data.team?.features ?? DEFAULT_TIERS.team.features,
             },
           })
@@ -98,7 +98,7 @@ export function PricingSection() {
           >
             Yearly
             <span className="text-xs bg-[#F59E0B]/20 text-[#F59E0B] px-2 py-0.5 rounded-full font-semibold">
-              Save 17%
+              Save 40%
             </span>
           </button>
         </div>
