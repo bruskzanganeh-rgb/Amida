@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -20,6 +20,8 @@ import { format } from 'date-fns'
 import { SUPPORTED_CURRENCIES, type SupportedCurrency, getRate } from '@/lib/currency/exchange'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
+import { CreateClientDialog } from '@/components/clients/create-client-dialog'
+import { CreateGigTypeDialog } from '@/components/gig-types/create-gig-type-dialog'
 
 type Gig = {
   id: string
@@ -114,6 +116,11 @@ export function GigDialog({
   const [scheduleFile, setScheduleFile] = useState<File | null>(null)
   const scheduleFileRef = useRef<HTMLInputElement>(null)
   const [draftGigId, setDraftGigId] = useState<string | null>(null)
+  const [showCreateClient, setShowCreateClient] = useState(false)
+  const [showCreateGigType, setShowCreateGigType] = useState(false)
+  const [showCreatePosition, setShowCreatePosition] = useState(false)
+  const [newPositionName, setNewPositionName] = useState('')
+  const [creatingPosition, setCreatingPosition] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   const supabase = createClient()
@@ -237,6 +244,25 @@ export function GigDialog({
           setFormData((f) => ({ ...f, currency: data.base_currency! }))
         }
       }
+    }
+  }
+
+  async function handleCreatePosition() {
+    if (!newPositionName.trim()) return
+    setCreatingPosition(true)
+    const { data: created, error } = await supabase
+      .from('positions')
+      .insert([{ name: newPositionName.trim() }])
+      .select('id')
+      .single()
+    setCreatingPosition(false)
+    if (error) {
+      toast.error(tToast('createError'))
+    } else if (created) {
+      await loadPositions()
+      setFormData((f) => ({ ...f, position_id: created.id }))
+      setNewPositionName('')
+      setShowCreatePosition(false)
     }
   }
 
@@ -608,295 +634,381 @@ export function GigDialog({
   const fieldLabel = 'text-xs font-medium text-muted-foreground'
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="flex flex-col max-h-[90vh] p-0 gap-0 w-[calc(100vw-2rem)] md:max-w-7xl"
-        style={{ maxWidth: 1280 }}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
-          {/* Header */}
-          <div className="px-6 pt-5 pb-4 border-b border-border/50 shrink-0">
-            <DialogHeader>
-              <div>
-                <DialogTitle className="text-base font-semibold tracking-tight">
-                  {isEditing ? t('editGig') : t('newGig')}
-                </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground mt-0.5">
-                  {isEditing ? t('editGigDescription') : t('createGigDescription')}
-                </DialogDescription>
-              </div>
-            </DialogHeader>
-          </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className="flex flex-col max-h-[90vh] p-0 gap-0 w-[calc(100vw-2rem)] md:max-w-7xl"
+          style={{ maxWidth: 1280 }}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4 border-b border-border/50 shrink-0">
+              <DialogHeader>
+                <div>
+                  <DialogTitle className="text-base font-semibold tracking-tight">
+                    {isEditing ? t('editGig') : t('newGig')}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+                    {isEditing ? t('editGigDescription') : t('createGigDescription')}
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
+            </div>
 
-          {/* Main 2-column layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 overflow-hidden">
-            {/* LEFT — Form (always on desktop, step 1 on mobile) */}
-            <div className={cn('overflow-y-auto px-5 py-4 space-y-3', !isLg && step !== 1 && 'hidden')}>
-              {/* Section: Gig Details */}
-              <div className={sectionCard}>
-                <p className={sectionHeader}>{t('sectionGig')}</p>
-                <div className="grid grid-cols-2 gap-3">
+            {/* Main 2-column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 overflow-hidden">
+              {/* LEFT — Form (always on desktop, step 1 on mobile) */}
+              <div className={cn('overflow-y-auto px-5 py-4 space-y-3', !isLg && step !== 1 && 'hidden')}>
+                {/* Section: Gig Details */}
+                <div className={sectionCard}>
+                  <p className={sectionHeader}>{t('sectionGig')}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>
+                        {t('type')} <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={formData.gig_type_id}
+                        onValueChange={(value) => {
+                          if (value === '__create__') {
+                            setShowCreateGigType(true)
+                            return
+                          }
+                          setFormData({ ...formData, gig_type_id: value })
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-full truncate" data-testid="gig-type-select">
+                          <SelectValue placeholder={t('selectType')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {gigTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name} ({type.vat_rate}%)
+                            </SelectItem>
+                          ))}
+                          <SelectSeparator />
+                          <SelectItem value="__create__" className="text-primary font-medium">
+                            {t('addNewGigType')}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {positions.length > 0 ? (
+                      <div className="space-y-1">
+                        <Label className={fieldLabel}>{t('position')}</Label>
+                        <Select
+                          value={formData.position_id}
+                          onValueChange={(value) => {
+                            if (value === '__create__') {
+                              setShowCreatePosition(true)
+                              return
+                            }
+                            setFormData({ ...formData, position_id: value })
+                          }}
+                        >
+                          <SelectTrigger className="h-9 w-full truncate">
+                            <SelectValue placeholder={t('selectPosition')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t('none')}</SelectItem>
+                            {positions.map((pos) => (
+                              <SelectItem key={pos.id} value={pos.id}>
+                                {pos.name}
+                              </SelectItem>
+                            ))}
+                            <SelectSeparator />
+                            <SelectItem value="__create__" className="text-primary font-medium">
+                              {t('addNewPosition')}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div />
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>{t('projectName')}</Label>
+                      <Input
+                        className="h-9"
+                        placeholder={t('projectNamePlaceholder')}
+                        value={formData.project_name}
+                        onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>{t('venue')}</Label>
+                      <Input
+                        className="h-9"
+                        placeholder={t('venuePlaceholder')}
+                        value={formData.venue}
+                        onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Client & Fees */}
+                <div className={sectionCard}>
+                  <p className={sectionHeader}>{t('sectionClientFee')}</p>
                   <div className="space-y-1">
                     <Label className={fieldLabel}>
-                      {t('type')} <span className="text-destructive">*</span>
+                      {t('client')}{' '}
+                      {['completed', 'invoiced', 'paid'].includes(formData.status) && (
+                        <span className="text-destructive">*</span>
+                      )}
                     </Label>
                     <Select
-                      value={formData.gig_type_id}
-                      onValueChange={(value) => setFormData({ ...formData, gig_type_id: value })}
+                      value={formData.client_id || 'none'}
+                      onValueChange={(value) => {
+                        if (value === '__create__') {
+                          setShowCreateClient(true)
+                          return
+                        }
+                        setFormData({ ...formData, client_id: value })
+                      }}
                     >
-                      <SelectTrigger className="h-9 w-full truncate" data-testid="gig-type-select">
-                        <SelectValue placeholder={t('selectType')} />
+                      <SelectTrigger className="h-9 w-full truncate">
+                        <SelectValue placeholder={t('selectClient')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {gigTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            {type.name} ({type.vat_rate}%)
+                        <SelectItem value="none">{t('noClient')}</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
                           </SelectItem>
                         ))}
+                        <SelectSeparator />
+                        <SelectItem value="__create__" className="text-primary font-medium">
+                          {t('addNewClient')}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {positions.length > 0 ? (
+                  <div className="grid grid-cols-[1fr_120px] gap-3">
                     <div className="space-y-1">
-                      <Label className={fieldLabel}>{t('position')}</Label>
+                      <Label className={fieldLabel}>{t('fee')}</Label>
+                      <Input
+                        className="h-9"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0"
+                        value={formData.fee}
+                        onChange={(e) => setFormData({ ...formData, fee: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>{t('currency')}</Label>
                       <Select
-                        value={formData.position_id}
-                        onValueChange={(value) => setFormData({ ...formData, position_id: value })}
+                        value={formData.currency}
+                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
                       >
-                        <SelectTrigger className="h-9 w-full truncate">
-                          <SelectValue placeholder={t('selectPosition')} />
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">{t('none')}</SelectItem>
-                          {positions.map((pos) => (
-                            <SelectItem key={pos.id} value={pos.id}>
-                              {pos.name}
+                          {SUPPORTED_CURRENCIES.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  ) : (
-                    <div />
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className={fieldLabel}>{t('projectName')}</Label>
-                    <Input
-                      className="h-9"
-                      placeholder={t('projectNamePlaceholder')}
-                      value={formData.project_name}
-                      onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
-                    />
                   </div>
                   <div className="space-y-1">
-                    <Label className={fieldLabel}>{t('venue')}</Label>
-                    <Input
-                      className="h-9"
-                      placeholder={t('venuePlaceholder')}
-                      value={formData.venue}
-                      onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section: Client & Fees */}
-              <div className={sectionCard}>
-                <p className={sectionHeader}>{t('sectionClientFee')}</p>
-                <div className="space-y-1">
-                  <Label className={fieldLabel}>
-                    {t('client')}{' '}
-                    {['completed', 'invoiced', 'paid'].includes(formData.status) && (
-                      <span className="text-destructive">*</span>
-                    )}
-                  </Label>
-                  <Select
-                    value={formData.client_id || 'none'}
-                    onValueChange={(value) => setFormData({ ...formData, client_id: value })}
-                  >
-                    <SelectTrigger className="h-9 w-full truncate">
-                      <SelectValue placeholder={t('selectClient')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{t('noClient')}</SelectItem>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-[1fr_120px] gap-3">
-                  <div className="space-y-1">
-                    <Label className={fieldLabel}>{t('fee')}</Label>
-                    <Input
-                      className="h-9"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0"
-                      value={formData.fee}
-                      onChange={(e) => setFormData({ ...formData, fee: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={fieldLabel}>{t('currency')}</Label>
+                    <Label className={fieldLabel}>{t('status')}</Label>
                     <Select
-                      value={formData.currency}
-                      onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                      value={formData.status}
+                      onValueChange={(value) => setFormData({ ...formData, status: value })}
                     >
-                      <SelectTrigger className="h-9 w-full">
+                      <SelectTrigger className="h-9 w-full" data-testid="gig-status-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {SUPPORTED_CURRENCIES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+                  {(formData.status === 'pending' || formData.status === 'tentative') && (
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>{t('responseDeadline')}</Label>
+                      <Input
+                        className="h-9"
+                        type="date"
+                        value={formData.response_deadline}
+                        onChange={(e) => setFormData({ ...formData, response_deadline: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <Label className={fieldLabel}>{t('status')}</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger className="h-9 w-full" data-testid="gig-status-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {(formData.status === 'pending' || formData.status === 'tentative') && (
+
+                {/* Section: Notes */}
+                <div className={sectionCard}>
+                  <p className={sectionHeader}>{t('sectionNotes')}</p>
                   <div className="space-y-1">
-                    <Label className={fieldLabel}>{t('responseDeadline')}</Label>
-                    <Input
-                      className="h-9"
-                      type="date"
-                      value={formData.response_deadline}
-                      onChange={(e) => setFormData({ ...formData, response_deadline: e.target.value })}
+                    <Label className={fieldLabel}>{t('notes')}</Label>
+                    <Textarea
+                      placeholder={t('notesPlaceholder')}
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={2}
+                      className="resize-none text-sm"
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={fieldLabel}>{t('invoiceNotes')}</Label>
+                    <Textarea
+                      placeholder={t('invoiceNotesPlaceholder')}
+                      value={formData.invoice_notes}
+                      onChange={(e) => setFormData({ ...formData, invoice_notes: e.target.value })}
+                      rows={2}
+                      className="resize-none text-sm"
+                    />
+                    <p className="text-[11px] text-muted-foreground/60">{t('invoiceNotesHint')}</p>
+                  </div>
+                </div>
+
+                {/* Section: Receipts & Attachments */}
+                {effectiveGigId ? (
+                  <div className={sectionCard}>
+                    <p className={sectionHeader}>{t('sectionAttachments')}</p>
+                    <div className="space-y-3">
+                      <GigReceipts
+                        gigId={effectiveGigId}
+                        gigTitle={formData.project_name || gig?.gig_type?.name}
+                        disabled={loading}
+                      />
+                      <GigAttachments gigId={effectiveGigId} disabled={loading} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-border/40 text-muted-foreground/50">
+                    <Paperclip className="h-4 w-4 shrink-0" />
+                    <p className="text-xs">{t('attachmentsLoading')}</p>
                   </div>
                 )}
               </div>
 
-              {/* Section: Notes */}
-              <div className={sectionCard}>
-                <p className={sectionHeader}>{t('sectionNotes')}</p>
-                <div className="space-y-1">
-                  <Label className={fieldLabel}>{t('notes')}</Label>
-                  <Textarea
-                    placeholder={t('notesPlaceholder')}
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    className="resize-none text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className={fieldLabel}>{t('invoiceNotes')}</Label>
-                  <Textarea
-                    placeholder={t('invoiceNotesPlaceholder')}
-                    value={formData.invoice_notes}
-                    onChange={(e) => setFormData({ ...formData, invoice_notes: e.target.value })}
-                    rows={2}
-                    className="resize-none text-sm"
-                  />
-                  <p className="text-[11px] text-muted-foreground/60">{t('invoiceNotesHint')}</p>
-                </div>
+              {/* RIGHT — Calendar (always on desktop, step 2 on mobile) */}
+              <div
+                className={cn(
+                  'border-t lg:border-t-0 lg:border-l border-border/40 bg-muted/30 p-4 flex flex-col overflow-y-auto',
+                  !isLg && step !== 2 && 'hidden',
+                )}
+              >
+                <MultiDayDatePicker
+                  selectedDates={selectedDates}
+                  onDatesChange={setSelectedDates}
+                  disabled={loading || scanningSchedule}
+                  scheduleTexts={scheduleTexts}
+                  onScheduleTextsChange={setScheduleTexts}
+                  onScanSchedule={handleScanSchedule}
+                  parsedSessions={parsedSessions}
+                  parsingSessions={parsingSessions}
+                  onParseScheduleText={handleParseScheduleText}
+                />
+                <input
+                  ref={scheduleFileRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
+                  className="hidden"
+                  onChange={handleScheduleFileSelected}
+                />
               </div>
-
-              {/* Section: Receipts & Attachments */}
-              {effectiveGigId ? (
-                <div className={sectionCard}>
-                  <p className={sectionHeader}>{t('sectionAttachments')}</p>
-                  <div className="space-y-3">
-                    <GigReceipts
-                      gigId={effectiveGigId}
-                      gigTitle={formData.project_name || gig?.gig_type?.name}
-                      disabled={loading}
-                    />
-                    <GigAttachments gigId={effectiveGigId} disabled={loading} />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-border/40 text-muted-foreground/50">
-                  <Paperclip className="h-4 w-4 shrink-0" />
-                  <p className="text-xs">{t('attachmentsLoading')}</p>
-                </div>
-              )}
             </div>
 
-            {/* RIGHT — Calendar (always on desktop, step 2 on mobile) */}
-            <div
-              className={cn(
-                'border-t lg:border-t-0 lg:border-l border-border/40 bg-muted/30 p-4 flex flex-col overflow-y-auto',
-                !isLg && step !== 2 && 'hidden',
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-border/50 flex items-center gap-2.5 shrink-0 bg-card">
+              {!isLg && step === 2 && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setStep(1)}>
+                  {tc('back')}
+                </Button>
               )}
-            >
-              <MultiDayDatePicker
-                selectedDates={selectedDates}
-                onDatesChange={setSelectedDates}
-                disabled={loading || scanningSchedule}
-                scheduleTexts={scheduleTexts}
-                onScheduleTextsChange={setScheduleTexts}
-                onScanSchedule={handleScanSchedule}
-                parsedSessions={parsedSessions}
-                parsingSessions={parsingSessions}
-                onParseScheduleText={handleParseScheduleText}
-              />
-              <input
-                ref={scheduleFileRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
-                className="hidden"
-                onChange={handleScheduleFileSelected}
+              <div className="flex-1" />
+              <Button type="button" variant="outline" size="sm" onClick={handleCancel} disabled={loading}>
+                {tc('cancel')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={loading}
+                onClick={() => {
+                  if (!isLg && step === 1) {
+                    setStep(2)
+                  } else {
+                    formRef.current?.requestSubmit()
+                  }
+                }}
+              >
+                {loading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                {!isLg && step === 1 ? tc('next') : isEditing ? t('saveChanges') : t('createGig')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Inline create dialogs */}
+      <CreateClientDialog
+        open={showCreateClient}
+        onOpenChange={setShowCreateClient}
+        onSuccess={loadClients}
+        onCreated={(id) => setFormData((f) => ({ ...f, client_id: id }))}
+      />
+      <CreateGigTypeDialog
+        open={showCreateGigType}
+        onOpenChange={setShowCreateGigType}
+        onSuccess={loadGigTypes}
+        onCreated={(id) => setFormData((f) => ({ ...f, gig_type_id: id }))}
+      />
+
+      {/* Inline position create dialog */}
+      <Dialog open={showCreatePosition} onOpenChange={setShowCreatePosition}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{t('newPosition')}</DialogTitle>
+            <DialogDescription>{t('newPositionDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">{t('positionName')}</Label>
+              <Input
+                placeholder={t('positionNamePlaceholder')}
+                value={newPositionName}
+                onChange={(e) => setNewPositionName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleCreatePosition()
+                  }
+                }}
               />
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="px-6 py-3 border-t border-border/50 flex items-center gap-2.5 shrink-0 bg-card">
-            {!isLg && step === 2 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => setStep(1)}>
-                {tc('back')}
-              </Button>
-            )}
-            <div className="flex-1" />
-            <Button type="button" variant="outline" size="sm" onClick={handleCancel} disabled={loading}>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowCreatePosition(false)}>
               {tc('cancel')}
             </Button>
             <Button
               type="button"
               size="sm"
-              disabled={loading}
-              onClick={() => {
-                if (!isLg && step === 1) {
-                  setStep(2)
-                } else {
-                  formRef.current?.requestSubmit()
-                }
-              }}
+              disabled={creatingPosition || !newPositionName.trim()}
+              onClick={handleCreatePosition}
             >
-              {loading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {!isLg && step === 1 ? tc('next') : isEditing ? t('saveChanges') : t('createGig')}
+              {creatingPosition && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {tc('create')}
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -115,7 +115,7 @@ test.describe('Team member — gigs', () => {
     await page.goto('/gigs', { waitUntil: 'networkidle' })
     await page.waitForTimeout(1000)
 
-    const newGigBtn = page.getByRole('button', { name: /new gig|nytt uppdrag/i }).first()
+    const newGigBtn = page.getByRole('button', { name: /new event|nytt event/i }).first()
     if (await newGigBtn.isVisible()) {
       await newGigBtn.click()
       await page.waitForTimeout(1500)

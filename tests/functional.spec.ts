@@ -124,7 +124,7 @@ test.describe('Settings', () => {
 test.describe('Gigs', () => {
   test('new gig dialog opens without errors', async ({ page }) => {
     const errors = await loadPage(page, '/gigs')
-    const newGigBtn = page.getByRole('button', { name: /new gig|nytt uppdrag/i }).first()
+    const newGigBtn = page.getByRole('button', { name: /new event|nytt event/i }).first()
     if (await newGigBtn.isVisible()) {
       await newGigBtn.click()
       await page.waitForTimeout(1000)
@@ -138,7 +138,7 @@ test.describe('Gigs', () => {
 
   test('can create a gig', async ({ page }) => {
     await loadPage(page, '/gigs')
-    const newGigBtn = page.getByRole('button', { name: /new gig|nytt uppdrag/i }).first()
+    const newGigBtn = page.getByRole('button', { name: /new event|nytt event/i }).first()
     await newGigBtn.click()
     await page.waitForTimeout(1500)
 
@@ -193,7 +193,7 @@ test.describe('Gigs', () => {
 test.describe('Clients', () => {
   test('can access clients tab', async ({ page }) => {
     await loadPage(page, '/config')
-    const clientsTab = page.getByRole('tab', { name: /clients|uppdragsgivare|klienter/i })
+    const clientsTab = page.getByRole('tab', { name: /clients|kunder/i })
     if (await clientsTab.isVisible()) {
       await clientsTab.click()
       await page.waitForTimeout(500)
@@ -203,7 +203,7 @@ test.describe('Clients', () => {
   test('can create a client', async ({ page }) => {
     await loadPage(page, '/config')
     // Switch to clients tab
-    const clientsTab = page.getByRole('tab', { name: /clients|uppdragsgivare|klienter/i })
+    const clientsTab = page.getByRole('tab', { name: /clients|kunder/i })
     if (await clientsTab.isVisible()) {
       await clientsTab.click()
       await page.waitForTimeout(500)
@@ -312,7 +312,7 @@ test.describe('Dashboard', () => {
     await loadPage(page, '/dashboard')
     const content = await page.textContent('main')
     // Should have upcoming section or "no gigs" message
-    expect(content).toMatch(/upcoming|kommande|no.*gig|inga.*uppdrag/i)
+    expect(content).toMatch(/upcoming|kommande|no.*event|inga.*event/i)
   })
 
   test('dashboard shows unpaid invoices section', async ({ page }) => {

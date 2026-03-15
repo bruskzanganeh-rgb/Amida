@@ -45,6 +45,7 @@ type UpcomingGig = {
   date: string
   project_name: string | null
   fee: number | null
+  fee_base: number | null
   client: { name: string } | null
   gig_type: { name: string } | null
 }
@@ -144,7 +145,7 @@ export default function DashboardPage() {
       userFilter(
         supabase
           .from('gigs')
-          .select('id, date, fee, project_name, client:clients(name), gig_type:gig_types(name)')
+          .select('id, date, fee, fee_base, project_name, client:clients(name), gig_type:gig_types(name)')
           .gte('date', today)
           .eq('status', 'accepted'),
       ).order('date', { ascending: true }),
@@ -168,7 +169,7 @@ export default function DashboardPage() {
 
     const upcomingList = (upcomingRes.data || []) as unknown as UpcomingGig[]
     setUpcomingGigs(upcomingList)
-    setUpcomingRevenue(upcomingList.reduce((sum, g) => sum + (g.fee || 0), 0))
+    setUpcomingRevenue(upcomingList.reduce((sum, g) => sum + (g.fee_base ?? g.fee ?? 0), 0))
 
     setPendingGigs((pendingRes.data || []) as unknown as PendingGig[])
 

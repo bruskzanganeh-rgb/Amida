@@ -8,12 +8,14 @@ import { test, expect } from '@playwright/test'
 import { loadPage } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  await page.context().addCookies([{
-    name: 'NEXT_LOCALE',
-    value: 'sv',
-    domain: 'localhost',
-    path: '/',
-  }])
+  await page.context().addCookies([
+    {
+      name: 'NEXT_LOCALE',
+      value: 'sv',
+      domain: 'localhost',
+      path: '/',
+    },
+  ])
 })
 
 test.describe('Swedish Locale', () => {
@@ -22,14 +24,14 @@ test.describe('Swedish Locale', () => {
 
     const content = await page.textContent('main')
     // Should show Swedish text
-    expect(content).toMatch(/kommande|obetalda|intäkter|uppdrag/i)
+    expect(content).toMatch(/kommande|obetalda|intäkter|event/i)
   })
 
   test('gig dialog på svenska', async ({ page }) => {
     await loadPage(page, '/gigs')
 
-    // Button should say "Nytt uppdrag"
-    const newGigBtn = page.getByRole('button', { name: /nytt uppdrag/i }).first()
+    // Button should say "Nytt event"
+    const newGigBtn = page.getByRole('button', { name: /nytt event/i }).first()
     await expect(newGigBtn).toBeVisible({ timeout: 5000 })
 
     await newGigBtn.click()
@@ -40,7 +42,7 @@ test.describe('Swedish Locale', () => {
 
     // Dialog should have Swedish text
     const dialogText = await dialog.textContent()
-    expect(dialogText).toMatch(/nytt uppdrag|uppdragstyp|klient|arvode|plats/i)
+    expect(dialogText).toMatch(/nytt event|eventtyp|kund|arvode|plats/i)
 
     await page.keyboard.press('Escape')
   })
@@ -52,9 +54,7 @@ test.describe('Swedish Locale', () => {
     const invoiceTab = page.getByRole('tab', { name: /fakturor/i })
     const expenseTab = page.getByRole('tab', { name: /utgifter/i })
 
-    expect(
-      await invoiceTab.isVisible() || await expenseTab.isVisible()
-    ).toBeTruthy()
+    expect((await invoiceTab.isVisible()) || (await expenseTab.isVisible())).toBeTruthy()
   })
 
   test('settings tabs på svenska', async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe('Swedish Locale', () => {
     // Check Swedish tab names
     const tabs = page.getByRole('tab')
     const tabTexts: string[] = []
-    for (let i = 0; i < await tabs.count(); i++) {
+    for (let i = 0; i < (await tabs.count()); i++) {
       const text = await tabs.nth(i).textContent()
       if (text) tabTexts.push(text.toLowerCase())
     }
@@ -78,13 +78,13 @@ test.describe('Swedish Locale', () => {
 
     const tabs = page.getByRole('tab')
     const tabTexts: string[] = []
-    for (let i = 0; i < await tabs.count(); i++) {
+    for (let i = 0; i < (await tabs.count()); i++) {
       const text = await tabs.nth(i).textContent()
       if (text) tabTexts.push(text.toLowerCase())
     }
 
     const tabString = tabTexts.join(' ')
     // Should contain Swedish config tab names
-    expect(tabString).toMatch(/uppdragstyper|positioner|uppdragsgivare/i)
+    expect(tabString).toMatch(/typer|roller|kunder/i)
   })
 })

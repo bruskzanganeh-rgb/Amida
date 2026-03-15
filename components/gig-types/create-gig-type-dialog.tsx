@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
@@ -21,13 +21,10 @@ type CreateGigTypeDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  onCreated?: (id: string) => void
 }
 
-export function CreateGigTypeDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: CreateGigTypeDialogProps) {
+export function CreateGigTypeDialog({ open, onOpenChange, onSuccess, onCreated }: CreateGigTypeDialogProps) {
   const [loading, setLoading] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [formData, setFormData] = useState({
@@ -52,7 +49,7 @@ export function CreateGigTypeDialog({
       })
       const data = await res.json()
       if (data.translation) {
-        setFormData(prev => ({ ...prev, name_en: data.translation }))
+        setFormData((prev) => ({ ...prev, name_en: data.translation }))
       }
     } catch {
       // Silently fail — user can type manually
@@ -64,15 +61,19 @@ export function CreateGigTypeDialog({
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase.from('gig_types').insert([
-      {
-        name: formData.name,
-        name_en: formData.name_en || null,
-        vat_rate: parseFloat(formData.vat_rate),
-        color: formData.color,
-        is_default: false,
-      },
-    ])
+    const { data: created, error } = await supabase
+      .from('gig_types')
+      .insert([
+        {
+          name: formData.name,
+          name_en: formData.name_en || null,
+          vat_rate: parseFloat(formData.vat_rate),
+          color: formData.color,
+          is_default: false,
+        },
+      ])
+      .select('id')
+      .single()
 
     setLoading(false)
 
@@ -88,6 +89,7 @@ export function CreateGigTypeDialog({
         color: '#3b82f6',
       })
       onSuccess()
+      if (created) onCreated?.(created.id)
       onOpenChange(false)
     }
   }
@@ -98,9 +100,7 @@ export function CreateGigTypeDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{t('newGigType')}</DialogTitle>
-            <DialogDescription>
-              {t('newGigTypeDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('newGigTypeDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -112,25 +112,19 @@ export function CreateGigTypeDialog({
                 id="name"
                 placeholder={t('namePlaceholder')}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="name_en">
-                {t('nameEn')}
-              </Label>
+              <Label htmlFor="name_en">{t('nameEn')}</Label>
               <div className="flex gap-2">
                 <Input
                   id="name_en"
                   placeholder={t('nameEnPlaceholder')}
                   value={formData.name_en}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name_en: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                 />
                 <Button
                   type="button"
@@ -140,16 +134,10 @@ export function CreateGigTypeDialog({
                   disabled={translating || !formData.name.trim()}
                   className="shrink-0"
                 >
-                  {translating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Languages className="h-4 w-4" />
-                  )}
+                  {translating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t('nameEnHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('nameEnHint')}</p>
             </div>
 
             <div className="grid gap-2">
@@ -163,14 +151,10 @@ export function CreateGigTypeDialog({
                 max="100"
                 step="0.01"
                 value={formData.vat_rate}
-                onChange={(e) =>
-                  setFormData({ ...formData, vat_rate: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, vat_rate: e.target.value })}
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                {t('vatRateHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('vatRateHint')}</p>
             </div>
 
             <div className="grid gap-2">
@@ -180,25 +164,16 @@ export function CreateGigTypeDialog({
                   id="color"
                   type="color"
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                   className="w-20 h-10"
                 />
-                <span className="text-sm text-muted-foreground">
-                  {formData.color}
-                </span>
+                <span className="text-sm text-muted-foreground">{formData.color}</span>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               {tc('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>

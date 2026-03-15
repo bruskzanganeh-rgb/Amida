@@ -30,20 +30,28 @@ test.describe('Gig CRUD', () => {
 
     // Fill project name
     const inputs = dialog.locator('input[type="text"], input:not([type])')
-    for (let i = 0; i < await inputs.count(); i++) {
+    for (let i = 0; i < (await inputs.count()); i++) {
       const input = inputs.nth(i)
       const placeholder = await input.getAttribute('placeholder')
-      if (placeholder && (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))) {
+      if (
+        placeholder &&
+        (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))
+      ) {
         await input.fill(`${E2E} Concert`)
         break
       }
     }
 
     // Fill venue
-    for (let i = 0; i < await inputs.count(); i++) {
+    for (let i = 0; i < (await inputs.count()); i++) {
       const input = inputs.nth(i)
       const placeholder = await input.getAttribute('placeholder')
-      if (placeholder && (placeholder.toLowerCase().includes('venue') || placeholder.toLowerCase().includes('plats') || placeholder.toLowerCase().includes('lokal'))) {
+      if (
+        placeholder &&
+        (placeholder.toLowerCase().includes('venue') ||
+          placeholder.toLowerCase().includes('plats') ||
+          placeholder.toLowerCase().includes('lokal'))
+      ) {
         await input.fill(`${E2E} Hall`)
         break
       }
@@ -69,7 +77,7 @@ test.describe('Gig CRUD', () => {
     }
 
     // Save
-    const saveBtn = page.getByRole('button', { name: /create gig|skapa uppdrag/i }).first()
+    const saveBtn = page.getByRole('button', { name: /create event|skapa event/i }).first()
     if (await saveBtn.isVisible()) {
       await saveBtn.click()
       await page.waitForTimeout(2000)
@@ -97,10 +105,13 @@ test.describe('Gig CRUD', () => {
 
     // Fill project name
     const inputs = dialog.locator('input[type="text"], input:not([type])')
-    for (let i = 0; i < await inputs.count(); i++) {
+    for (let i = 0; i < (await inputs.count()); i++) {
       const input = inputs.nth(i)
       const placeholder = await input.getAttribute('placeholder')
-      if (placeholder && (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))) {
+      if (
+        placeholder &&
+        (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))
+      ) {
         await input.fill(`${E2E} Multi`)
         break
       }
@@ -126,7 +137,7 @@ test.describe('Gig CRUD', () => {
     await expect(summary).toBeVisible({ timeout: 3000 })
 
     // Save
-    const saveBtn = page.getByRole('button', { name: /create gig|skapa uppdrag/i }).first()
+    const saveBtn = page.getByRole('button', { name: /create event|skapa event/i }).first()
     if (await saveBtn.isVisible()) {
       await saveBtn.click()
       await page.waitForTimeout(2000)
@@ -139,16 +150,22 @@ test.describe('Gig CRUD', () => {
     // Find the E2E-created gig row and click its edit button
     const e2eRow = page.locator('tr, [class*="card"]').filter({ hasText: E2E }).first()
     await expect(e2eRow).toBeVisible({ timeout: 5000 })
-    const editBtn = e2eRow.locator('button').filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') }).first()
+    const editBtn = e2eRow
+      .locator('button')
+      .filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') })
+      .first()
     await editBtn.click()
     const dialog = await waitForDialog(page)
 
     // Change project name
     const inputs = dialog.locator('input[type="text"], input:not([type])')
-    for (let i = 0; i < await inputs.count(); i++) {
+    for (let i = 0; i < (await inputs.count()); i++) {
       const input = inputs.nth(i)
       const placeholder = await input.getAttribute('placeholder')
-      if (placeholder && (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))) {
+      if (
+        placeholder &&
+        (placeholder.toLowerCase().includes('project') || placeholder.toLowerCase().includes('projekt'))
+      ) {
         await input.clear()
         await input.fill(`${E2E} Edited`)
         break
@@ -170,7 +187,10 @@ test.describe('Gig CRUD', () => {
     // Find E2E-created gig row and click its edit button
     const e2eRow = page.locator('tr, [class*="card"]').filter({ hasText: E2E }).first()
     await expect(e2eRow).toBeVisible({ timeout: 5000 })
-    const editBtn = e2eRow.locator('button').filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') }).first()
+    const editBtn = e2eRow
+      .locator('button')
+      .filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') })
+      .first()
     if (await editBtn.isVisible()) {
       await editBtn.click()
       const dialog = await waitForDialog(page)
@@ -200,7 +220,10 @@ test.describe('Gig CRUD', () => {
     // Find E2E-created gig row and click its duplicate button
     const e2eRow = page.locator('tr, [class*="card"]').filter({ hasText: E2E }).first()
     await expect(e2eRow).toBeVisible({ timeout: 5000 })
-    const copyBtn = e2eRow.locator('button').filter({ has: page.locator('svg.lucide-copy') }).first()
+    const copyBtn = e2eRow
+      .locator('button')
+      .filter({ has: page.locator('svg.lucide-copy') })
+      .first()
     if (await copyBtn.isVisible()) {
       await copyBtn.click()
       await page.waitForTimeout(1000)
@@ -212,7 +235,7 @@ test.describe('Gig CRUD', () => {
       // Dialog title should indicate new gig (not edit)
       const title = dialog.locator('[class*="DialogTitle"], h2').first()
       const titleText = await title.textContent()
-      expect(titleText).toMatch(/new gig|nytt uppdrag/i)
+      expect(titleText).toMatch(/new event|nytt event/i)
 
       // Close without saving
       await page.keyboard.press('Escape')
@@ -225,14 +248,17 @@ test.describe('Gig CRUD', () => {
     // Find E2E-created gig row and click its delete button
     const e2eRow = page.locator('tr, [class*="card"]').filter({ hasText: E2E }).first()
     await expect(e2eRow).toBeVisible({ timeout: 5000 })
-    const trashBtn = e2eRow.locator('button').filter({ has: page.locator('svg.lucide-trash-2, svg.lucide-trash') }).first()
+    const trashBtn = e2eRow
+      .locator('button')
+      .filter({ has: page.locator('svg.lucide-trash-2, svg.lucide-trash') })
+      .first()
     if (await trashBtn.isVisible()) {
       await trashBtn.click()
       await page.waitForTimeout(500)
 
       // Confirm deletion in ConfirmDialog
       const confirmBtn = page.getByRole('button', { name: L.confirm }).first()
-      if (!await confirmBtn.isVisible()) {
+      if (!(await confirmBtn.isVisible())) {
         // Try delete button in confirm dialog
         const deleteBtn = page.getByRole('button', { name: L.delete }).first()
         if (await deleteBtn.isVisible()) await deleteBtn.click()
@@ -263,7 +289,7 @@ test.describe('Gig CRUD', () => {
     const calendarGrid = page.locator('.grid.grid-cols-7').last()
     if (await calendarGrid.isVisible()) {
       const dayButtons = calendarGrid.locator('button:not([disabled])')
-      if (await dayButtons.count() > 5) await dayButtons.nth(5).click()
+      if ((await dayButtons.count()) > 5) await dayButtons.nth(5).click()
       await page.waitForTimeout(200)
     }
 
@@ -280,7 +306,7 @@ test.describe('Gig CRUD', () => {
     }
 
     // Try to save without client
-    const saveBtn = page.getByRole('button', { name: /create gig|skapa uppdrag/i }).first()
+    const saveBtn = page.getByRole('button', { name: /create event|skapa event/i }).first()
     if (await saveBtn.isVisible()) {
       await saveBtn.click()
       await page.waitForTimeout(1000)

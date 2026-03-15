@@ -8,8 +8,8 @@ test('gig-dialog screenshot', async ({ page }, testInfo) => {
   await page.goto('/gigs', { waitUntil: 'networkidle' })
   await page.waitForTimeout(1000)
 
-  // Try "Nytt uppdrag" button first, then FAB "+" button
-  let btn = page.getByRole('button', { name: /nytt uppdrag|new gig/i }).first()
+  // Try "Nytt event" button first, then FAB "+" button
+  let btn = page.getByRole('button', { name: /nytt event|new event/i }).first()
   if (!(await btn.isVisible())) {
     // On mobile, the FAB is a simple "+" button
     btn = page.locator('button').filter({ hasText: '+' }).first()

@@ -39,23 +39,26 @@ async function findBrokenI18nKeys(page: Page): Promise<string[]> {
 
     // Known i18n namespace prefixes in this app
     const namespaces = [
-      'common', 'auth', 'gig', 'invoice', 'expense', 'calendar',
-      'dashboard', 'settings', 'status', 'toast', 'team', 'admin',
+      'common',
+      'auth',
+      'gig',
+      'invoice',
+      'expense',
+      'calendar',
+      'dashboard',
+      'settings',
+      'status',
+      'toast',
+      'team',
+      'admin',
       'onboarding',
     ]
-    const nsPattern = new RegExp(
-      `^(${namespaces.join('|')})\\.\\w+`,
-      'i'
-    )
+    const nsPattern = new RegExp(`^(${namespaces.join('|')})\\.\\w+`, 'i')
 
     // Pattern for unresolved interpolation: {variableName}
     const interpolationPattern = /\{[a-zA-Z_]\w*\}/
 
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      null,
-    )
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null)
 
     let node: Text | null
     while ((node = walker.nextNode() as Text | null)) {
@@ -101,7 +104,7 @@ async function checkNoHorizontalOverflow(page: Page) {
   }))
   expect(
     scrollWidth,
-    `Horizontal overflow: scrollWidth=${scrollWidth} > clientWidth=${clientWidth}`
+    `Horizontal overflow: scrollWidth=${scrollWidth} > clientWidth=${clientWidth}`,
   ).toBeLessThanOrEqual(clientWidth + 1)
 }
 
@@ -144,10 +147,7 @@ async function checkElementsWithinViewport(page: Page) {
     return results
   })
 
-  expect(
-    overflowing,
-    `Elements overflow viewport:\n${overflowing.join('\n')}`
-  ).toHaveLength(0)
+  expect(overflowing, `Elements overflow viewport:\n${overflowing.join('\n')}`).toHaveLength(0)
 }
 
 /**
@@ -159,7 +159,7 @@ async function checkNoContentFooterOverlap(page: Page) {
     const results: string[] = []
     const scrollables = document.querySelectorAll('*')
 
-    scrollables.forEach(el => {
+    scrollables.forEach((el) => {
       const style = window.getComputedStyle(el)
       if (style.overflowY !== 'auto' && style.overflowY !== 'scroll') return
 
@@ -177,7 +177,7 @@ async function checkNoContentFooterOverlap(page: Page) {
         if (sibRect.height > 0 && sibRect.top < rect.bottom - 2) {
           const text = sibling.textContent?.trim().slice(0, 50) || ''
           results.push(
-            `"${text}" (top=${Math.round(sibRect.top)}) overlaps scroll area (bottom=${Math.round(rect.bottom)})`
+            `"${text}" (top=${Math.round(sibRect.top)}) overlaps scroll area (bottom=${Math.round(rect.bottom)})`,
           )
         }
         sibling = sibling.nextElementSibling
@@ -187,10 +187,7 @@ async function checkNoContentFooterOverlap(page: Page) {
     return results
   })
 
-  expect(
-    overlaps,
-    `Content/footer overlap detected:\n${overlaps.join('\n')}`
-  ).toHaveLength(0)
+  expect(overlaps, `Content/footer overlap detected:\n${overlaps.join('\n')}`).toHaveLength(0)
 }
 
 /**
@@ -207,21 +204,19 @@ async function checkNoTableCellOverflow(page: Page) {
     const results: string[] = []
     const tables = document.querySelectorAll('table')
 
-    tables.forEach(table => {
+    tables.forEach((table) => {
       const style = window.getComputedStyle(table)
       if (style.tableLayout !== 'fixed') return
 
       const cells = table.querySelectorAll('td')
-      cells.forEach(cell => {
+      cells.forEach((cell) => {
         const cellStyle = window.getComputedStyle(cell)
         // overflow:hidden means content is properly clipped — OK
         if (cellStyle.overflow === 'hidden') return
 
         if (cell.scrollWidth > cell.clientWidth + 4) {
           const text = cell.textContent?.trim().slice(0, 40) || ''
-          results.push(
-            `Cell "${text}" overflow: scrollWidth=${cell.scrollWidth} > clientWidth=${cell.clientWidth}`
-          )
+          results.push(`Cell "${text}" overflow: scrollWidth=${cell.scrollWidth} > clientWidth=${cell.clientWidth}`)
         }
       })
     })
@@ -229,10 +224,7 @@ async function checkNoTableCellOverflow(page: Page) {
     return results
   })
 
-  expect(
-    issues,
-    `Table cell overflow:\n${issues.join('\n')}`
-  ).toHaveLength(0)
+  expect(issues, `Table cell overflow:\n${issues.join('\n')}`).toHaveLength(0)
 }
 
 // ---------------------------------------------------------------------------
@@ -247,10 +239,7 @@ test.describe('UI Audit — i18n keys', () => {
       await page.waitForTimeout(1000)
 
       const problems = await findBrokenI18nKeys(page)
-      expect(
-        problems,
-        `Broken i18n keys found on ${pg.name}:\n${problems.join('\n')}`
-      ).toHaveLength(0)
+      expect(problems, `Broken i18n keys found on ${pg.name}:\n${problems.join('\n')}`).toHaveLength(0)
     })
   }
 })
@@ -287,16 +276,13 @@ test.describe('UI Audit — dialogs', () => {
     await page.waitForTimeout(500)
 
     // Click "New gig" button (use first() to avoid strict mode with FAB + inline button)
-    const newGigBtn = page.getByRole('button', { name: /nytt uppdrag|new gig/i }).first()
+    const newGigBtn = page.getByRole('button', { name: /nytt event|new event/i }).first()
     if (await newGigBtn.isVisible()) {
       await newGigBtn.click()
       await page.waitForTimeout(500)
 
       const problems = await findBrokenI18nKeys(page)
-      expect(
-        problems,
-        `Broken i18n in new gig dialog:\n${problems.join('\n')}`
-      ).toHaveLength(0)
+      expect(problems, `Broken i18n in new gig dialog:\n${problems.join('\n')}`).toHaveLength(0)
 
       // Close dialog
       await page.keyboard.press('Escape')
@@ -320,10 +306,7 @@ test.describe('UI Audit — dialogs', () => {
       await page.waitForTimeout(1000)
 
       const problems = await findBrokenI18nKeys(page)
-      expect(
-        problems,
-        `Broken i18n in export dialog:\n${problems.join('\n')}`
-      ).toHaveLength(0)
+      expect(problems, `Broken i18n in export dialog:\n${problems.join('\n')}`).toHaveLength(0)
 
       await page.keyboard.press('Escape')
     }
@@ -339,10 +322,7 @@ test.describe('UI Audit — dialogs', () => {
       await page.waitForTimeout(500)
 
       const problems = await findBrokenI18nKeys(page)
-      expect(
-        problems,
-        `Broken i18n in new invoice dialog:\n${problems.join('\n')}`
-      ).toHaveLength(0)
+      expect(problems, `Broken i18n in new invoice dialog:\n${problems.join('\n')}`).toHaveLength(0)
 
       await page.keyboard.press('Escape')
     }

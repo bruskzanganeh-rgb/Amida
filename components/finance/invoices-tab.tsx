@@ -351,8 +351,15 @@ export default function InvoicesTab() {
     'upcoming-revenue',
     async () => {
       const today = new Date().toISOString().split('T')[0]
-      const { data: upcoming } = await supabase.from('gigs').select('fee').gte('date', today).eq('status', 'accepted')
-      return (upcoming || []).reduce((sum, g: { fee: number | null }) => sum + (g.fee || 0), 0)
+      const { data: upcoming } = await supabase
+        .from('gigs')
+        .select('fee, fee_base')
+        .gte('date', today)
+        .eq('status', 'accepted')
+      return (upcoming || []).reduce(
+        (sum, g: { fee: number | null; fee_base: number | null }) => sum + (g.fee_base ?? g.fee ?? 0),
+        0,
+      )
     },
     { revalidateOnFocus: true, dedupingInterval: 30_000 },
   )

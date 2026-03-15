@@ -14,8 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
 // ---------------------------------------------------------------------------
 export const L = {
   // Buttons
-  newGig: /new gig|nytt uppdrag/i,
-  createGig: /create gig|skapa uppdrag/i,
+  newGig: /new event|nytt event/i,
+  createGig: /create event|skapa event/i,
   save: /save|spara/i,
   saveChanges: /save changes|spara ändringar/i,
   saveSettings: /save settings|spara inställningar/i,
@@ -40,9 +40,9 @@ export const L = {
   expensesTab: /expenses|utgifter/i,
   calendarTab: /calendar|kalender/i,
   availabilityTab: /availability|tillgänglighet/i,
-  clientsTab: /clients|uppdragsgivare|klienter/i,
-  gigTypesTab: /gig types|uppdragstyper/i,
-  positionsTab: /positions|positioner|roller/i,
+  clientsTab: /clients|kunder/i,
+  gigTypesTab: /types|typer/i,
+  positionsTab: /positions|roller|roles/i,
   companyTab: /company|företag/i,
   emailTab: /^email$|^e-post$/i,
   teamTab: /team/i,
@@ -61,7 +61,7 @@ export const L = {
   history: /history|historik/i,
 
   // Config
-  newGigType: /new gig type|ny uppdragstyp/i,
+  newGigType: /new event type|ny eventtyp/i,
   newPosition: /new position|ny position/i,
 }
 
@@ -101,13 +101,10 @@ export async function cleanupTestData() {
     const supabase = getAdminClient()
 
     // Find E2E gigs and their IDs
-    const { data: gigs } = await supabase
-      .from('gigs')
-      .select('id')
-      .ilike('project_name', 'E2E-%')
+    const { data: gigs } = await supabase.from('gigs').select('id').ilike('project_name', 'E2E-%')
 
     if (gigs?.length) {
-      const ids = gigs.map(g => g.id)
+      const ids = gigs.map((g) => g.id)
       await supabase.from('invoice_gigs').delete().in('gig_id', ids)
       await supabase.from('gig_dates').delete().in('gig_id', ids)
       await supabase.from('expenses').delete().in('gig_id', ids)
@@ -115,13 +112,10 @@ export async function cleanupTestData() {
     }
 
     // Find E2E invoices via notes
-    const { data: invoices } = await supabase
-      .from('invoices')
-      .select('id')
-      .ilike('notes', '%E2E%')
+    const { data: invoices } = await supabase.from('invoices').select('id').ilike('notes', '%E2E%')
 
     if (invoices?.length) {
-      const ids = invoices.map(i => i.id)
+      const ids = invoices.map((i) => i.id)
       await supabase.from('invoice_lines').delete().in('invoice_id', ids)
       await supabase.from('invoice_gigs').delete().in('invoice_id', ids)
       await supabase.from('invoices').delete().in('id', ids)
@@ -135,7 +129,7 @@ export async function cleanupTestData() {
       .or('project_name.is.null,project_name.eq.')
 
     if (orphans?.length) {
-      const ids = orphans.map(g => g.id)
+      const ids = orphans.map((g) => g.id)
       await supabase.from('invoice_gigs').delete().in('gig_id', ids)
       await supabase.from('gig_dates').delete().in('gig_id', ids)
       await supabase.from('expenses').delete().in('gig_id', ids)
@@ -183,9 +177,7 @@ export { TEST_COMPANY_ID, TEST_OWNER_ID }
 /** Set test company subscription plan via service role */
 export async function setTestPlan(plan: 'free' | 'pro' | 'team') {
   const supabase = getAdminClient()
-  await supabase.from('subscriptions')
-    .update({ plan, status: 'active' })
-    .eq('company_id', TEST_COMPANY_ID)
+  await supabase.from('subscriptions').update({ plan, status: 'active' }).eq('company_id', TEST_COMPANY_ID)
 }
 
 /** Reset usage_tracking for test owner */
@@ -197,7 +189,5 @@ export async function resetUsageTracking() {
 /** Set gig visibility for test company */
 export async function setGigVisibility(mode: 'personal' | 'shared') {
   const supabase = getAdminClient()
-  await supabase.from('companies')
-    .update({ gig_visibility: mode })
-    .eq('id', TEST_COMPANY_ID)
+  await supabase.from('companies').update({ gig_visibility: mode }).eq('id', TEST_COMPANY_ID)
 }

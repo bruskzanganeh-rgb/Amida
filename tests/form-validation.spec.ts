@@ -23,7 +23,7 @@ test.describe('Form Validation', () => {
     await page.waitForTimeout(200)
 
     // Try to save WITHOUT selecting a date
-    const saveBtn = page.getByRole('button', { name: /create gig|skapa uppdrag/i }).first()
+    const saveBtn = page.getByRole('button', { name: /create event|skapa event/i }).first()
     if (await saveBtn.isVisible()) {
       await saveBtn.click()
       await page.waitForTimeout(1000)
@@ -45,8 +45,8 @@ test.describe('Form Validation', () => {
       await page.waitForTimeout(500)
     }
 
-    // Click the "Ny uppdragsgivare" / "New client" button
-    const addBtn = page.getByRole('button', { name: /ny uppdragsgivare|new client/i }).first()
+    // Click the "Ny kund" / "New client" button
+    const addBtn = page.getByRole('button', { name: /ny kund|new client/i })
     await expect(addBtn).toBeVisible({ timeout: 5000 })
     await addBtn.click()
     const dialog = await waitForDialog(page)
