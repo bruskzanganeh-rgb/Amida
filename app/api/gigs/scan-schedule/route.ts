@@ -10,10 +10,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get user's locale for AI output language
+    const { data: settings } = await supabase.from('company_settings').select('locale').eq('user_id', user.id).single()
+    const locale = settings?.locale || 'en'
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -28,15 +34,12 @@ export async function POST(request: NextRequest) {
     if (!validImageTypes.includes(file.type) && !isPdf) {
       return NextResponse.json(
         { error: 'Invalid file type. Only JPEG, PNG, GIF, WebP, and PDF are supported.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'File is too large. Max 10MB.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File is too large. Max 10MB.' }, { status: 400 })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -44,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (isPdf) {
       const base64 = Buffer.from(arrayBuffer).toString('base64')
-      result = await parseScheduleWithPdf(base64, user.id)
+      result = await parseScheduleWithPdf(base64, user.id, locale)
     } else {
       const bytes = new Uint8Array(arrayBuffer)
       let binary = ''
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
       }
       const base64 = Buffer.from(binary, 'binary').toString('base64')
       const mimeType = file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
-      result = await parseScheduleWithVision(base64, mimeType, user.id)
+      result = await parseScheduleWithVision(base64, mimeType, user.id, locale)
     }
 
     // Convert sessions to text for display in text fields
@@ -73,9 +76,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('Schedule scan error:', message, error)
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

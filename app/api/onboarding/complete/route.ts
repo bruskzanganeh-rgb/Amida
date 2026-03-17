@@ -24,9 +24,9 @@ export async function POST(request: Request) {
 
   // Determine late payment interest text based on chosen locale
   const latePaymentText =
-    locale === 'en'
-      ? 'Late payment interest of 10% will be charged after due date'
-      : 'Efter förfallodagen debiteras dröjsmålsränta med 10%'
+    locale === 'sv'
+      ? 'Efter förfallodagen debiteras dröjsmålsränta med 10%'
+      : 'Late payment interest of 10% will be charged after due date'
 
   // Use admin client for company/members/data creation (bypasses RLS)
   const admin = createAdminClient()

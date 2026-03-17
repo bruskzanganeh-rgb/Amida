@@ -62,7 +62,9 @@ export type ScannedScheduleData = Omit<z.infer<typeof ScannedScheduleSchema>, 'd
   dates: Record<string, Session[]>
 }
 
-const PARSE_PROMPT = `Du parsar schematext för en frilansmusiker.
+function getParsePrompt(locale: string) {
+  if (locale === 'sv') {
+    return `Du parsar schematext för en frilansmusiker.
 
 Input: en lista av datum med fritext som beskriver dagens schema.
 Output: strukturerade sessions per datum.
@@ -84,8 +86,35 @@ Returnera ENDAST JSON:
 }
 
 VIKTIGT: Returnera BARA JSON, inget annat.`
+  }
 
-const SCAN_PROMPT = `Du läser ett repetitions- eller konsertschema för en frilansmusiker.
+  return `You parse schedule text for a freelance musician.
+
+Input: a list of dates with free text describing the day's schedule.
+Output: structured sessions per date.
+
+Rules:
+- "10-12" → { "start": "10:00", "end": "12:00" }
+- "rehearsal 10-12" → { "start": "10:00", "end": "12:00", "label": "Rehearsal" }
+- "concert 19" without end time → { "start": "19:00", "end": null }
+- "10-12, 15-17" → two sessions
+- "10.00-12.00" → { "start": "10:00", "end": "12:00" }
+- Normalize labels: "rep"/"repetition"/"rehearsal"→"Rehearsal", "konsert"/"concert"/"gig"/"performance"→"Concert", "gp"/"genrep"/"generalrep"/"dress rehearsal"→"Dress rehearsal", "scenrep"/"stage rehearsal"→"Stage rehearsal"
+- If no label is given, omit the field
+
+Return ONLY JSON:
+{
+  "dates": {
+    "2026-03-03": [{ "start": "10:00", "end": "12:00", "label": "Rehearsal" }]
+  }
+}
+
+IMPORTANT: Return ONLY JSON, nothing else.`
+}
+
+function getScanPrompt(locale: string) {
+  if (locale === 'sv') {
+    return `Du läser ett repetitions- eller konsertschema för en frilansmusiker.
 Extrahera alla datum med tider och typ av aktivitet.
 
 Typer (normalisera till dessa):
@@ -118,6 +147,42 @@ Regler:
 - confidence: 0-1, din säkerhet
 
 VIKTIGT: Returnera BARA JSON, inget annat.`
+  }
+
+  return `You are reading a rehearsal or concert schedule for a freelance musician.
+Extract all dates with times and activity type.
+
+Types (normalize to these):
+- Rehearsal: Rehearsal, rep, repetition, run-through
+- Dress rehearsal: Dress rehearsal, GP, generalrep, stage rehearsal
+- Concert: Concert, performance, gig, konsert
+- (omit label if unknown)
+
+Return ONLY JSON:
+{
+  "dates": {
+    "2026-03-03": [
+      { "start": "10:00", "end": "12:00", "label": "Rehearsal" },
+      { "start": "15:00", "end": "17:00", "label": "Rehearsal" }
+    ],
+    "2026-03-06": [
+      { "start": "19:00", "end": "21:30", "label": "Concert" }
+    ]
+  },
+  "project_name": "Beethoven 9",
+  "venue": "Concert Hall",
+  "confidence": 0.95
+}
+
+Rules:
+- Dates in ISO format (YYYY-MM-DD)
+- Times in HH:MM format
+- If end time is missing, set end to null
+- project_name and venue can be null if unclear
+- confidence: 0-1, your certainty
+
+IMPORTANT: Return ONLY JSON, nothing else.`
+}
 
 function cleanJsonResponse(text: string): string {
   let jsonText = text.trim()
@@ -136,6 +201,7 @@ function cleanJsonResponse(text: string): string {
 export async function parseScheduleTexts(
   entries: { date: string; text: string }[],
   userId?: string,
+  locale: string = 'en',
 ): Promise<Record<string, Session[]>> {
   if (entries.length === 0) return {}
 
@@ -144,15 +210,18 @@ export async function parseScheduleTexts(
 
     const userContent = entries.map((e) => `${e.date}: ${e.text}`).join('\n')
 
+    const userMessage =
+      locale === 'sv' ? `Parsa dessa schematexter:\n\n${userContent}` : `Parse these schedule texts:\n\n${userContent}`
+
     const message = await anthropic.messages.create({
       model,
       max_tokens: 1024,
       temperature: 0,
-      system: PARSE_PROMPT,
+      system: getParsePrompt(locale),
       messages: [
         {
           role: 'user',
-          content: `Parsa dessa schematexter:\n\n${userContent}`,
+          content: userMessage,
         },
       ],
     })
@@ -190,14 +259,20 @@ export async function parseScheduleWithVision(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
   userId?: string,
+  locale: string = 'en',
 ): Promise<ScannedScheduleData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
+    const userMessage =
+      locale === 'sv'
+        ? 'Läs detta schema och extrahera datum, tider och typ.'
+        : 'Read this schedule and extract dates, times, and activity type.'
+
     const message = await anthropic.messages.create({
       model,
       max_tokens: 2048,
       temperature: 0,
-      system: SCAN_PROMPT,
+      system: getScanPrompt(locale),
       messages: [
         {
           role: 'user',
@@ -212,7 +287,7 @@ export async function parseScheduleWithVision(
             },
             {
               type: 'text',
-              text: 'Läs detta schema och extrahera datum, tider och typ.',
+              text: userMessage,
             },
           ],
         },
@@ -252,14 +327,23 @@ export async function parseScheduleWithVision(
  * Scan a schedule PDF by sending it directly to Claude's API.
  * Uses the document content type — no local PDF rendering needed.
  */
-export async function parseScheduleWithPdf(pdfBase64: string, userId?: string): Promise<ScannedScheduleData> {
+export async function parseScheduleWithPdf(
+  pdfBase64: string,
+  userId?: string,
+  locale: string = 'en',
+): Promise<ScannedScheduleData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
+    const userMessage =
+      locale === 'sv'
+        ? 'Läs detta schema och extrahera datum, tider och typ.'
+        : 'Read this schedule and extract dates, times, and activity type.'
+
     const message = await anthropic.messages.create({
       model,
       max_tokens: 2048,
       temperature: 0,
-      system: SCAN_PROMPT,
+      system: getScanPrompt(locale),
       messages: [
         {
           role: 'user',
@@ -274,7 +358,7 @@ export async function parseScheduleWithPdf(pdfBase64: string, userId?: string): 
             },
             {
               type: 'text',
-              text: 'Läs detta schema och extrahera datum, tider och typ.',
+              text: userMessage,
             },
           ],
         },

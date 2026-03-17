@@ -10,29 +10,29 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get user's locale for AI output language
+    const { data: settings } = await supabase.from('company_settings').select('locale').eq('user_id', user.id).single()
+    const locale = settings?.locale || 'en'
 
     const body = await request.json()
     const { entries } = body as { entries: { date: string; text: string }[] }
 
     if (!entries || !Array.isArray(entries) || entries.length === 0) {
-      return NextResponse.json(
-        { error: 'No schedule entries provided' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No schedule entries provided' }, { status: 400 })
     }
 
-    const sessions = await parseScheduleTexts(entries, user.id)
+    const sessions = await parseScheduleTexts(entries, user.id, locale)
 
     return NextResponse.json({ success: true, sessions })
   } catch (error) {
     console.error('Schedule parse error:', error)
-    return NextResponse.json(
-      { error: 'Could not parse schedule' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Could not parse schedule' }, { status: 500 })
   }
 }
