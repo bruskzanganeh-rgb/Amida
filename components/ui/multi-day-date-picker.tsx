@@ -175,6 +175,20 @@ export function MultiDayDatePicker({
 
   return (
     <div className="space-y-4">
+      {/* Import schedule - prominent button at the top */}
+      {onScanSchedule && !showTimes && (
+        <button
+          type="button"
+          className="w-full text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg flex items-center justify-center gap-2 py-2.5 transition-colors"
+          onClick={onScanSchedule}
+          disabled={disabled}
+        >
+          <Upload className="h-4 w-4" />
+          {t('importSchedule')}
+          <span className="text-xs text-muted-foreground">(PDF / {t('image')})</span>
+        </button>
+      )}
+
       {/* Calendar */}
       <div className="p-4">
         {/* Month navigation */}
@@ -266,19 +280,6 @@ export function MultiDayDatePicker({
           )}
         </div>
       </div>
-
-      {/* Import schedule - always visible when onScanSchedule exists */}
-      {onScanSchedule && !showTimes && (
-        <button
-          type="button"
-          className="w-full text-sm text-primary hover:underline underline-offset-2 flex items-center justify-center gap-1.5 py-1"
-          onClick={onScanSchedule}
-          disabled={disabled}
-        >
-          <Upload className="h-3.5 w-3.5" />
-          {t('importSchedule')}
-        </button>
-      )}
 
       {/* Schedule times section */}
       {showTimes && selectedDates.length > 0 && onScheduleTextsChange && (

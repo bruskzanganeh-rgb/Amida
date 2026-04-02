@@ -85,6 +85,8 @@
     "position": "Position",
     "venue": "Venue",
     "fee": "Fee",
+    "exchangeRateLabel": "Exchange rate (1 {from} → {to})",
+    "exchangeRateAuto": "Auto",
     "travelExpense": "Travel expense",
     "travelShort": "travel",
     "date": "Date",
@@ -1433,6 +1435,7 @@
     "hideTimes": "Hide times",
     "allDaysSameSchedule": "All days same schedule",
     "importSchedule": "Import schedule",
+    "image": "image",
     "schedulePlaceholder": "e.g. rehearsal 10-12, concert 19",
     "scanning": "Scanning...",
     "parsing": "Parsing schedule..."

@@ -41,6 +41,7 @@ type Gig = {
   gig_type_id: string
   position_id?: string | null
   currency?: string | null
+  exchange_rate?: number | null
   client: { name: string } | null
   gig_type: { name: string } | null
 }
@@ -116,6 +117,7 @@ export function GigDialog({
   const [scheduleFile, setScheduleFile] = useState<File | null>(null)
   const scheduleFileRef = useRef<HTMLInputElement>(null)
   const [draftGigId, setDraftGigId] = useState<string | null>(null)
+  const [manualExchangeRate, setManualExchangeRate] = useState<string>('')
   const [showCreateClient, setShowCreateClient] = useState(false)
   const [showCreateGigType, setShowCreateGigType] = useState(false)
   const [showCreatePosition, setShowCreatePosition] = useState(false)
@@ -162,6 +164,8 @@ export function GigDialog({
 
       // Always reset schedule file state when dialog opens (prevents re-upload on edit)
       setScheduleFile(null)
+
+      setManualExchangeRate('')
 
       // Reset form for create mode
       if (!gig) {
@@ -212,6 +216,13 @@ export function GigDialog({
         status: gig.status || 'pending',
         response_deadline: gig.response_deadline || '',
       })
+
+      // Pre-populate exchange rate if editing a foreign currency gig
+      if (gig.exchange_rate && gig.exchange_rate !== 1) {
+        setManualExchangeRate(gig.exchange_rate.toString())
+      } else {
+        setManualExchangeRate('')
+      }
 
       // Load gig dates
       loadGigDates(gig.id)
@@ -338,15 +349,27 @@ export function GigDialog({
       // Exchange rate
       (async () => {
         if (currency !== baseCurrency && (fee || travelExpense)) {
+          // Use manual exchange rate if provided
+          const manualRate = manualExchangeRate ? parseFloat(manualExchangeRate) : null
+          if (manualRate && manualRate > 0) {
+            return {
+              exchangeRate: manualRate,
+              feeBase: fee ? Math.round(fee * manualRate * 100) / 100 : fee,
+              travelExpenseBase: travelExpense ? Math.round(travelExpense * manualRate * 100) / 100 : travelExpense,
+            }
+          }
           try {
             const rate = await getRate(currency, baseCurrency, startDate)
+            setManualExchangeRate(rate.toString())
             return {
               exchangeRate: rate,
               feeBase: fee ? Math.round(fee * rate * 100) / 100 : fee,
               travelExpenseBase: travelExpense ? Math.round(travelExpense * rate * 100) / 100 : travelExpense,
             }
           } catch {
-            toast.warning(tToast('exchangeRateError'))
+            toast.error(tToast('exchangeRateError'))
+            setLoading(false)
+            return null
           }
         }
         return { exchangeRate: 1.0, feeBase: fee, travelExpenseBase: travelExpense }
@@ -372,6 +395,9 @@ export function GigDialog({
         return { ...parsedSessions }
       })(),
     ])
+
+    // If exchange rate fetch failed (null result), abort save
+    if (!exchangeResult) return
 
     const { exchangeRate, feeBase, travelExpenseBase } = exchangeResult
 
@@ -819,6 +845,22 @@ export function GigDialog({
                       </Select>
                     </div>
                   </div>
+                  {formData.currency && formData.currency !== baseCurrency && (
+                    <div className="space-y-1">
+                      <Label className={fieldLabel}>
+                        {t('exchangeRateLabel', { from: formData.currency, to: baseCurrency })}
+                      </Label>
+                      <Input
+                        className="h-9"
+                        type="number"
+                        min="0"
+                        step="0.0001"
+                        placeholder={t('exchangeRateAuto')}
+                        value={manualExchangeRate}
+                        onChange={(e) => setManualExchangeRate(e.target.value)}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <Label className={fieldLabel}>{t('status')}</Label>
                     <Select

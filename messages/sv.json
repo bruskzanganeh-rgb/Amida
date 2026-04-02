@@ -85,6 +85,8 @@
     "position": "Position",
     "venue": "Plats",
     "fee": "Arvode",
+    "exchangeRateLabel": "Växelkurs (1 {from} → {to})",
+    "exchangeRateAuto": "Auto",
     "travelExpense": "Reseersättning",
     "travelShort": "resa",
     "date": "Datum",
@@ -1432,6 +1434,7 @@
     "hideTimes": "Dölj tider",
     "allDaysSameSchedule": "Alla dagar samma schema",
     "importSchedule": "Importera schema",
+    "image": "bild",
     "schedulePlaceholder": "t.ex. rep 10-12, konsert 19",
     "scanning": "Skannar...",
     "parsing": "Tolkar schema..."

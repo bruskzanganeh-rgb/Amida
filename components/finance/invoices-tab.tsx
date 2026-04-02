@@ -378,6 +378,27 @@ export default function InvoicesTab() {
     overscan: 5,
   })
 
+  async function downloadInvoicePdf(invoiceId: string, invoiceNumber: number) {
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
+      if (!res.ok) throw new Error()
+      const disposition = res.headers.get('Content-Disposition') || ''
+      const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
+      const filename = filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error(t('errorLoadingPdf'))
+    }
+  }
+
   async function openPdfPreview(invoiceId: string, invoiceNumber: number) {
     setPdfPreviewInvoiceNumber(invoiceNumber)
     setPdfPreviewOpen(true)
@@ -750,6 +771,15 @@ export default function InvoicesTab() {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => downloadInvoicePdf(invoice.id, invoice.invoice_number)}
+                            title={tc('download')}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </Button>
                           {invoice.status === 'overdue' ? (
                             <Button
                               variant="ghost"
@@ -922,6 +952,14 @@ export default function InvoicesTab() {
                                     title={t('previewPdf')}
                                   >
                                     <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => downloadInvoicePdf(invoice.id, invoice.invoice_number)}
+                                    title={tc('download')}
+                                  >
+                                    <Download className="h-4 w-4" />
                                   </Button>
                                   {invoice.status === 'overdue' ? (
                                     <Button

@@ -2223,14 +2223,24 @@ export default function GigsPage() {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full hover:bg-gray-100 -mt-1"
-                        onClick={() => setSelectedGig(null)}
-                      >
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
-                      </Button>
+                      <div className="flex items-center gap-1 -mt-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-gray-100"
+                          onClick={() => setEditingGig(selectedGig)}
+                        >
+                          <Edit className="h-4 w-4 text-gray-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-gray-100"
+                          onClick={() => setSelectedGig(null)}
+                        >
+                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                        </Button>
+                      </div>
                     </div>
                     {/* Content - single column for mobile */}
                     <div className="flex-1 overflow-y-auto pb-2">

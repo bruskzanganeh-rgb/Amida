@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   // Bottom section - anchored to bottom of page
   bottomSection: {
     position: 'absolute',
-    bottom: 130,
+    bottom: 185,
     left: 50,
     right: 50,
   },

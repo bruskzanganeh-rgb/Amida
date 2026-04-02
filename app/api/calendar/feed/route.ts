@@ -201,16 +201,31 @@ END:VEVENT`,
           ? 'Amida — My events'
           : 'Amida — Mina events'
 
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Amida//SE
-X-WR-CALNAME:${calName}
-X-WR-TIMEZONE:${tz}
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-${getVTimezone(tz)}
-${events}
-END:VCALENDAR`
+    // Build ICS with RFC 5545 compliant CRLF line endings
+    const icsLines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Amida//SE',
+      `X-WR-CALNAME:${calName}`,
+      `X-WR-TIMEZONE:${tz}`,
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+      'X-PUBLISHED-TTL:PT1H',
+    ]
+
+    // Add VTIMEZONE (already has \n separators, convert to individual lines)
+    icsLines.push(...getVTimezone(tz).split('\n'))
+
+    // Add events (each event is a multi-line string)
+    if (events) {
+      icsLines.push(...events.split('\n'))
+    }
+
+    icsLines.push('END:VCALENDAR')
+
+    // Join with CRLF (RFC 5545 requirement)
+    const icsContent = icsLines.filter((line) => line.trim() !== '').join('\r\n') + '\r\n'
 
     return new NextResponse(icsContent, {
       headers: {
