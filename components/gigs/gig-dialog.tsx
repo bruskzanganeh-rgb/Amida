@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Paperclip } from 'lucide-react'
+import { Loader2, Paperclip, Upload, CalendarDays, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { GigAttachments } from './gig-attachments'
@@ -116,6 +116,7 @@ export function GigDialog({
   const [scanningSchedule, setScanningSchedule] = useState(false)
   const [scheduleFile, setScheduleFile] = useState<File | null>(null)
   const scheduleFileRef = useRef<HTMLInputElement>(null)
+  const [dateEntryMode, setDateEntryMode] = useState<'choose' | 'manual' | 'import'>('choose')
   const [draftGigId, setDraftGigId] = useState<string | null>(null)
   const [manualExchangeRate, setManualExchangeRate] = useState<string>('')
   const [showCreateClient, setShowCreateClient] = useState(false)
@@ -166,6 +167,9 @@ export function GigDialog({
       setScheduleFile(null)
 
       setManualExchangeRate('')
+
+      // Reset date entry mode — skip chooser for edit or when a date is pre-selected
+      setDateEntryMode(gig || initialDate ? 'manual' : 'choose')
 
       // Reset form for create mode
       if (!gig) {
@@ -575,7 +579,11 @@ export function GigDialog({
 
   async function handleScheduleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      // User cancelled file picker — go back to chooser
+      if (dateEntryMode === 'import') setDateEntryMode('choose')
+      return
+    }
 
     setScanningSchedule(true)
     try {
@@ -946,17 +954,56 @@ export function GigDialog({
                   !isLg && step !== 2 && 'hidden',
                 )}
               >
-                <MultiDayDatePicker
-                  selectedDates={selectedDates}
-                  onDatesChange={setSelectedDates}
-                  disabled={loading || scanningSchedule}
-                  scheduleTexts={scheduleTexts}
-                  onScheduleTextsChange={setScheduleTexts}
-                  onScanSchedule={handleScanSchedule}
-                  parsedSessions={parsedSessions}
-                  parsingSessions={parsingSessions}
-                  onParseScheduleText={handleParseScheduleText}
-                />
+                {dateEntryMode === 'choose' ? (
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <p className="text-sm font-medium text-muted-foreground mb-8">{t('addDates')}</p>
+                    <div className="grid grid-cols-2 gap-4 px-4 w-full">
+                      <button
+                        type="button"
+                        className="group aspect-square flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                        onClick={() => {
+                          setDateEntryMode('import')
+                          handleScanSchedule()
+                        }}
+                      >
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                          <Upload className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="text-center px-2">
+                          <span className="block text-[13px] font-semibold">{t('uploadSchedule')}</span>
+                          <span className="block text-[11px] text-muted-foreground mt-0.5">PDF, JPG, PNG</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        className="group aspect-square flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                        onClick={() => setDateEntryMode('manual')}
+                      >
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                          <CalendarDays className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="text-center px-2">
+                          <span className="block text-[13px] font-semibold">{t('enterManually')}</span>
+                          <span className="block text-[11px] text-muted-foreground mt-0.5">
+                            {t('enterManuallyHint')}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <MultiDayDatePicker
+                    selectedDates={selectedDates}
+                    onDatesChange={setSelectedDates}
+                    disabled={loading || scanningSchedule}
+                    scheduleTexts={scheduleTexts}
+                    onScheduleTextsChange={setScheduleTexts}
+                    onScanSchedule={handleScanSchedule}
+                    parsedSessions={parsedSessions}
+                    parsingSessions={parsingSessions}
+                    onParseScheduleText={handleParseScheduleText}
+                  />
+                )}
                 <input
                   ref={scheduleFileRef}
                   type="file"
