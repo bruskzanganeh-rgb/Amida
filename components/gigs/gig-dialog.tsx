@@ -579,12 +579,9 @@ export function GigDialog({
 
   async function handleScheduleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) {
-      // User cancelled file picker — go back to chooser
-      if (dateEntryMode === 'import') setDateEntryMode('choose')
-      return
-    }
+    if (!file) return
 
+    setDateEntryMode('import')
     setScanningSchedule(true)
     try {
       const formDataUpload = new FormData()
@@ -960,11 +957,8 @@ export function GigDialog({
                     <div className="grid grid-cols-2 gap-4 px-4 w-full">
                       <button
                         type="button"
-                        className="group aspect-square flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
-                        onClick={() => {
-                          setDateEntryMode('import')
-                          handleScanSchedule()
-                        }}
+                        className="group flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200 py-8 lg:aspect-square lg:py-0"
+                        onClick={() => handleScanSchedule()}
                       >
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                           <Upload className="h-6 w-6 text-primary" />
@@ -976,7 +970,7 @@ export function GigDialog({
                       </button>
                       <button
                         type="button"
-                        className="group aspect-square flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                        className="group flex flex-col items-center justify-center gap-3 rounded-2xl bg-card border border-border shadow-sm cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-1 transition-all duration-200 py-8 lg:aspect-square lg:py-0"
                         onClick={() => setDateEntryMode('manual')}
                       >
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
