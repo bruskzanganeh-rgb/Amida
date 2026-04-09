@@ -18,7 +18,7 @@ import { InvoicePreview } from './invoice-preview'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
-import { getRate, type SupportedCurrency } from '@/lib/currency/exchange'
+import { getRate, formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
 
 type GigExpense = {
@@ -669,7 +669,11 @@ export function CreateInvoiceDialog({
                               <span className="text-muted-foreground ml-2">{dateStr}</span>
                             </div>
                             <span className="font-medium shrink-0">
-                              {gig.fee.toLocaleString(formatLocale)} {currencyLabel}
+                              {formatCurrency(
+                                gig.fee,
+                                (gig.currency || companyCurrency) as SupportedCurrency,
+                                formatLocale,
+                              )}
                             </span>
                           </div>
                         )

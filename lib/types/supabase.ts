@@ -254,6 +254,7 @@ export type Database = {
           bankgiro: string | null
           iban: string | null
           bic: string | null
+          bank_address: string | null
         }
         Insert: {
           id?: string
@@ -283,6 +284,7 @@ export type Database = {
           bankgiro?: string | null
           iban?: string | null
           bic?: string | null
+          bank_address?: string | null
         }
         Update: {
           id?: string
@@ -312,6 +314,7 @@ export type Database = {
           bankgiro?: string | null
           iban?: string | null
           bic?: string | null
+          bank_address?: string | null
         }
         Relationships: []
       }
@@ -811,6 +814,7 @@ export type Database = {
           schedule_text: string | null
           sessions: Json | null
           company_id: string | null
+          venue: string | null
         }
         Insert: {
           id?: string
@@ -821,6 +825,7 @@ export type Database = {
           schedule_text?: string | null
           sessions?: Json | null
           company_id?: string | null
+          venue?: string | null
         }
         Update: {
           id?: string
@@ -831,6 +836,7 @@ export type Database = {
           schedule_text?: string | null
           sessions?: Json | null
           company_id?: string | null
+          venue?: string | null
         }
         Relationships: []
       }

@@ -63,8 +63,8 @@ describe('SUPPORTED_CURRENCIES', () => {
 })
 
 describe('CURRENCY_SYMBOLS', () => {
-  it('maps SEK to kr', () => {
-    expect(CURRENCY_SYMBOLS.SEK).toBe('kr')
+  it('maps SEK to ISO code (disambiguated from NOK/DKK)', () => {
+    expect(CURRENCY_SYMBOLS.SEK).toBe('SEK')
   })
 
   it('maps EUR to euro sign', () => {
@@ -102,10 +102,10 @@ describe('CURRENCY_SYMBOLS', () => {
 // 2. formatCurrency — pure function
 // ---------------------------------------------------------------------------
 describe('formatCurrency', () => {
-  it('puts symbol after amount for SEK', () => {
+  it('puts ISO code after amount for SEK (not "kr" to avoid Nordic ambiguity)', () => {
     const result = formatCurrency(1500, 'SEK')
-    expect(result).toContain('kr')
-    expect(result).toMatch(/\d.*kr$/)
+    expect(result).toContain('SEK')
+    expect(result).toMatch(/\d.*SEK$/)
   })
 
   it('puts symbol before amount for EUR', () => {
@@ -123,14 +123,14 @@ describe('formatCurrency', () => {
     expect(result).toMatch(/^£/)
   })
 
-  it('puts symbol after amount for DKK', () => {
+  it('puts symbol after amount for DKK (uses ISO code, not "kr")', () => {
     const result = formatCurrency(200, 'DKK')
-    expect(result).toMatch(/kr$/)
+    expect(result).toMatch(/DKK$/)
   })
 
-  it('puts symbol after amount for NOK', () => {
+  it('puts symbol after amount for NOK (uses ISO code, not "kr")', () => {
     const result = formatCurrency(300, 'NOK')
-    expect(result).toMatch(/kr$/)
+    expect(result).toMatch(/NOK$/)
   })
 
   it('puts symbol after amount for CHF', () => {
@@ -203,12 +203,13 @@ describe('getRate', () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ rates: { SEK: 11.5 } }),
+      json: async () => ({ rate: 11.5 }),
     })
 
     const rate = await getRate('EUR', 'SEK', '2025-03-15')
     expect(rate).toBe(11.5)
-    expect(mockFetch).toHaveBeenCalledWith('https://api.frankfurter.app/2025-03-15?from=EUR&to=SEK')
+    // Client-side now calls our proxy route instead of Frankfurter directly
+    expect(mockFetch).toHaveBeenCalledWith('/api/exchange-rate?from=EUR&to=SEK&date=2025-03-15')
   })
 
   it('falls back to closest historical rate when API fails', async () => {

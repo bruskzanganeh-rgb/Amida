@@ -30,19 +30,22 @@ export async function POST(request: NextRequest) {
   try {
     // Autentisera användare
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get user locale for AI output language
+    const { data: settings } = await supabase.from('company_settings').select('locale').eq('user_id', user.id).single()
+    const locale: 'sv' | 'en' = settings?.locale === 'en' ? 'en' : 'sv'
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
     // Validera filtyp - nu med PDF-stöd
@@ -52,16 +55,13 @@ export async function POST(request: NextRequest) {
     if (!validImageTypes.includes(file.type) && !isPdf) {
       return NextResponse.json(
         { error: 'Invalid file type. Only JPEG, PNG, GIF, WebP, and PDF are supported.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     // Validera filstorlek (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'File is too large. Max 10MB.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File is too large. Max 10MB.' }, { status: 400 })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
 
         if (text && text.trim().length >= MIN_TEXT_LENGTH) {
           // PDF text extracted, using text parsing
-          result = await parseReceiptWithText(text, user.id)
+          result = await parseReceiptWithText(text, user.id, locale)
         } else {
           // Steg 2: För lite text, fallback till bildkonvertering
           // PDF text insufficient, falling back to image conversion
           const base64Image = await pdfToBase64Image(arrayBuffer)
-          result = await parseReceiptWithVision(base64Image, 'image/png', user.id)
+          result = await parseReceiptWithVision(base64Image, 'image/png', user.id, locale)
         }
       } catch (pdfError) {
         console.error('PDF text extraction failed, trying image conversion:', pdfError)
@@ -95,13 +95,10 @@ export async function POST(request: NextRequest) {
         // Steg 3: Textextraktion misslyckades, försök med bild
         try {
           const base64Image = await pdfToBase64Image(arrayBuffer)
-          result = await parseReceiptWithVision(base64Image, 'image/png', user.id)
+          result = await parseReceiptWithVision(base64Image, 'image/png', user.id, locale)
         } catch (imageError) {
           console.error('PDF image conversion also failed:', imageError)
-          return NextResponse.json(
-            { error: 'Could not read the PDF file. Try an image instead.' },
-            { status: 400 }
-          )
+          return NextResponse.json({ error: 'Could not read the PDF file. Try an image instead.' }, { status: 400 })
         }
       }
     } else {
@@ -115,7 +112,7 @@ export async function POST(request: NextRequest) {
       const mimeType = file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
 
       // Parsa med Claude Vision
-      result = await parseReceiptWithVision(base64, mimeType, user.id)
+      result = await parseReceiptWithVision(base64, mimeType, user.id, locale)
     }
 
     return NextResponse.json({
@@ -124,9 +121,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Receipt scan error:', error)
-    return NextResponse.json(
-      { error: 'Could not read receipt' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Could not read receipt' }, { status: 500 })
   }
 }

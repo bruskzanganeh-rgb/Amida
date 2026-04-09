@@ -8,29 +8,71 @@ const anthropic = new Anthropic({
 
 // Schema för extraherad kvittodata
 export const ReceiptDataSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
   supplier: z.string().min(1),
   amount: z.number().positive(),
   currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']).default('SEK'),
-  category: z.enum([
-    'Resa',
-    'Mat',
-    'Hotell',
-    'Instrument',
-    'Noter',
-    'Utrustning',
-    'Kontorsmaterial',
-    'Telefon',
-    'Prenumeration',
-    'Övrigt'
-  ]).default('Övrigt'),
+  category: z
+    .enum([
+      'Resa',
+      'Mat',
+      'Hotell',
+      'Instrument',
+      'Noter',
+      'Utrustning',
+      'Kontorsmaterial',
+      'Telefon',
+      'Prenumeration',
+      'Redovisning',
+      'Övrigt',
+    ])
+    .default('Övrigt'),
   notes: z.string().optional(),
   confidence: z.number().min(0).max(1),
 })
 
 export type ParsedReceiptData = z.infer<typeof ReceiptDataSchema>
 
-const SYSTEM_PROMPT = `Du är en kvittoläsare för ett svenskt bokföringssystem för frilansmusiker.
+function getSystemPrompt(locale: 'sv' | 'en' = 'sv'): string {
+  if (locale === 'en') {
+    return `You are a receipt reader for a bookkeeping system for freelance musicians.
+Extract data from receipt images with high accuracy.
+
+Rules:
+- Date in ISO format (YYYY-MM-DD)
+- Amount should be the TOTAL (including VAT/tax)
+- Detect currency from symbols (kr/SEK, €/EUR, $/USD, £/GBP)
+- Choose the best-fitting category
+
+Category values (MUST be one of these exact Swedish values — they are keys, not display labels):
+- "Resa": Train, flight, taxi, petrol, parking (travel)
+- "Mat": Restaurant, café, groceries (food)
+- "Hotell": Accommodation (hotel)
+- "Instrument": Instrument purchase, repair, accessories
+- "Noter": Sheet music purchases
+- "Utrustning": Microphones, cables, stands (equipment)
+- "Kontorsmaterial": Paper, pens etc (office supplies)
+- "Telefon": Phone bill, subscriptions
+- "Prenumeration": Spotify, software etc (subscriptions)
+- "Redovisning": Accounting services, bookkeeping
+- "Övrigt": Everything else
+
+Return ONLY JSON with these fields:
+- date: date (YYYY-MM-DD) or null if unclear
+- supplier: supplier/store/company name (keep original language)
+- amount: total amount (number)
+- currency: currency code (SEK/EUR/USD/GBP/DKK/NOK)
+- category: one of the Swedish values listed above (they are internal keys)
+- notes: short description of what was purchased, IN ENGLISH (optional)
+- confidence: 0-1, your confidence
+
+IMPORTANT: Return ONLY JSON, nothing else. The "notes" field must be in English.`
+  }
+
+  return `Du är en kvittoläsare för ett svenskt bokföringssystem för frilansmusiker.
 Extrahera data från kvittobilder med hög noggrannhet.
 
 Regler:
@@ -49,6 +91,7 @@ Kategorier:
 - Kontorsmaterial: Papper, pennor, etc
 - Telefon: Mobilräkning, abonnemang
 - Prenumeration: Spotify, programvara, etc
+- Redovisning: Bokföringstjänster, revisor
 - Övrigt: Allt annat
 
 Returnera ENDAST JSON med dessa fält:
@@ -57,15 +100,17 @@ Returnera ENDAST JSON med dessa fält:
 - amount: totalbelopp (nummer)
 - currency: valuta (SEK/EUR/USD/GBP/DKK/NOK)
 - category: kategori från listan ovan
-- notes: kort beskrivning av vad som köpts (valfritt)
+- notes: kort beskrivning av vad som köpts PÅ SVENSKA (valfritt)
 - confidence: 0-1, din säkerhet
 
-VIKTIGT: Returnera BARA JSON, inget annat.`
+VIKTIGT: Returnera BARA JSON, inget annat. Fältet "notes" ska vara på svenska.`
+}
 
 export async function parseReceiptWithVision(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  userId?: string
+  userId?: string,
+  locale: 'sv' | 'en' = 'sv',
 ): Promise<ParsedReceiptData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
@@ -73,7 +118,7 @@ export async function parseReceiptWithVision(
       model,
       max_tokens: 1024,
       temperature: 0,
-      system: SYSTEM_PROMPT,
+      system: getSystemPrompt(locale),
       messages: [
         {
           role: 'user',
@@ -88,7 +133,8 @@ export async function parseReceiptWithVision(
             },
             {
               type: 'text',
-              text: 'Läs detta kvitto och extrahera data.',
+              text:
+                locale === 'en' ? 'Read this receipt and extract the data.' : 'Läs detta kvitto och extrahera data.',
             },
           ],
         },
@@ -104,9 +150,7 @@ export async function parseReceiptWithVision(
       userId,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('Inget svar från Claude')
@@ -131,27 +175,32 @@ export async function parseReceiptWithVision(
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
     }
-    throw new Error(
-      `Kunde inte läsa kvitto: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte läsa kvitto: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 
 /**
  * Parse receipt from extracted text (cheaper than vision)
  */
-export async function parseReceiptWithText(text: string, userId?: string): Promise<ParsedReceiptData> {
+export async function parseReceiptWithText(
+  text: string,
+  userId?: string,
+  locale: 'sv' | 'en' = 'sv',
+): Promise<ParsedReceiptData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
     const message = await anthropic.messages.create({
       model,
       max_tokens: 1024,
       temperature: 0,
-      system: SYSTEM_PROMPT,
+      system: getSystemPrompt(locale),
       messages: [
         {
           role: 'user',
-          content: `Läs denna kvittotext och extrahera data:\n\n${text}`,
+          content:
+            locale === 'en'
+              ? `Read this receipt text and extract the data:\n\n${text}`
+              : `Läs denna kvittotext och extrahera data:\n\n${text}`,
         },
       ],
     })
@@ -165,9 +214,7 @@ export async function parseReceiptWithText(text: string, userId?: string): Promi
       userId,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('Inget svar från Claude')
@@ -192,9 +239,7 @@ export async function parseReceiptWithText(text: string, userId?: string): Promi
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
     }
-    throw new Error(
-      `Kunde inte läsa kvitto: ${error instanceof Error ? error.message : 'Okänt fel'}`
-    )
+    throw new Error(`Kunde inte läsa kvitto: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
 }
 

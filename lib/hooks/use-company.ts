@@ -13,6 +13,10 @@ export type Company = {
   email: string
   phone: string
   bank_account: string
+  bankgiro: string | null
+  iban: string | null
+  bic: string | null
+  bank_address: string | null
   logo_url: string | null
   country_code: string
   vat_registration_number: string | null

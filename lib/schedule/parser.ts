@@ -54,7 +54,8 @@ const ParsedScheduleSchema = z.object({
 const ScannedScheduleSchema = z.object({
   dates: z.record(z.string(), z.array(RawSessionSchema)),
   project_name: z.string().nullable().optional(),
-  venue: z.string().nullable().optional(),
+  venue: z.string().nullable().optional(), // Dominant/fallback venue
+  venues: z.record(z.string(), z.string()).nullable().optional(), // Per-date venue overrides (yyyy-MM-dd → venue)
   confidence: z.number().min(0).max(1),
 })
 
@@ -115,13 +116,20 @@ IMPORTANT: Return ONLY JSON, nothing else.`
 function getScanPrompt(locale: string) {
   if (locale === 'sv') {
     return `Du läser ett repetitions- eller konsertschema för en frilansmusiker.
-Extrahera alla datum med tider och typ av aktivitet.
+Extrahera alla datum med tider, typ av aktivitet, OCH plats per datum.
 
 Typer (normalisera till dessa):
 - Rep: Repetition, instudering, genomspelning
 - Generalrep: Generalrepetition, GP, scenrep
 - Konsert: Konsert, föreställning, spelning
 - (utelämna label om okänt)
+
+VIKTIGT om platser (venue):
+- Många frilansmusiker turnerar: repetitioner sker på en plats och konserter på olika platser
+- Om schemat anger olika platser per datum, lägg dem i "venues"-objektet (yyyy-MM-dd → platsnamn)
+- Om ALLA datum har samma plats, sätt "venue" (huvudplatsen) och låt "venues" vara null
+- Om det finns en huvudsaklig repetitionsplats + olika konsertplatser: sätt "venue" till repetitionsplatsen och fyll "venues" ENDAST för dagar med avvikande plats
+- Om platsen är otydlig för ett datum, utelämna det datumet från "venues"
 
 Returnera ENDAST JSON:
 {
@@ -132,10 +140,17 @@ Returnera ENDAST JSON:
     ],
     "2026-03-06": [
       { "start": "19:00", "end": "21:30", "label": "Konsert" }
+    ],
+    "2026-03-07": [
+      { "start": "19:00", "end": "21:30", "label": "Konsert" }
     ]
   },
   "project_name": "Beethoven 9",
-  "venue": "Konserthuset",
+  "venue": "Musikhögskolan Stockholm",
+  "venues": {
+    "2026-03-06": "Konserthuset, Stockholm",
+    "2026-03-07": "Uppsala Konsert & Kongress"
+  },
   "confidence": 0.95
 }
 
@@ -144,19 +159,27 @@ Regler:
 - Tider i HH:MM-format
 - Om sluttid saknas, sätt end till null
 - project_name och venue kan vara null om otydliga
+- venues kan vara null om alla datum har samma plats
 - confidence: 0-1, din säkerhet
 
 VIKTIGT: Returnera BARA JSON, inget annat.`
   }
 
   return `You are reading a rehearsal or concert schedule for a freelance musician.
-Extract all dates with times and activity type.
+Extract all dates with times, activity type, AND venue per date.
 
 Types (normalize to these):
 - Rehearsal: Rehearsal, rep, repetition, run-through
 - Dress rehearsal: Dress rehearsal, GP, generalrep, stage rehearsal
 - Concert: Concert, performance, gig, konsert
 - (omit label if unknown)
+
+IMPORTANT about venues:
+- Many freelance musicians tour: rehearsals happen at one place, concerts at different venues
+- If the schedule shows different venues per date, put them in the "venues" object (yyyy-MM-dd → venue name)
+- If ALL dates share the same venue, set "venue" (main venue) and leave "venues" null
+- If there's a main rehearsal venue + different concert venues: set "venue" to the rehearsal venue and fill "venues" ONLY for days with a different venue
+- If the venue is unclear for a date, omit that date from "venues"
 
 Return ONLY JSON:
 {
@@ -167,10 +190,17 @@ Return ONLY JSON:
     ],
     "2026-03-06": [
       { "start": "19:00", "end": "21:30", "label": "Concert" }
+    ],
+    "2026-03-07": [
+      { "start": "19:00", "end": "21:30", "label": "Concert" }
     ]
   },
   "project_name": "Beethoven 9",
-  "venue": "Concert Hall",
+  "venue": "Royal College of Music",
+  "venues": {
+    "2026-03-06": "Concert Hall, Stockholm",
+    "2026-03-07": "Uppsala Concert Hall"
+  },
   "confidence": 0.95
 }
 
@@ -179,6 +209,7 @@ Rules:
 - Times in HH:MM format
 - If end time is missing, set end to null
 - project_name and venue can be null if unclear
+- venues can be null if all dates share the same venue
 - confidence: 0-1, your certainty
 
 IMPORTANT: Return ONLY JSON, nothing else.`

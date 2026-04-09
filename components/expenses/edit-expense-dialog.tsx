@@ -72,6 +72,30 @@ const categories = [
   'Övrigt',
 ]
 
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  Resa: 'categoryTravel',
+  Mat: 'categoryFood',
+  Hotell: 'categoryHotel',
+  Instrument: 'categoryInstrument',
+  Noter: 'categorySheetMusic',
+  Utrustning: 'categoryEquipment',
+  Kontorsmaterial: 'categoryOffice',
+  Telefon: 'categoryPhone',
+  Prenumeration: 'categorySubscription',
+  Redovisning: 'categoryAccounting',
+  Övrigt: 'categoryOther',
+}
+
+function categoryLabel(category: string, t: (k: string) => string): string {
+  const key = CATEGORY_KEY_MAP[category]
+  if (!key) return category
+  try {
+    return t(key)
+  } catch {
+    return category
+  }
+}
+
 const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
 
 export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs }: EditExpenseDialogProps) {
@@ -466,7 +490,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
                   <SelectContent>
                     {categories.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {c}
+                        {categoryLabel(c, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>

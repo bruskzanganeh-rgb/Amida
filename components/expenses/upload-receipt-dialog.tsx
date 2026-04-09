@@ -83,8 +83,34 @@ const categories = [
   'Kontorsmaterial',
   'Telefon',
   'Prenumeration',
+  'Redovisning',
   'Övrigt',
 ]
+
+// Map hardcoded Swedish category values to translation keys
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  Resa: 'categoryTravel',
+  Mat: 'categoryFood',
+  Hotell: 'categoryHotel',
+  Instrument: 'categoryInstrument',
+  Noter: 'categorySheetMusic',
+  Utrustning: 'categoryEquipment',
+  Kontorsmaterial: 'categoryOffice',
+  Telefon: 'categoryPhone',
+  Prenumeration: 'categorySubscription',
+  Redovisning: 'categoryAccounting',
+  Övrigt: 'categoryOther',
+}
+
+function categoryLabel(category: string, t: (k: string) => string): string {
+  const key = CATEGORY_KEY_MAP[category]
+  if (!key) return category
+  try {
+    return t(key)
+  } catch {
+    return category
+  }
+}
 
 const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
 
@@ -582,7 +608,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                   <SelectContent>
                     {categories.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {c}
+                        {categoryLabel(c, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>

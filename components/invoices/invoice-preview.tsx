@@ -84,6 +84,7 @@ type CompanySettings = {
   bankgiro?: string | null
   iban?: string | null
   bic?: string | null
+  bank_address?: string | null
   vat_registration_number?: string | null
   late_payment_interest_text?: string | null
   our_reference?: string | null
@@ -171,7 +172,12 @@ export function InvoicePreview({
   function formatDate(dateStr: string): string {
     if (!dateStr) return '-'
     const date = new Date(dateStr)
-    return date.toLocaleDateString(formatLocale)
+    if (isNaN(date.getTime())) return dateStr
+    // ISO yyyy-MM-dd — unambiguous across locales (avoids US MM/DD/YYYY)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const displayLines =

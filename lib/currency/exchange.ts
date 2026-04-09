@@ -5,11 +5,11 @@ export type SupportedCurrency = 'SEK' | 'EUR' | 'USD' | 'DKK' | 'NOK' | 'GBP' | 
 export const SUPPORTED_CURRENCIES: SupportedCurrency[] = ['SEK', 'EUR', 'USD', 'DKK', 'NOK', 'GBP', 'CHF', 'CZK', 'PLN']
 
 export const CURRENCY_SYMBOLS: Record<SupportedCurrency, string> = {
-  SEK: 'kr',
+  SEK: 'SEK', // Use code for consistency with NOK/DKK (all "kr" locally)
   EUR: '€',
   USD: '$',
-  DKK: 'kr',
-  NOK: 'kr',
+  DKK: 'DKK',
+  NOK: 'NOK',
   GBP: '£',
   CHF: 'CHF',
   CZK: 'Kč',
@@ -29,10 +29,32 @@ export function formatCurrency(amount: number, currency: SupportedCurrency, loca
 }
 
 /**
- * Fetch exchange rate from Frankfurter API (ECB data, free, no API key).
+ * Fetch exchange rate via our server-side proxy route.
+ * Uses /api/exchange-rate which proxies Frankfurter (avoids client-side CSP issues).
  * Returns the rate: 1 unit of `from` = X units of `to`.
  */
 async function fetchRateFromAPI(from: SupportedCurrency, to: SupportedCurrency, date: string): Promise<number> {
+  if (from === to) return 1.0
+
+  const url = `/api/exchange-rate?from=${from}&to=${to}&date=${date}`
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch exchange rate: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  if (typeof data.rate !== 'number') {
+    throw new Error('Invalid exchange rate response')
+  }
+  return data.rate
+}
+
+/**
+ * Direct Frankfurter fetch for server-side usage (API routes, server components).
+ * Bypasses the /api proxy since we're already on the server.
+ */
+async function fetchRateFromFrankfurter(from: SupportedCurrency, to: SupportedCurrency, date: string): Promise<number> {
   if (from === to) return 1.0
 
   const url = `https://api.frankfurter.app/${date}?from=${from}&to=${to}`
@@ -73,13 +95,16 @@ export async function getRate(from: SupportedCurrency, to: SupportedCurrency, da
     const rate = await fetchRateFromAPI(from, to, date)
 
     // Cache it
-    await supabase.from('exchange_rates').upsert({
-      base_currency: from,
-      target_currency: to,
-      rate,
-      date,
-      source: 'ecb',
-    }, { onConflict: 'base_currency,target_currency,date' })
+    await supabase.from('exchange_rates').upsert(
+      {
+        base_currency: from,
+        target_currency: to,
+        rate,
+        date,
+        source: 'ecb',
+      },
+      { onConflict: 'base_currency,target_currency,date' },
+    )
 
     return rate
   } catch (error) {
@@ -108,7 +133,7 @@ export async function convert(
   amount: number,
   from: SupportedCurrency,
   to: SupportedCurrency,
-  date: string
+  date: string,
 ): Promise<{ converted: number; rate: number }> {
   const rate = await getRate(from, to, date)
   return {
@@ -124,7 +149,6 @@ export async function convert(
 export async function getRateServer(from: SupportedCurrency, to: SupportedCurrency, date: string): Promise<number> {
   if (from === to) return 1.0
 
-  // For server routes, we use the same Frankfurter API
-  // but skip DB caching (could be added later with server supabase client)
-  return fetchRateFromAPI(from, to, date)
+  // For server routes, hit Frankfurter directly (no proxy needed, no client CSP)
+  return fetchRateFromFrankfurter(from, to, date)
 }

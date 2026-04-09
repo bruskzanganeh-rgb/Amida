@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Paperclip, Upload, CalendarDays, ChevronRight } from 'lucide-react'
+import { Loader2, Paperclip, Upload, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { GigAttachments } from './gig-attachments'
@@ -109,6 +109,7 @@ export function GigDialog({
   const [formData, setFormData] = useState({ ...defaultFormData })
   const [baseCurrency, setBaseCurrency] = useState<SupportedCurrency>('SEK')
   const [scheduleTexts, setScheduleTexts] = useState<Record<string, string>>({})
+  const [dateVenues, setDateVenues] = useState<Record<string, string>>({}) // per-date venue overrides (yyyy-MM-dd → venue)
   const [parsedSessions, setParsedSessions] = useState<
     Record<string, { start: string; end: string | null; label?: string }[]>
   >({})
@@ -189,6 +190,7 @@ export function GigDialog({
         })
         setSelectedDates(initialDate ? [initialDate] : [])
         setScheduleTexts({})
+        setDateVenues({})
         setParsedSessions({})
         setParsingSessions({})
         createDraft()
@@ -284,7 +286,7 @@ export function GigDialog({
   async function loadGigDates(gigId: string) {
     const { data } = await supabase
       .from('gig_dates')
-      .select('date, schedule_text, sessions')
+      .select('date, schedule_text, sessions, venue')
       .eq('gig_id', gigId)
       .order('date')
 
@@ -292,23 +294,27 @@ export function GigDialog({
       const dates = data.map((d) => new Date(d.date + 'T12:00:00'))
       setSelectedDates(dates)
 
-      // Load schedule texts and existing parsed sessions
+      // Load schedule texts, existing parsed sessions, and per-date venues
       const texts: Record<string, string> = {}
       const sessions: Record<string, { start: string; end: string | null; label?: string }[]> = {}
+      const venues: Record<string, string> = {}
       data.forEach((d) => {
         if (d.schedule_text) texts[d.date] = d.schedule_text
         if (d.sessions && Array.isArray(d.sessions) && d.sessions.length > 0) {
           sessions[d.date] = d.sessions as { start: string; end: string | null; label?: string }[]
         }
+        if (d.venue) venues[d.date] = d.venue
       })
       setScheduleTexts(texts)
       setParsedSessions(sessions)
+      setDateVenues(venues)
     } else {
       // Fallback to start_date if no gig_dates
       if (gig?.start_date) {
         setSelectedDates([new Date(gig.start_date + 'T12:00:00')])
       }
       setScheduleTexts({})
+      setDateVenues({})
     }
   }
 
@@ -436,6 +442,7 @@ export function GigDialog({
           date: key,
           schedule_text: scheduleTexts[key] || null,
           sessions: (finalSessions[key] || []) as Json,
+          venue: dateVenues[key] || null, // per-date venue override
         }
       })
     }
@@ -621,6 +628,11 @@ export function GigDialog({
       // Set schedule texts
       if (result.scheduleTexts) {
         setScheduleTexts(result.scheduleTexts)
+      }
+
+      // Set per-date venue overrides (for touring schedules)
+      if (result.venues && typeof result.venues === 'object') {
+        setDateVenues(result.venues as Record<string, string>)
       }
 
       // Pre-fill project name and venue if empty
@@ -996,6 +1008,8 @@ export function GigDialog({
                     parsedSessions={parsedSessions}
                     parsingSessions={parsingSessions}
                     onParseScheduleText={handleParseScheduleText}
+                    dateVenues={dateVenues}
+                    onDateVenuesChange={setDateVenues}
                   />
                 )}
                 <input

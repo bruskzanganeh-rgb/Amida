@@ -60,6 +60,7 @@ type CompanySettings = {
   bankgiro: string
   iban: string
   bic: string
+  bank_address: string
   logo_url: string | null
   vat_registration_number: string | null
   late_payment_interest_text: string | null
@@ -191,6 +192,7 @@ export default function SettingsPage() {
             bankgiro: company.bankgiro || '',
             iban: company.iban || '',
             bic: company.bic || '',
+            bank_address: company.bank_address || '',
             logo_url: company.logo_url,
             vat_registration_number: company.vat_registration_number,
             late_payment_interest_text: company.late_payment_interest_text,
@@ -232,6 +234,7 @@ export default function SettingsPage() {
           bankgiro: settings.bankgiro,
           iban: settings.iban,
           bic: settings.bic,
+          bank_address: settings.bank_address || null,
           vat_registration_number: settings.vat_registration_number,
           late_payment_interest_text: settings.late_payment_interest_text,
           our_reference: settings.our_reference,
@@ -470,15 +473,17 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bankgiro">{t('bankgiro')}</Label>
-                    <Input
-                      id="bankgiro"
-                      value={settings?.bankgiro || ''}
-                      onChange={(e) => setSettings((s) => (s ? { ...s, bankgiro: e.target.value } : null))}
-                      placeholder="XXXX-XXXX"
-                    />
-                  </div>
+                  {settings?.country_code === 'SE' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="bankgiro">{t('bankgiro')}</Label>
+                      <Input
+                        id="bankgiro"
+                        value={settings?.bankgiro || ''}
+                        onChange={(e) => setSettings((s) => (s ? { ...s, bankgiro: e.target.value } : null))}
+                        placeholder="XXXX-XXXX"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="bank_account">
@@ -513,6 +518,19 @@ export default function SettingsPage() {
                       placeholder="XXXXSESS"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bank_address">{t('bankAddress')}</Label>
+                  <Textarea
+                    id="bank_address"
+                    rows={2}
+                    value={settings?.bank_address || ''}
+                    onChange={(e) => setSettings((s) => (s ? { ...s, bank_address: e.target.value } : null))}
+                    placeholder={t('bankAddressPlaceholder')}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('bankAddressHint')}</p>
                 </div>
 
                 <p className="text-xs text-muted-foreground">{t('bankAccountHint')}</p>
@@ -553,15 +571,15 @@ export default function SettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="SEK">SEK — Svenska kronor</SelectItem>
-                      <SelectItem value="NOK">NOK — Norska kronor</SelectItem>
-                      <SelectItem value="DKK">DKK — Danska kronor</SelectItem>
-                      <SelectItem value="EUR">EUR — Euro</SelectItem>
-                      <SelectItem value="USD">USD — US Dollar</SelectItem>
-                      <SelectItem value="GBP">GBP — Brittiskt pund</SelectItem>
-                      <SelectItem value="CHF">CHF — Schweizisk franc</SelectItem>
-                      <SelectItem value="CZK">CZK — Tjeckisk krona</SelectItem>
-                      <SelectItem value="PLN">PLN — Polsk zloty</SelectItem>
+                      <SelectItem value="SEK">SEK — {t('currencyNameSEK')}</SelectItem>
+                      <SelectItem value="NOK">NOK — {t('currencyNameNOK')}</SelectItem>
+                      <SelectItem value="DKK">DKK — {t('currencyNameDKK')}</SelectItem>
+                      <SelectItem value="EUR">EUR — {t('currencyNameEUR')}</SelectItem>
+                      <SelectItem value="USD">USD — {t('currencyNameUSD')}</SelectItem>
+                      <SelectItem value="GBP">GBP — {t('currencyNameGBP')}</SelectItem>
+                      <SelectItem value="CHF">CHF — {t('currencyNameCHF')}</SelectItem>
+                      <SelectItem value="CZK">CZK — {t('currencyNameCZK')}</SelectItem>
+                      <SelectItem value="PLN">PLN — {t('currencyNamePLN')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">{t('baseCurrencyHint')}</p>

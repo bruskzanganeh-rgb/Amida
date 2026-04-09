@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select(
-        'company_name, org_number, address, city, country_code, email, phone, bank_account, bankgiro, iban, bic, vat_registration_number, late_payment_interest_text, our_reference',
+        'company_name, org_number, address, city, country_code, email, phone, bank_account, bankgiro, iban, bic, bank_address, vat_registration_number, late_payment_interest_text, our_reference',
       )
       .eq('id', membership.company_id)
       .single()

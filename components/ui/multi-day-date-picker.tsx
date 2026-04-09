@@ -34,6 +34,8 @@ type MultiDayDatePickerProps = {
   parsedSessions?: Record<string, Session[]>
   parsingSessions?: Record<string, boolean>
   onParseScheduleText?: (date: string, text: string) => void
+  dateVenues?: Record<string, string>
+  onDateVenuesChange?: (venues: Record<string, string>) => void
 }
 
 export function MultiDayDatePicker({
@@ -46,6 +48,8 @@ export function MultiDayDatePicker({
   parsedSessions,
   parsingSessions,
   onParseScheduleText,
+  dateVenues,
+  onDateVenuesChange,
 }: MultiDayDatePickerProps) {
   const t = useTranslations('datePicker')
   const appLocale = useLocale()
@@ -83,13 +87,15 @@ export function MultiDayDatePicker({
         setShowTimes(true)
         // Check if all texts are the same
         const allSame = texts.every((t) => t === texts[0])
-        setAllSameText(allSame)
+        // If per-date venues exist, force per-day mode (so venue inputs are visible)
+        const hasPerDateVenues = dateVenues && Object.keys(dateVenues).length > 0
+        setAllSameText(allSame && !hasPerDateVenues)
         if (allSame) {
           setSharedText(texts[0])
         }
       }
     }
-  }, [scheduleTexts, showTimes])
+  }, [scheduleTexts, showTimes, dateVenues])
 
   function toggleDate(date: Date) {
     if (disabled) return
@@ -394,6 +400,25 @@ export function MultiDayDatePicker({
                             {s.end ? `–${s.end}` : ''}
                           </span>
                         ))}
+                      </div>
+                    )}
+                    {onDateVenuesChange && (
+                      <div className="ml-[83px]">
+                        <Input
+                          value={dateVenues?.[key] ?? ''}
+                          onChange={(e) => {
+                            const next = { ...(dateVenues || {}) }
+                            if (e.target.value) {
+                              next[key] = e.target.value
+                            } else {
+                              delete next[key]
+                            }
+                            onDateVenuesChange(next)
+                          }}
+                          placeholder={t('venuePlaceholder')}
+                          className="text-[11px] h-7"
+                          disabled={disabled}
+                        />
                       </div>
                     )}
                   </div>

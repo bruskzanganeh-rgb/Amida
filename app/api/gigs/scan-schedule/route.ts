@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       scheduleTexts,
       projectName: result.project_name,
       venue: result.venue,
+      venues: result.venues || null, // per-date venue overrides
       confidence: result.confidence,
     })
   } catch (error) {

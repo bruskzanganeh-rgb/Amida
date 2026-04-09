@@ -14,6 +14,7 @@ type CompanySettings = {
   bankgiro?: string | null
   iban?: string | null
   bic?: string | null
+  bank_address?: string | null
   vat_registration_number?: string | null
   late_payment_interest_text?: string | null
   our_reference?: string | null
@@ -81,6 +82,7 @@ const PDF_LABELS: Record<string, Record<string, string>> = {
     bankgiro: 'Bankgiro',
     iban: 'IBAN',
     bic: 'BIC',
+    bankAddress: 'Bankens adress',
     description: 'Beskrivning',
     amount: 'Belopp',
     subtotal: 'Summa',
@@ -112,6 +114,7 @@ const PDF_LABELS: Record<string, Record<string, string>> = {
     bankgiro: 'Bankgiro',
     iban: 'IBAN',
     bic: 'BIC',
+    bankAddress: 'Bank address',
     description: 'Description',
     amount: 'Amount',
     subtotal: 'Subtotal',
@@ -445,9 +448,9 @@ const styles = StyleSheet.create({
   },
 })
 
-// Currency symbols for PDF
+// Currency symbols for PDF — use ISO codes for Nordic currencies to avoid "kr" ambiguity
 const PDF_CURRENCY_SUFFIX: Record<string, string> = {
-  SEK: 'kr',
+  SEK: 'SEK',
   NOK: 'NOK',
   DKK: 'DKK',
   EUR: 'EUR',
@@ -471,10 +474,15 @@ function formatCurrencyPdf(amount: number, currency = 'SEK'): string {
   return `${formatted} ${symbol}`
 }
 
-// Format date
+// Format date — always ISO yyyy-MM-dd (unambiguous across locales)
 function formatDate(dateStr: string): string {
+  // Input is typically already yyyy-MM-dd, but normalize to be safe
   const date = new Date(dateStr)
-  return date.toLocaleDateString('sv-SE')
+  if (isNaN(date.getTime())) return dateStr
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 // PDF Document Component
@@ -738,6 +746,12 @@ function InvoicePDF({
                 <>
                   <Text style={styles.footerLabel}>{l.bic}</Text>
                   <Text style={styles.footerValue}>{company.bic}</Text>
+                </>
+              )}
+              {company.bank_address && (
+                <>
+                  <Text style={styles.footerLabel}>{l.bankAddress}</Text>
+                  <Text style={styles.footerValue}>{company.bank_address}</Text>
                 </>
               )}
               {company.vat_registration_number && (
