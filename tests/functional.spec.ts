@@ -123,7 +123,7 @@ test.describe('Settings', () => {
 // ---------------------------------------------------------------------------
 test.describe('Gigs', () => {
   test('new gig dialog opens without errors', async ({ page }) => {
-    const errors = await loadPage(page, '/gigs')
+    await loadPage(page, '/gigs')
     const newGigBtn = page.getByRole('button', { name: /new event|nytt event/i }).first()
     if (await newGigBtn.isVisible()) {
       await newGigBtn.click()
@@ -141,10 +141,6 @@ test.describe('Gigs', () => {
     const newGigBtn = page.getByRole('button', { name: /new event|nytt event/i }).first()
     await newGigBtn.click()
     await page.waitForTimeout(1500)
-
-    // Select a date (click on today or a future date in the calendar)
-    const today = new Date()
-    const dateStr = today.toISOString().split('T')[0]
 
     // Set project name
     const projectInput = page

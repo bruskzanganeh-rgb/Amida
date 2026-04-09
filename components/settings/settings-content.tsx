@@ -94,7 +94,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
 
   const supabase = createClient()
-  const { isPro, isTeam } = useSubscription()
+  const { isTeam } = useSubscription()
   const searchParams = useSearchParams()
   const countryConfig = getCountryConfig(settings?.country_code || 'SE')
 

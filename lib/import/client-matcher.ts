@@ -146,9 +146,9 @@ export async function matchClient(extractedName: string): Promise<ClientMatchRes
 }
 
 /**
- * Manually set client match (user selection)
+ * Manually set client match (user selection).
+ * Placeholder for future implementation — we could store these manual mappings
+ * in a cache table for faster matching of similar names.
  */
-export async function setClientMatch(_extractedName: string, _clientId: string): Promise<void> {
-  // In the future, we could store these manual mappings in a cache table
-  // for faster matching of similar names
-}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function setClientMatch(_extractedName: string, _clientId: string): Promise<void> {}

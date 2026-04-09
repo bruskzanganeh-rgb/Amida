@@ -4,7 +4,7 @@
  * Runs as the OWNER account on /dashboard.
  */
 import { test, expect } from '@playwright/test'
-import { loadPage, L } from './helpers'
+import { loadPage } from './helpers'
 
 test.describe('Dashboard Widgets', () => {
   test('upcoming gigs widget', async ({ page }) => {
@@ -35,6 +35,8 @@ test.describe('Dashboard Widgets', () => {
     expect(mainText!.length).toBeGreaterThan(100)
 
     // Check that it shows dates/months or financial data
-    expect(mainText).toMatch(/202\d|jan|feb|mar|apr|ma[ij]|jun|jul|aug|sep|okt|oct|nov|dec|revenue|intäkter|kr|uppdrag|gig/i)
+    expect(mainText).toMatch(
+      /202\d|jan|feb|mar|apr|ma[ij]|jun|jul|aug|sep|okt|oct|nov|dec|revenue|intäkter|kr|uppdrag|gig/i,
+    )
   })
 })

@@ -4,7 +4,7 @@
  * Runs as the OWNER account.
  */
 import { test, expect } from '@playwright/test'
-import { loadPage, L, E2E, cleanupTestData, waitForDialog, selectOption } from './helpers'
+import { loadPage, L, E2E, cleanupTestData, waitForDialog } from './helpers'
 
 test.afterAll(async () => {
   await cleanupTestData()

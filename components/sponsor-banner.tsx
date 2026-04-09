@@ -28,7 +28,10 @@ export function SponsorBanner() {
       }}
       className="flex items-center justify-center gap-2.5 px-4 py-3 transition-opacity hover:opacity-70"
     >
-      {sponsor.logo_url && <img src={sponsor.logo_url} alt={sponsor.name} className="h-5 w-auto object-contain" />}
+      {sponsor.logo_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- external sponsor logo from arbitrary origin, next/image requires config per domain
+        <img src={sponsor.logo_url} alt={sponsor.name} className="h-5 w-auto object-contain" />
+      )}
       <span className="text-xs text-muted-foreground/60">
         {sponsor.display_prefix || 'Sponsored by'}{' '}
         <span className="font-semibold" style={{ color: '#d4a843' }}>

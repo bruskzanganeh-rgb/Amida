@@ -1500,6 +1500,7 @@ export function SponsorsHub({
               <div className="flex items-center gap-3">
                 <div className="w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/50 shrink-0">
                   {sponsorForm.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- admin preview of externally hosted sponsor logo
                     <img src={sponsorForm.logo_url} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
                   ) : (
                     <ImageIcon className="h-5 w-5 text-muted-foreground/50" />

@@ -559,6 +559,7 @@ export default function GigsPage() {
     [gigs],
   )
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; this is expected behavior
   const upcomingVirtualizer = useVirtualizer({
     count: sortedUpcoming.length,
     getScrollElement: () => upcomingScrollRef.current,

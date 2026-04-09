@@ -187,7 +187,6 @@ export function ImportClientsDialog({ open, onOpenChange, onSuccess }: ImportCli
   const supabase = createClient()
   const t = useTranslations('client')
   const tc = useTranslations('common')
-  const tt = useTranslations('toast')
 
   const reset = useCallback(() => {
     setStep('paste')

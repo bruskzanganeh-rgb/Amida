@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { config as loadEnv } from 'dotenv'
 
-require('dotenv').config({ path: '.env.local' })
+loadEnv({ path: '.env.local' })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -22,53 +23,269 @@ const NEW_CLIENTS = [
 // All 24 invoices extracted from PDFs
 const INVOICES = [
   // #145 - Stockholm Studio Orchestra
-  { invoice_number: 145, client_name: 'Stockholm Studio Orchestra AB', invoice_date: '2023-05-18', due_date: '2023-06-17', subtotal: 6950, vat_rate: 6, vat_amount: 417, total: 7367 },
+  {
+    invoice_number: 145,
+    client_name: 'Stockholm Studio Orchestra AB',
+    invoice_date: '2023-05-18',
+    due_date: '2023-06-17',
+    subtotal: 6950,
+    vat_rate: 6,
+    vat_amount: 417,
+    total: 7367,
+  },
   // #161 - Stockholm Studio Orchestra
-  { invoice_number: 161, client_name: 'Stockholm Studio Orchestra AB', invoice_date: '2024-04-21', due_date: '2024-05-21', subtotal: 9800, vat_rate: 6, vat_amount: 588, total: 10388 },
+  {
+    invoice_number: 161,
+    client_name: 'Stockholm Studio Orchestra AB',
+    invoice_date: '2024-04-21',
+    due_date: '2024-05-21',
+    subtotal: 9800,
+    vat_rate: 6,
+    vat_amount: 588,
+    total: 10388,
+  },
   // #203 - Stockholm Studio Orchestra
-  { invoice_number: 203, client_name: 'Stockholm Studio Orchestra AB', invoice_date: '2025-05-19', due_date: '2025-06-18', subtotal: 4500, vat_rate: 6, vat_amount: 270, total: 4770 },
+  {
+    invoice_number: 203,
+    client_name: 'Stockholm Studio Orchestra AB',
+    invoice_date: '2025-05-19',
+    due_date: '2025-06-18',
+    subtotal: 4500,
+    vat_rate: 6,
+    vat_amount: 270,
+    total: 4770,
+  },
   // #210 - Region Jönköping
-  { invoice_number: 210, client_name: 'Region Jönköping', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 33940, vat_rate: 0, vat_amount: 0, total: 33940 },
+  {
+    invoice_number: 210,
+    client_name: 'Region Jönköping',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 33940,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 33940,
+  },
   // #211 - Göteborgs Symfoniker AB
-  { invoice_number: 211, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 21296, vat_rate: 0, vat_amount: 0, total: 21296 },
+  {
+    invoice_number: 211,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 21296,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 21296,
+  },
   // #212 - Göteborgs Symfoniker AB
-  { invoice_number: 212, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 27877, vat_rate: 0, vat_amount: 0, total: 27877 },
+  {
+    invoice_number: 212,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 27877,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 27877,
+  },
   // #213 - Göteborgs Symfoniker AB
-  { invoice_number: 213, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 27365, vat_rate: 0, vat_amount: 0, total: 27365 },
+  {
+    invoice_number: 213,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 27365,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 27365,
+  },
   // #214 - Göteborgs Symfoniker AB
-  { invoice_number: 214, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 24935, vat_rate: 0, vat_amount: 0, total: 24935 },
+  {
+    invoice_number: 214,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 24935,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 24935,
+  },
   // #215 - Julius Och Nils Westerdahls Stiftelse (NEW CLIENT)
-  { invoice_number: 215, client_name: 'Julius Och Nils Westerdahls Stiftelse', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 6000, vat_rate: 0, vat_amount: 0, total: 6000 },
+  {
+    invoice_number: 215,
+    client_name: 'Julius Och Nils Westerdahls Stiftelse',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 6000,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 6000,
+  },
   // #216 - Stockholms Konserthusstiftelse
-  { invoice_number: 216, client_name: 'Stockholms Konserthusstiftelse', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 6331, vat_rate: 0, vat_amount: 0, total: 6331 },
+  {
+    invoice_number: 216,
+    client_name: 'Stockholms Konserthusstiftelse',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 6331,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 6331,
+  },
   // #217 - Baggab Musik AB (NEW CLIENT)
-  { invoice_number: 217, client_name: 'Baggab Musik AB', invoice_date: '2025-10-05', due_date: '2025-11-04', subtotal: 6400, vat_rate: 0, vat_amount: 0, total: 6400 },
+  {
+    invoice_number: 217,
+    client_name: 'Baggab Musik AB',
+    invoice_date: '2025-10-05',
+    due_date: '2025-11-04',
+    subtotal: 6400,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 6400,
+  },
   // #218 - Göteborgs Symfoniker AB
-  { invoice_number: 218, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 19948, vat_rate: 0, vat_amount: 0, total: 19948 },
+  {
+    invoice_number: 218,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 19948,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 19948,
+  },
   // #219 - Göteborgs Symfoniker AB
-  { invoice_number: 219, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 24935, vat_rate: 0, vat_amount: 0, total: 24935 },
+  {
+    invoice_number: 219,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 24935,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 24935,
+  },
   // #220 - Göteborgs Symfoniker AB
-  { invoice_number: 220, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 24935, vat_rate: 0, vat_amount: 0, total: 24935 },
+  {
+    invoice_number: 220,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 24935,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 24935,
+  },
   // #221 - Göteborgs Symfoniker AB
-  { invoice_number: 221, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 28239, vat_rate: 0, vat_amount: 0, total: 28239 },
+  {
+    invoice_number: 221,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 28239,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 28239,
+  },
   // #222 - Julius Och Nils Westerdahls Stiftelse
-  { invoice_number: 222, client_name: 'Julius Och Nils Westerdahls Stiftelse', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 6000, vat_rate: 0, vat_amount: 0, total: 6000 },
+  {
+    invoice_number: 222,
+    client_name: 'Julius Och Nils Westerdahls Stiftelse',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 6000,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 6000,
+  },
   // #223 - Stockholms Konserthusstiftelse
-  { invoice_number: 223, client_name: 'Stockholms Konserthusstiftelse', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 11633, vat_rate: 0, vat_amount: 0, total: 11633 },
+  {
+    invoice_number: 223,
+    client_name: 'Stockholms Konserthusstiftelse',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 11633,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 11633,
+  },
   // #224 - Göteborgs Symfoniker AB
-  { invoice_number: 224, client_name: 'Göteborgs Symfoniker AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 20528, vat_rate: 0, vat_amount: 0, total: 20528 },
+  {
+    invoice_number: 224,
+    client_name: 'Göteborgs Symfoniker AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 20528,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 20528,
+  },
   // #225 - SampleTekk Production HB (mixed VAT - using 6% on main amount)
-  { invoice_number: 225, client_name: 'SampleTekk Production HB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 27500, vat_rate: 6, vat_amount: 1500, total: 29000 },
+  {
+    invoice_number: 225,
+    client_name: 'SampleTekk Production HB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 27500,
+    vat_rate: 6,
+    vat_amount: 1500,
+    total: 29000,
+  },
   // #226 - Migdal & Nilsson Musik AB
-  { invoice_number: 226, client_name: 'Migdal & Nilsson Musik AB', invoice_date: '2025-11-01', due_date: '2025-12-01', subtotal: 3000, vat_rate: 6, vat_amount: 180, total: 3180 },
+  {
+    invoice_number: 226,
+    client_name: 'Migdal & Nilsson Musik AB',
+    invoice_date: '2025-11-01',
+    due_date: '2025-12-01',
+    subtotal: 3000,
+    vat_rate: 6,
+    vat_amount: 180,
+    total: 3180,
+  },
   // #227 - Scenkonst Öst AB
-  { invoice_number: 227, client_name: 'Scenkonst Öst AB', invoice_date: '2025-11-11', due_date: '2025-12-11', subtotal: 23036, vat_rate: 0, vat_amount: 0, total: 23036 },
+  {
+    invoice_number: 227,
+    client_name: 'Scenkonst Öst AB',
+    invoice_date: '2025-11-11',
+    due_date: '2025-12-11',
+    subtotal: 23036,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 23036,
+  },
   // #228 - Gröna Linjen Kammarmusik
-  { invoice_number: 228, client_name: 'Gröna Linjen Kammarmusik', invoice_date: '2025-11-11', due_date: '2025-12-11', subtotal: 6500, vat_rate: 0, vat_amount: 0, total: 6500 },
+  {
+    invoice_number: 228,
+    client_name: 'Gröna Linjen Kammarmusik',
+    invoice_date: '2025-11-11',
+    due_date: '2025-12-11',
+    subtotal: 6500,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 6500,
+  },
   // #229 - Gageego!
-  { invoice_number: 229, client_name: 'Gageego!', invoice_date: '2025-11-15', due_date: '2025-12-15', subtotal: 14290, vat_rate: 0, vat_amount: 0, total: 14290 },
+  {
+    invoice_number: 229,
+    client_name: 'Gageego!',
+    invoice_date: '2025-11-15',
+    due_date: '2025-12-15',
+    subtotal: 14290,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 14290,
+  },
   // #230 - Stockholms Konserthusstiftelse
-  { invoice_number: 230, client_name: 'Stockholms Konserthusstiftelse', invoice_date: '2025-11-15', due_date: '2025-12-15', subtotal: 29405, vat_rate: 0, vat_amount: 0, total: 29405 },
+  {
+    invoice_number: 230,
+    client_name: 'Stockholms Konserthusstiftelse',
+    invoice_date: '2025-11-15',
+    due_date: '2025-12-15',
+    subtotal: 29405,
+    vat_rate: 0,
+    vat_amount: 0,
+    total: 29405,
+  },
 ]
 
 async function main() {
@@ -77,11 +294,7 @@ async function main() {
   // Step 1: Create missing clients
   console.log('👥 Creating missing clients...')
   for (const client of NEW_CLIENTS) {
-    const { data: existing } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('name', client.name)
-      .single()
+    const { data: existing } = await supabase.from('clients').select('id').eq('name', client.name).single()
 
     if (!existing) {
       const { error } = await supabase.from('clients').insert([client])
@@ -98,7 +311,7 @@ async function main() {
   // Step 2: Get all clients for matching
   const { data: clients } = await supabase.from('clients').select('id, name')
   const clientMap = new Map<string, string>()
-  clients?.forEach(c => clientMap.set(c.name.toLowerCase(), c.id))
+  clients?.forEach((c) => clientMap.set(c.name.toLowerCase(), c.id))
 
   console.log(`\n📋 Loaded ${clients?.length || 0} clients`)
 

@@ -4,7 +4,7 @@
  * Runs as the OWNER account.
  */
 import { test, expect } from '@playwright/test'
-import { loadPage, L, E2E, cleanupTestData, waitForDialog } from './helpers'
+import { loadPage, E2E, cleanupTestData, waitForDialog } from './helpers'
 
 test.afterAll(async () => {
   await cleanupTestData()
@@ -64,7 +64,10 @@ test.describe('Gig Types Config', () => {
     await page.waitForTimeout(500)
 
     // Click edit on first type
-    const editBtn = page.locator('button').filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') }).first()
+    const editBtn = page
+      .locator('button')
+      .filter({ has: page.locator('svg.lucide-pencil, svg.lucide-edit') })
+      .first()
     if (await editBtn.isVisible()) {
       await editBtn.click()
       const dialog = await waitForDialog(page)

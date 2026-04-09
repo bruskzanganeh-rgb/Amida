@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
+import { config as loadEnv } from 'dotenv'
 
 // Load environment variables
-require('dotenv').config({ path: '.env.local' })
+loadEnv({ path: '.env.local' })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -59,11 +60,7 @@ async function main() {
   let clientId: string
 
   // Check if client already exists
-  const { data: existingClient } = await supabase
-    .from('clients')
-    .select('id')
-    .eq('name', CLIENT_DATA.name)
-    .single()
+  const { data: existingClient } = await supabase.from('clients').select('id').eq('name', CLIENT_DATA.name).single()
 
   if (existingClient) {
     clientId = existingClient.id
@@ -100,14 +97,12 @@ async function main() {
       continue
     }
 
-    const { error: insertError } = await supabase
-      .from('invoices')
-      .insert({
-        ...invoice,
-        client_id: clientId,
-        status: 'paid',
-        imported_from_pdf: true,
-      })
+    const { error: insertError } = await supabase.from('invoices').insert({
+      ...invoice,
+      client_id: clientId,
+      status: 'paid',
+      imported_from_pdf: true,
+    })
 
     if (insertError) {
       console.error(`   ❌ Invoice #${invoice.invoice_number}: ${insertError.message}`)

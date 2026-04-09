@@ -87,7 +87,7 @@ export default function DashboardPage() {
   const tGig = useTranslations('gig')
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
-  const { company, fullName, loading: companyLoading } = useCompany()
+  const { fullName, loading: companyLoading } = useCompany()
 
   const [upcomingGigs, setUpcomingGigs] = useState<UpcomingGig[]>([])
   const [upcomingRevenue, setUpcomingRevenue] = useState(0)

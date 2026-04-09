@@ -4,7 +4,7 @@
  * Requires E2E_EMAIL and E2E_PASSWORD environment variables.
  * Create a .env.test file or export them before running tests.
  */
-import { test as setup, expect } from '@playwright/test'
+import { test as setup } from '@playwright/test'
 
 const AUTH_FILE = 'tests/.auth/state.json'
 
@@ -14,8 +14,7 @@ setup('authenticate', async ({ page }) => {
 
   if (!email || !password) {
     throw new Error(
-      'E2E_EMAIL and E2E_PASSWORD must be set. ' +
-      'Create a .env.test file or export them before running tests.'
+      'E2E_EMAIL and E2E_PASSWORD must be set. ' + 'Create a .env.test file or export them before running tests.',
     )
   }
 

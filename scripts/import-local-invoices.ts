@@ -5,9 +5,10 @@ import { extractText } from 'unpdf'
 import Anthropic from '@anthropic-ai/sdk'
 import { distance } from 'fastest-levenshtein'
 import { z } from 'zod'
+import { config as loadEnv } from 'dotenv'
 
 // Load environment variables
-require('dotenv').config({ path: '.env.local' })
+loadEnv({ path: '.env.local' })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -105,9 +106,7 @@ async function parseInvoiceWithAI(extractedText: string) {
     ],
   })
 
-  const responseText = message.content[0]?.type === 'text'
-    ? message.content[0].text
-    : null
+  const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
   if (!responseText) {
     throw new Error('No response from Claude')
@@ -192,10 +191,12 @@ function findInvoicePDFs(): InvoiceFile[] {
           continue
         }
         // Scan year folders, month folders, "Fakturor skickade kund", and "Kundfakturor"
-        if (entry.name.match(/^20\d{2}$/) || // Year folders like 2021, 2022
-            entry.name.match(/^\d{2}\s+/i) || // Month folders like "01 Januari", "12 Dec"
-            entry.name === 'Fakturor skickade kund' ||
-            entry.name === 'Kundfakturor') {
+        if (
+          entry.name.match(/^20\d{2}$/) || // Year folders like 2021, 2022
+          entry.name.match(/^\d{2}\s+/i) || // Month folders like "01 Januari", "12 Dec"
+          entry.name === 'Fakturor skickade kund' ||
+          entry.name === 'Kundfakturor'
+        ) {
           scanDirectory(fullPath)
         }
       } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.pdf')) {
@@ -222,16 +223,14 @@ function findInvoicePDFs(): InvoiceFile[] {
 
 // Check which invoices already exist in the database
 async function getExistingInvoiceNumbers(): Promise<Set<number>> {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select('invoice_number')
+  const { data, error } = await supabase.from('invoices').select('invoice_number')
 
   if (error) {
     console.error('Error fetching existing invoices:', error)
     return new Set()
   }
 
-  return new Set(data.map(inv => inv.invoice_number))
+  return new Set(data.map((inv) => inv.invoice_number))
 }
 
 // Main import function
@@ -245,7 +244,7 @@ async function importInvoices() {
   console.log(`Found ${existingNumbers.size} existing invoices`)
 
   // Filter to only missing invoices
-  const missingInvoices = allInvoices.filter(inv => !existingNumbers.has(inv.invoiceNumber))
+  const missingInvoices = allInvoices.filter((inv) => !existingNumbers.has(inv.invoiceNumber))
   console.log(`\n📋 ${missingInvoices.length} invoices need to be imported`)
 
   if (missingInvoices.length === 0) {
@@ -254,9 +253,7 @@ async function importInvoices() {
   }
 
   // Get all clients for matching
-  const { data: clients, error: clientsError } = await supabase
-    .from('clients')
-    .select('id, name')
+  const { data: clients, error: clientsError } = await supabase.from('clients').select('id, name')
 
   if (clientsError) {
     console.error('Error fetching clients:', clientsError)
@@ -292,9 +289,7 @@ async function importInvoices() {
       console.log(`  🤖 AI parsed: ${parsedData.clientName || '(no client)'} - ${parsedData.total} kr`)
 
       // Match client
-      const matchedClient = parsedData.clientName
-        ? matchClient(parsedData.clientName, clients || [])
-        : null
+      const matchedClient = parsedData.clientName ? matchClient(parsedData.clientName, clients || []) : null
 
       if (matchedClient) {
         console.log(`  👤 Matched client: ${matchedClient.name}`)
@@ -303,20 +298,18 @@ async function importInvoices() {
       }
 
       // Insert into database
-      const { error: insertError } = await supabase
-        .from('invoices')
-        .insert({
-          invoice_number: invoice.invoiceNumber,
-          client_id: matchedClient?.id || null,
-          invoice_date: parsedData.invoiceDate,
-          due_date: parsedData.dueDate,
-          subtotal: parsedData.subtotal,
-          vat_rate: parsedData.vatRate,
-          vat_amount: parsedData.vatAmount,
-          total: parsedData.total,
-          status: 'paid',
-          imported_from_pdf: true,
-        })
+      const { error: insertError } = await supabase.from('invoices').insert({
+        invoice_number: invoice.invoiceNumber,
+        client_id: matchedClient?.id || null,
+        invoice_date: parsedData.invoiceDate,
+        due_date: parsedData.dueDate,
+        subtotal: parsedData.subtotal,
+        vat_rate: parsedData.vatRate,
+        vat_amount: parsedData.vatAmount,
+        total: parsedData.total,
+        status: 'paid',
+        imported_from_pdf: true,
+      })
 
       if (insertError) {
         throw insertError
@@ -326,10 +319,10 @@ async function importInvoices() {
       imported++
 
       // Add a small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-    } catch (error: any) {
-      console.error(`  ❌ Failed: ${error.message}`)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`  ❌ Failed: ${message}`)
       failed++
     }
   }
@@ -353,12 +346,12 @@ async function dryRun() {
   const existingNumbers = await getExistingInvoiceNumbers()
   console.log(`\nExisting in database: ${existingNumbers.size}`)
 
-  const missingInvoices = allInvoices.filter(inv => !existingNumbers.has(inv.invoiceNumber))
+  const missingInvoices = allInvoices.filter((inv) => !existingNumbers.has(inv.invoiceNumber))
   console.log(`Missing (to import): ${missingInvoices.length}`)
 
   if (missingInvoices.length > 0) {
     console.log(`\nMissing invoice numbers:`)
-    console.log(missingInvoices.map(inv => `#${inv.invoiceNumber}`).join(', '))
+    console.log(missingInvoices.map((inv) => `#${inv.invoiceNumber}`).join(', '))
   }
 }
 

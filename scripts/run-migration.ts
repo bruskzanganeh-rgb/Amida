@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
-import * as fs from 'fs'
-import * as path from 'path'
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
@@ -24,7 +22,7 @@ async function runMigration() {
   const { error: bucketError } = await supabase.storage.createBucket('gig-attachments', {
     public: false,
     fileSizeLimit: 10 * 1024 * 1024, // 10 MB
-    allowedMimeTypes: ['application/pdf']
+    allowedMimeTypes: ['application/pdf'],
   })
 
   if (bucketError) {
@@ -42,10 +40,7 @@ async function runMigration() {
   // and create it via the dashboard or use a Postgres function
 
   console.log('\n2. Checking gig_attachments table...')
-  const { data: tableCheck, error: tableError } = await supabase
-    .from('gig_attachments')
-    .select('id')
-    .limit(1)
+  const { error: tableError } = await supabase.from('gig_attachments').select('id').limit(1)
 
   if (tableError && tableError.code === '42P01') {
     // Table doesn't exist - need to create via SQL Editor

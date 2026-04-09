@@ -30,19 +30,13 @@ test.describe('Onboarding wizard', () => {
   // Temporarily set onboarding_completed to false
   test.beforeAll(async () => {
     const supabase = getAdminClient()
-    await supabase
-      .from('company_settings')
-      .update({ onboarding_completed: false })
-      .eq('user_id', TEST_OWNER_ID)
+    await supabase.from('company_settings').update({ onboarding_completed: false }).eq('user_id', TEST_OWNER_ID)
   })
 
   // ALWAYS restore onboarding_completed to true
   test.afterAll(async () => {
     const supabase = getAdminClient()
-    await supabase
-      .from('company_settings')
-      .update({ onboarding_completed: true })
-      .eq('user_id', TEST_OWNER_ID)
+    await supabase.from('company_settings').update({ onboarding_completed: true }).eq('user_id', TEST_OWNER_ID)
   })
 
   test('redirects to /onboarding when not completed', async ({ page }) => {
@@ -56,9 +50,6 @@ test.describe('Onboarding wizard', () => {
   test('step 1 — language selection visible', async ({ page }) => {
     await page.goto('/onboarding', { waitUntil: 'networkidle' })
     await page.waitForTimeout(1500)
-
-    // Step indicator should be visible
-    const content = await page.textContent('body')
 
     // Language buttons should be visible (Svenska / English)
     const svBtn = page.getByRole('button', { name: /svenska/i })
