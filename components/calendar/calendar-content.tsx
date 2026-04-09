@@ -33,6 +33,7 @@ import { toast } from 'sonner'
 import { PageTransition } from '@/components/ui/page-transition'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { getVenueForDate } from '@/lib/gigs/venue-helpers'
 
 function fmtFee(amount: number, currency?: string | null): string {
   return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
@@ -58,7 +59,11 @@ type Gig = {
   client: { name: string; payment_terms: number } | null
   gig_type: { name: string; color: string | null; vat_rate: number } | null
   position: { name: string } | null
-  gig_dates: { date: string; sessions: { start: string; end: string | null; label?: string }[] | null }[]
+  gig_dates: {
+    date: string
+    sessions: { start: string; end: string | null; label?: string }[] | null
+    venue: string | null
+  }[]
 }
 
 type GigExpense = {
@@ -118,6 +123,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedGig, setSelectedGig] = useState<Gig | null>(null)
+  const [selectedGigDate, setSelectedGigDate] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [editingGig, setEditingGig] = useState<Gig | null>(null)
   const [editingNotes, setEditingNotes] = useState(false)
@@ -162,7 +168,7 @@ export default function CalendarPage() {
         client:clients(name, payment_terms),
         gig_type:gig_types(name, color, vat_rate),
         position:positions(name),
-        gig_dates(date, sessions)
+        gig_dates(date, sessions, venue)
       `,
       )
       .neq('status', 'draft')
@@ -560,7 +566,9 @@ export default function CalendarPage() {
                                   statusColors[gig.status],
                                 )}
                                 onClick={() => {
-                                  setSelectedGig(selectedGig?.id === gig.id ? null : gig)
+                                  const sameSelection = selectedGig?.id === gig.id && selectedGigDate === dateStr
+                                  setSelectedGig(sameSelection ? null : gig)
+                                  setSelectedGigDate(sameSelection ? null : dateStr)
                                   setEditingNotes(false)
                                 }}
                                 title={`${gig.client ? gig.client.name : tGig('clientNotSpecified')} - ${gig.project_name || (gig.gig_type ? gig.gig_type.name : '')}`}
@@ -725,24 +733,29 @@ export default function CalendarPage() {
                             </p>
                           )}
                         </div>
-                        {selectedGig.venue ? (
-                          <div className="bg-card rounded-lg p-2.5 border shadow-sm">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <MapPin className="h-2.5 w-2.5 text-muted-foreground" />
-                              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
+                        {(() => {
+                          const venueForDay = selectedGigDate
+                            ? getVenueForDate(selectedGig, selectedGigDate)
+                            : selectedGig.venue
+                          return venueForDay ? (
+                            <div className="bg-card rounded-lg p-2.5 border shadow-sm">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <MapPin className="h-2.5 w-2.5 text-muted-foreground" />
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">
+                                  {tGig('venue')}
+                                </p>
+                              </div>
+                              <p className="text-xs font-medium">{venueForDay}</p>
+                            </div>
+                          ) : (
+                            <div className="bg-secondary/50 rounded-lg p-2.5 border">
+                              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                                 {tGig('venue')}
                               </p>
+                              <p className="text-xs text-muted-foreground">—</p>
                             </div>
-                            <p className="text-xs font-medium">{selectedGig.venue}</p>
-                          </div>
-                        ) : (
-                          <div className="bg-secondary/50 rounded-lg p-2.5 border">
-                            <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
-                              {tGig('venue')}
-                            </p>
-                            <p className="text-xs text-muted-foreground">—</p>
-                          </div>
-                        )}
+                          )
+                        })()}
                       </div>
 
                       {/* Dates */}
@@ -990,24 +1003,29 @@ export default function CalendarPage() {
                               {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                             </p>
                           </div>
-                          {selectedGig.venue ? (
-                            <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                              <div className="flex items-center gap-1.5 mb-0.5">
-                                <MapPin className="h-3 w-3 text-gray-400" />
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                          {(() => {
+                            const venueForDay = selectedGigDate
+                              ? getVenueForDate(selectedGig, selectedGigDate)
+                              : selectedGig.venue
+                            return venueForDay ? (
+                              <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <MapPin className="h-3 w-3 text-gray-400" />
+                                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                    {tGig('venue')}
+                                  </p>
+                                </div>
+                                <p className="text-sm font-medium text-gray-900">{venueForDay}</p>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">
                                   {tGig('venue')}
                                 </p>
+                                <p className="text-sm text-gray-400">—</p>
                               </div>
-                              <p className="text-sm font-medium text-gray-900">{selectedGig.venue}</p>
-                            </div>
-                          ) : (
-                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">
-                                {tGig('venue')}
-                              </p>
-                              <p className="text-sm text-gray-400">—</p>
-                            </div>
-                          )}
+                            )
+                          })()}
                         </div>
                         <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-100">
                           <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">

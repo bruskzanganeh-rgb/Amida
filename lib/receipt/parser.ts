@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { logAiUsage } from '@/lib/ai/usage-logger'
+import { EXPENSE_CATEGORIES } from '@/lib/expenses/categories'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -15,26 +16,50 @@ export const ReceiptDataSchema = z.object({
   supplier: z.string().min(1),
   amount: z.number().positive(),
   currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']).default('SEK'),
-  category: z
-    .enum([
-      'Resa',
-      'Mat',
-      'Hotell',
-      'Instrument',
-      'Noter',
-      'Utrustning',
-      'Kontorsmaterial',
-      'Telefon',
-      'Prenumeration',
-      'Redovisning',
-      'Övrigt',
-    ])
-    .default('Övrigt'),
+  category: z.enum(EXPENSE_CATEGORIES).default('other'),
   notes: z.string().optional(),
   confidence: z.number().min(0).max(1),
 })
 
 export type ParsedReceiptData = z.infer<typeof ReceiptDataSchema>
+
+const CATEGORY_LIST_EN = `- "travel": train, flight, taxi, petrol, parking
+- "food": restaurant, café, groceries
+- "hotel": accommodation, overnight stays
+- "instrument": instrument purchases, repairs, accessories
+- "sheet_music": sheet music purchases, copies
+- "equipment": microphones, cables, stands, gear
+- "office": paper, pens, office supplies
+- "phone": phone bills, mobile plans
+- "subscription": Spotify, software subscriptions, streaming services
+- "accounting": accounting services, bookkeeper, auditor fees
+- "loan": loan payments (principal only)
+- "bank": bank fees, account fees
+- "insurance": insurance premiums
+- "representation": client entertainment, business meals (rep)
+- "training": courses, masterclasses, continuing education
+- "interest": interest expenses
+- "subcontractor": payments to other musicians/performers
+- "other": anything that doesn't fit above`
+
+const CATEGORY_LIST_SV = `- "travel": tåg, flyg, taxi, bensin, parkering (Resa)
+- "food": restaurang, fika, livsmedel (Mat)
+- "hotel": övernattning, boende (Hotell)
+- "instrument": köp, reparation, tillbehör
+- "sheet_music": notköp, kopior (Noter)
+- "equipment": mikrofoner, kablar, stativ (Utrustning)
+- "office": papper, pennor, kontorsmaterial
+- "phone": mobilräkning, abonnemang (Telefon)
+- "subscription": Spotify, programvara, strömningstjänster (Prenumeration)
+- "accounting": bokföringstjänster, revisor (Redovisning)
+- "loan": amorteringar på lån (Lån)
+- "bank": bankavgifter, kontoavgifter
+- "insurance": försäkringar (Försäkring)
+- "representation": kundrepresentation, affärsmiddagar (Representation)
+- "training": kurser, mästarklasser, vidareutbildning (Utbildning)
+- "interest": räntekostnader (Ränta)
+- "subcontractor": betalningar till andra musiker (Underleverantör)
+- "other": allt annat (Övrigt)`
 
 function getSystemPrompt(locale: 'sv' | 'en' = 'sv'): string {
   if (locale === 'en') {
@@ -47,32 +72,22 @@ Rules:
 - Detect currency from symbols (kr/SEK, €/EUR, $/USD, £/GBP)
 - Choose the best-fitting category
 
-Category values (MUST be one of these exact Swedish values — they are keys, not display labels):
-- "Resa": Train, flight, taxi, petrol, parking (travel)
-- "Mat": Restaurant, café, groceries (food)
-- "Hotell": Accommodation (hotel)
-- "Instrument": Instrument purchase, repair, accessories
-- "Noter": Sheet music purchases
-- "Utrustning": Microphones, cables, stands (equipment)
-- "Kontorsmaterial": Paper, pens etc (office supplies)
-- "Telefon": Phone bill, subscriptions
-- "Prenumeration": Spotify, software etc (subscriptions)
-- "Redovisning": Accounting services, bookkeeping
-- "Övrigt": Everything else
+Category values (use these exact English keys — they are internal identifiers, not display labels):
+${CATEGORY_LIST_EN}
 
 Return ONLY JSON with these fields:
 - date: date (YYYY-MM-DD) or null if unclear
 - supplier: supplier/store/company name (keep original language)
 - amount: total amount (number)
 - currency: currency code (SEK/EUR/USD/GBP/DKK/NOK)
-- category: one of the Swedish values listed above (they are internal keys)
+- category: one of the exact English keys listed above
 - notes: short description of what was purchased, IN ENGLISH (optional)
 - confidence: 0-1, your confidence
 
-IMPORTANT: Return ONLY JSON, nothing else. The "notes" field must be in English.`
+IMPORTANT: Return ONLY JSON, nothing else. The "notes" field must be in English. The "category" field MUST be an English key from the list above (never Swedish).`
   }
 
-  return `Du är en kvittoläsare för ett svenskt bokföringssystem för frilansmusiker.
+  return `Du är en kvittoläsare för ett bokföringssystem för frilansmusiker.
 Extrahera data från kvittobilder med hög noggrannhet.
 
 Regler:
@@ -81,29 +96,19 @@ Regler:
 - Gissa valuta baserat på symboler (kr/SEK, €/EUR, $/USD, £/GBP)
 - Välj kategori som passar bäst
 
-Kategorier:
-- Resa: Tåg, flyg, taxi, bensin, parkering
-- Mat: Restaurang, fika, livsmedel
-- Hotell: Övernattning, boende
-- Instrument: Köp, reparation, tillbehör
-- Noter: Notköp, kopior
-- Utrustning: Mikrofoner, kablar, stativ
-- Kontorsmaterial: Papper, pennor, etc
-- Telefon: Mobilräkning, abonnemang
-- Prenumeration: Spotify, programvara, etc
-- Redovisning: Bokföringstjänster, revisor
-- Övrigt: Allt annat
+Kategorivärden (använd EXAKT dessa engelska nycklar — de är interna identifierare, inte visningsetiketter):
+${CATEGORY_LIST_SV}
 
 Returnera ENDAST JSON med dessa fält:
 - date: datum (YYYY-MM-DD) eller null om otydligt
 - supplier: leverantör/butik/företag
 - amount: totalbelopp (nummer)
 - currency: valuta (SEK/EUR/USD/GBP/DKK/NOK)
-- category: kategori från listan ovan
+- category: EN AV de engelska nycklarna ovan (t.ex. "travel", INTE "Resa")
 - notes: kort beskrivning av vad som köpts PÅ SVENSKA (valfritt)
 - confidence: 0-1, din säkerhet
 
-VIKTIGT: Returnera BARA JSON, inget annat. Fältet "notes" ska vara på svenska.`
+VIKTIGT: Returnera BARA JSON, inget annat. Fältet "notes" ska vara på svenska. Fältet "category" MÅSTE vara en engelsk nyckel från listan (aldrig svenska).`
 }
 
 export async function parseReceiptWithVision(

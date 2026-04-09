@@ -6,6 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/supabase'
+import { getDisplayVenue } from '@/lib/gigs/venue-helpers'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -76,9 +77,12 @@ function sortGigs(gigs: Gig[], config: SortConfig): Gig[] {
       case 'type':
         cmp = a.gig_type.name.localeCompare(b.gig_type.name)
         break
-      case 'venue':
-        cmp = (a.venue || '').localeCompare(b.venue || '')
+      case 'venue': {
+        const av = getDisplayVenue(a).venue || ''
+        const bv = getDisplayVenue(b).venue || ''
+        cmp = av.localeCompare(bv)
         break
+      }
       case 'fee':
         cmp = (a.fee || 0) - (b.fee || 0)
         break
@@ -148,6 +152,7 @@ type Gig = {
     date: string
     schedule_text: string | null
     sessions: { start: string; end: string | null; label?: string }[] | null
+    venue: string | null
   }[]
 }
 
@@ -291,7 +296,7 @@ export default function GigsPage() {
           client:clients(name, payment_terms),
           gig_type:gig_types(name, vat_rate, color),
           position:positions(name),
-          gig_dates(date, schedule_text, sessions)
+          gig_dates(date, schedule_text, sessions, venue)
         `,
         )
         .neq('status', 'draft')
@@ -1042,7 +1047,20 @@ export default function GigsPage() {
                                         </div>
                                       </TableCell>
                                       <TableCell>
-                                        <span className="text-sm text-muted-foreground">{gig.venue || '-'}</span>
+                                        {(() => {
+                                          const { venue, isMixed, allVenues } = getDisplayVenue(gig)
+                                          if (isMixed) {
+                                            return (
+                                              <span
+                                                className="text-sm text-muted-foreground cursor-help"
+                                                title={allVenues.join('\n')}
+                                              >
+                                                {t('multipleVenues')}
+                                              </span>
+                                            )
+                                          }
+                                          return <span className="text-sm text-muted-foreground">{venue || '-'}</span>
+                                        })()}
                                       </TableCell>
                                       <TableCell className="font-medium">
                                         {gig.fee !== null ? (
@@ -1408,7 +1426,20 @@ export default function GigsPage() {
                                         </div>
                                       </TableCell>
                                       <TableCell>
-                                        <span className="text-sm text-muted-foreground">{gig.venue || '-'}</span>
+                                        {(() => {
+                                          const { venue, isMixed, allVenues } = getDisplayVenue(gig)
+                                          if (isMixed) {
+                                            return (
+                                              <span
+                                                className="text-sm text-muted-foreground cursor-help"
+                                                title={allVenues.join('\n')}
+                                              >
+                                                {t('multipleVenues')}
+                                              </span>
+                                            )
+                                          }
+                                          return <span className="text-sm text-muted-foreground">{venue || '-'}</span>
+                                        })()}
                                       </TableCell>
                                       <TableCell className="font-medium">
                                         {gig.fee !== null ? (
@@ -1708,7 +1739,20 @@ export default function GigsPage() {
                                         </div>
                                       </TableCell>
                                       <TableCell>
-                                        <span className="text-sm text-muted-foreground">{gig.venue || '-'}</span>
+                                        {(() => {
+                                          const { venue, isMixed, allVenues } = getDisplayVenue(gig)
+                                          if (isMixed) {
+                                            return (
+                                              <span
+                                                className="text-sm text-muted-foreground cursor-help"
+                                                title={allVenues.join('\n')}
+                                              >
+                                                {t('multipleVenues')}
+                                              </span>
+                                            )
+                                          }
+                                          return <span className="text-sm text-muted-foreground">{venue || '-'}</span>
+                                        })()}
                                       </TableCell>
                                       <TableCell className="font-medium">
                                         {gig.fee !== null ? (

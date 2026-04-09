@@ -4,13 +4,14 @@ import { apiSuccess, apiError, apiValidationError } from '@/lib/api-response'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
+import { EXPENSE_CATEGORIES } from '@/lib/expenses/categories'
 
 const createExpenseSchema = z.object({
   date: z.string().min(1),
   supplier: z.string().min(1),
   amount: z.number().min(0),
   currency: z.string().optional(),
-  category: z.string().optional(),
+  category: z.enum(EXPENSE_CATEGORIES).optional(),
   notes: z.string().nullable().optional(),
   gig_id: z.string().nullable().optional(),
 })

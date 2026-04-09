@@ -6,6 +6,7 @@ import { useCompany } from '@/lib/hooks/use-company'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
+import { categoryLabel } from '@/lib/expenses/categories'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -156,7 +157,9 @@ export default function ExpensesTab() {
   }
 
   const years = [...new Set(expenses.map((e) => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
-  const categories = [...new Set(expenses.map((e) => e.category).filter(Boolean))].sort() as string[]
+  const categories = ([...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]).sort((a, b) =>
+    categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
+  )
   const suppliers = [...new Set(expenses.map((e) => e.supplier))].sort()
 
   const filteredExpenses = expenses.filter((e) => {
@@ -168,7 +171,9 @@ export default function ExpensesTab() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       const matchesSupplier = e.supplier.toLowerCase().includes(q)
-      const matchesCategory = e.category?.toLowerCase().includes(q)
+      // Search against both the canonical key and the localized label
+      const matchesCategory =
+        e.category?.toLowerCase().includes(q) || categoryLabel(e.category, t).toLowerCase().includes(q)
       const matchesNotes = e.notes?.toLowerCase().includes(q)
       if (!matchesSupplier && !matchesCategory && !matchesNotes) return false
     }
@@ -233,7 +238,7 @@ export default function ExpensesTab() {
                 <SelectItem value="all">{t('allCategories')}</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
-                    {cat}
+                    {categoryLabel(cat, t)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -387,7 +392,7 @@ export default function ExpensesTab() {
                             </span>
                             {expense.category && (
                               <Badge variant="outline" className="text-xs">
-                                {expense.category}
+                                {categoryLabel(expense.category, t)}
                               </Badge>
                             )}
                           </div>
@@ -475,7 +480,7 @@ export default function ExpensesTab() {
                           <TableCell className="font-medium">{expense.supplier}</TableCell>
                           <TableCell>
                             {expense.category ? (
-                              <Badge variant="outline">{expense.category}</Badge>
+                              <Badge variant="outline">{categoryLabel(expense.category, t)}</Badge>
                             ) : (
                               <span className="text-sm text-muted-foreground">-</span>
                             )}

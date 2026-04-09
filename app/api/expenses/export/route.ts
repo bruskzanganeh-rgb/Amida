@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logActivity } from '@/lib/activity'
+import { categoryLabelStatic } from '@/lib/expenses/categories'
 import JSZip from 'jszip'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
@@ -42,13 +43,14 @@ function extractFilePath(attachmentUrl: string): string | null {
 }
 
 // Hämta signerad URL för kvitto
-async function getSignedUrl(attachmentUrl: string, supabase: ReturnType<typeof createAdminClient>): Promise<string | null> {
+async function getSignedUrl(
+  attachmentUrl: string,
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<string | null> {
   const filePath = extractFilePath(attachmentUrl)
   if (!filePath) return null
 
-  const { data, error } = await supabase.storage
-    .from('expenses')
-    .createSignedUrl(filePath, 3600) // 1 timme
+  const { data, error } = await supabase.storage.from('expenses').createSignedUrl(filePath, 3600) // 1 timme
 
   if (error || !data) {
     console.error('Failed to create signed URL:', error)
@@ -67,27 +69,32 @@ function createReceiptFilename(expense: Expense, ext: string): string {
 }
 
 // Skapa CSV-innehåll
-function createCsvContent(expenses: Expense[]): string {
-  const headers = ['Datum', 'Leverantör', 'Belopp', 'Valuta', 'Belopp SEK', 'Kategori', 'Anteckningar', 'Uppdrag']
-  const rows = expenses.map(e => [
+function createCsvContent(expenses: Expense[], locale: 'sv' | 'en' = 'sv'): string {
+  const headers =
+    locale === 'en'
+      ? ['Date', 'Supplier', 'Amount', 'Currency', 'Amount SEK', 'Category', 'Notes', 'Event']
+      : ['Datum', 'Leverantör', 'Belopp', 'Valuta', 'Belopp SEK', 'Kategori', 'Anteckningar', 'Uppdrag']
+  const rows = expenses.map((e) => [
     e.date,
     `"${e.supplier.replace(/"/g, '""')}"`,
     e.amount.toString(),
     e.currency,
     (e.amount_base || e.amount).toString(),
-    e.category || '',
+    categoryLabelStatic(e.category, locale),
     `"${(e.notes || '').replace(/"/g, '""')}"`,
     e.gig?.project_name || e.gig?.venue || '',
   ])
 
-  return [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n')
+  return [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n')
 }
 
 export async function GET(request: NextRequest) {
   try {
     // Get authenticated user
     const serverSupabase = await createServerClient()
-    const { data: { user } } = await serverSupabase.auth.getUser()
+    const {
+      data: { user },
+    } = await serverSupabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -98,6 +105,14 @@ export async function GET(request: NextRequest) {
     const month = parseInt(searchParams.get('month') || (new Date().getMonth() + 1).toString())
     const format = searchParams.get('format') || 'zip'
 
+    // Load user locale to localize category labels in export
+    const { data: userSettings } = await serverSupabase
+      .from('company_settings')
+      .select('locale')
+      .eq('user_id', user.id)
+      .single()
+    const exportLocale: 'sv' | 'en' = userSettings?.locale === 'en' ? 'en' : 'sv'
+
     // Beräkna start- och slutdatum för månaden
     const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
     const endDate = new Date(year, month, 0).toISOString().split('T')[0]
@@ -105,7 +120,8 @@ export async function GET(request: NextRequest) {
     // Hämta utgifter för månaden
     const { data: expenses, error } = await supabase
       .from('expenses')
-      .select(`
+      .select(
+        `
         id,
         date,
         supplier,
@@ -116,7 +132,8 @@ export async function GET(request: NextRequest) {
         notes,
         attachment_url,
         gig:gigs(project_name, venue)
-      `)
+      `,
+      )
       .eq('user_id', user.id)
       .gte('date', startDate)
       .lte('date', endDate)
@@ -124,23 +141,17 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching expenses:', error)
-      return NextResponse.json(
-        { error: 'Could not fetch expenses' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Could not fetch expenses' }, { status: 500 })
     }
 
     const typedExpenses = (expenses || []) as unknown as Expense[]
 
     if (typedExpenses.length === 0) {
-      return NextResponse.json(
-        { error: 'No expenses found for the selected month' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'No expenses found for the selected month' }, { status: 404 })
     }
 
     // Filtrera ut utgifter med bilagor
-    const expensesWithAttachments = typedExpenses.filter(e => e.attachment_url)
+    const expensesWithAttachments = typedExpenses.filter((e) => e.attachment_url)
 
     const monthName = new Date(year, month - 1).toLocaleDateString('sv-SE', { month: 'long' })
     const fileBaseName = `${year}-${month.toString().padStart(2, '0')}-Kvitton`
@@ -159,7 +170,7 @@ export async function GET(request: NextRequest) {
         totalExpenses: typedExpenses.length,
         totalWithReceipts: expensesWithAttachments.length,
         totalAmount: typedExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0),
-        expenses: typedExpenses.map(e => ({
+        expenses: typedExpenses.map((e) => ({
           id: e.id,
           date: e.date,
           supplier: e.supplier,
@@ -168,9 +179,7 @@ export async function GET(request: NextRequest) {
           amount_base: e.amount_base,
           category: e.category,
           attachment_url: e.attachment_url,
-          filename: e.attachment_url
-            ? createReceiptFilename(e, e.attachment_url.split('.').pop() || 'jpg')
-            : null,
+          filename: e.attachment_url ? createReceiptFilename(e, e.attachment_url.split('.').pop() || 'jpg') : null,
         })),
       })
     }
@@ -180,7 +189,7 @@ export async function GET(request: NextRequest) {
       const zip = new JSZip()
 
       // Lägg till CSV-summering
-      const csvContent = createCsvContent(typedExpenses)
+      const csvContent = createCsvContent(typedExpenses, exportLocale)
       zip.file(`${fileBaseName}.csv`, csvContent)
 
       // Skapa PDF-summering
@@ -244,7 +253,7 @@ export async function GET(request: NextRequest) {
 
         summaryPage.drawText(expense.date, { x: 50, y, size: 9, font })
         summaryPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
-        summaryPage.drawText((expense.category || '').substring(0, 15), { x: 300, y, size: 9, font })
+        summaryPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
         summaryPage.drawText(`${Math.round(expense.amount_base || expense.amount)} kr`, { x: 420, y, size: 9, font })
         summaryPage.drawText(expense.attachment_url ? 'Ja' : 'Nej', { x: 500, y, size: 9, font })
         y -= 12
@@ -362,7 +371,7 @@ export async function GET(request: NextRequest) {
 
         currentPage.drawText(expense.date, { x: 50, y, size: 9, font })
         currentPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
-        currentPage.drawText((expense.category || '').substring(0, 15), { x: 300, y, size: 9, font })
+        currentPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
         currentPage.drawText(`${Math.round(expense.amount_base || expense.amount)} kr`, { x: 420, y, size: 9, font })
         currentPage.drawText(expense.attachment_url ? 'Ja' : 'Nej', { x: 500, y, size: 9, font })
         y -= 12
@@ -389,7 +398,8 @@ export async function GET(request: NextRequest) {
           const ext = expense.attachment_url.split('.').pop()?.toLowerCase() || 'jpg'
 
           // Header text för kvittot
-          const headerText = `${expense.date} - ${expense.supplier} - ${Math.round(expense.amount_base || expense.amount)} ${expense.currency}${expense.category ? ` - ${expense.category}` : ''}`
+          const categoryText = categoryLabelStatic(expense.category, 'sv')
+          const headerText = `${expense.date} - ${expense.supplier} - ${Math.round(expense.amount_base || expense.amount)} ${expense.currency}${categoryText ? ` - ${categoryText}` : ''}`
 
           if (ext === 'pdf') {
             // Merga PDF-kvitto
@@ -426,7 +436,13 @@ export async function GET(request: NextRequest) {
               // Skapa en sida med felmeddelande
               const errorPage = pdfDoc.addPage([595, 842])
               errorPage.drawText(headerText, { x: 50, y: 800, size: 10, font })
-              errorPage.drawText('Kunde inte ladda PDF-kvitto', { x: 50, y: 750, size: 12, font, color: rgb(0.8, 0, 0) })
+              errorPage.drawText('Kunde inte ladda PDF-kvitto', {
+                x: 50,
+                y: 750,
+                size: 12,
+                font,
+                color: rgb(0.8, 0, 0),
+              })
             }
           } else {
             // Lägg till bild (JPEG/PNG)
@@ -495,15 +511,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(
-      { error: 'Invalid format. Use: zip, pdf, or individual' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Invalid format. Use: zip, pdf, or individual' }, { status: 400 })
   } catch (error) {
     console.error('Export error:', error)
-    return NextResponse.json(
-      { error: 'Export failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Export failed' }, { status: 500 })
   }
 }

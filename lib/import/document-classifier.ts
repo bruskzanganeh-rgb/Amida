@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { extractText, renderPageAsImage } from 'unpdf'
 import { logAiUsage } from '@/lib/ai/usage-logger'
+import { EXPENSE_CATEGORIES } from '@/lib/expenses/categories'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -19,18 +20,7 @@ const ExpenseDataSchema = z.object({
   vatAmount: z.number().nonnegative(),
   total: z.number().nonnegative(),
   currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']),
-  category: z.enum([
-    'Resa',
-    'Mat',
-    'Hotell',
-    'Instrument',
-    'Noter',
-    'Utrustning',
-    'Kontorsmaterial',
-    'Telefon',
-    'Prenumeration',
-    'Övrigt',
-  ]),
+  category: z.enum(EXPENSE_CATEGORIES),
   notes: z.string().optional(),
 })
 
@@ -107,7 +97,7 @@ Skillnaden: Kvitto/Receipt = du har BETALAT. Faktura = kunden SKA betala dig.
 - vatAmount: Momsbelopp (om bara total finns: total - subtotal)
 - total: Totalbelopp inkl moms
 - currency: SEK/EUR/USD/GBP/DKK/NOK (default: SEK)
-- category: Välj från: Resa, Mat, Hotell, Instrument, Noter, Utrustning, Kontorsmaterial, Telefon, Prenumeration, Övrigt
+- category: Välj EN engelsk nyckel från: travel, food, hotel, instrument, sheet_music, equipment, office, phone, subscription, accounting, loan, bank, insurance, representation, training, interest, subcontractor, other
 - notes: Kort beskrivning
 
 TIPS för moms på kvitton:
@@ -304,7 +294,7 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
       // Sätt defaults för utgifter
       parsed.data.supplier = parsed.data.supplier || 'Okänd leverantör'
       parsed.data.currency = parsed.data.currency || 'SEK'
-      parsed.data.category = parsed.data.category || 'Övrigt'
+      parsed.data.category = parsed.data.category || 'other'
 
       // Hantera moms - beräkna saknade värden
       const total = parsed.data.total ?? parsed.data.amount ?? 0

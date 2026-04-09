@@ -42,7 +42,7 @@ function validReceiptJson(overrides: Record<string, unknown> = {}) {
     supplier: 'ICA Maxi',
     amount: 345.5,
     currency: 'SEK',
-    category: 'Mat',
+    category: 'food',
     notes: 'Lunch',
     confidence: 0.95,
     ...overrides,
@@ -72,11 +72,11 @@ describe('ReceiptDataSchema', () => {
     expect(result.currency).toBe('SEK')
   })
 
-  it('applies default category Övrigt when omitted', () => {
+  it('applies default category "other" when omitted', () => {
     const receipt = validReceiptJson()
     delete (receipt as Record<string, unknown>).category
     const result = ReceiptDataSchema.parse(receipt)
-    expect(result.category).toBe('Övrigt')
+    expect(result.category).toBe('other')
   })
 
   it('allows null date', () => {
@@ -126,18 +126,31 @@ describe('ReceiptDataSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('accepts all valid categories', () => {
+  it('rejects legacy Swedish category values', () => {
+    const result = ReceiptDataSchema.safeParse(validReceiptJson({ category: 'Resa' }))
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts all valid English canonical categories', () => {
     const categories = [
-      'Resa',
-      'Mat',
-      'Hotell',
-      'Instrument',
-      'Noter',
-      'Utrustning',
-      'Kontorsmaterial',
-      'Telefon',
-      'Prenumeration',
-      'Övrigt',
+      'travel',
+      'food',
+      'hotel',
+      'instrument',
+      'sheet_music',
+      'equipment',
+      'office',
+      'phone',
+      'subscription',
+      'accounting',
+      'loan',
+      'bank',
+      'insurance',
+      'representation',
+      'training',
+      'interest',
+      'subcontractor',
+      'other',
     ]
     for (const category of categories) {
       const result = ReceiptDataSchema.safeParse(validReceiptJson({ category }))
@@ -276,7 +289,7 @@ describe('parseReceiptWithVision', () => {
 
     const result = await parseReceiptWithVision('data', 'image/png')
     expect(result.currency).toBe('SEK')
-    expect(result.category).toBe('Övrigt')
+    expect(result.category).toBe('other')
   })
 })
 

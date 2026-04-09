@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         user_id,
         client:clients(name),
         gig_type:gig_types(name),
-        gig_dates(date, sessions)
+        gig_dates(date, sessions, venue)
       `,
       )
       .neq('status', 'declined')
@@ -133,14 +133,16 @@ export async function GET(request: NextRequest) {
         if (gig.notes) descParts.push(`\n${gig.notes}`)
 
         const description = escapeICSText(descParts.join('\n'))
-        const location = gig.venue ? escapeICSText(gig.venue) : ''
+        const fallbackLocation = gig.venue ? escapeICSText(gig.venue) : ''
         const icsStatus = gig.status === 'accepted' ? 'CONFIRMED' : 'TENTATIVE'
 
-        const dates: { date: string; sessions: Session[] | null }[] = gig.gig_dates || []
+        const dates: { date: string; sessions: Session[] | null; venue: string | null }[] = gig.gig_dates || []
         if (dates.length === 0) return []
 
         return dates.flatMap((gd, dateIdx) => {
           const sessions: Session[] = Array.isArray(gd.sessions) ? gd.sessions : []
+          // Per-date venue override if present
+          const location = gd.venue ? escapeICSText(gd.venue) : fallbackLocation
 
           if (sessions.length > 0) {
             // Emit one VEVENT per session (timed events)

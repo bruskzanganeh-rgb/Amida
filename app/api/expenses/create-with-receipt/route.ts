@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const amount = parseFloat(formData.get('amount') as string)
     const currency = (formData.get('currency') as string) || 'SEK'
     const amountSek = parseFloat(formData.get('amount_base') as string) || amount
-    const category = (formData.get('category') as string) || 'Övrigt'
+    const category = (formData.get('category') as string) || 'other'
     const notes = (formData.get('notes') as string) || null
     const gigId = (formData.get('gig_id') as string) || null
     const forceSave = formData.get('forceSave') === 'true'

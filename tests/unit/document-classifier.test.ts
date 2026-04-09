@@ -102,7 +102,7 @@ function makeExpenseResponse(overrides: Partial<Record<string, unknown>> = {}) {
       vatAmount: 12,
       total: 212,
       currency: 'SEK',
-      category: 'Resa',
+      category: 'travel',
       notes: 'Tågresa Stockholm-Göteborg',
       ...((overrides.data as Record<string, unknown>) || {}),
     },
@@ -234,7 +234,7 @@ describe('classifyImageDocument', () => {
     expect(data.total).toBe(212)
     expect(data.vatRate).toBe(6)
     expect(data.currency).toBe('SEK')
-    expect(data.category).toBe('Resa')
+    expect(data.category).toBe('travel')
   })
 
   it('classifies an invoice image correctly', async () => {
@@ -410,7 +410,7 @@ describe('parseAIResponse — expense preprocessing', () => {
     expect(data.currency).toBe('SEK')
   })
 
-  it('sets default category to Övrigt when missing', async () => {
+  it('sets default category to "other" when missing', async () => {
     const response = makeExpenseResponse({
       data: { ...makeExpenseResponse().data, category: null },
     })
@@ -418,7 +418,7 @@ describe('parseAIResponse — expense preprocessing', () => {
 
     const result = await classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')
     const data = result.data as ExpenseData
-    expect(data.category).toBe('Övrigt')
+    expect(data.category).toBe('other')
   })
 
   it('calculates subtotal and vatAmount from total when only total is provided', async () => {
@@ -431,7 +431,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 125,
         currency: 'SEK',
-        category: 'Mat',
+        category: 'food',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -453,7 +453,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: 9.6,
         total: 89.6,
         currency: 'SEK',
-        category: 'Mat',
+        category: 'food',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -475,7 +475,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 0,
         currency: 'SEK',
-        category: 'Övrigt',
+        category: 'other',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -497,7 +497,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 125,
         currency: 'SEK',
-        category: 'Övrigt',
+        category: 'other',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -523,7 +523,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: null,
         currency: 'SEK',
-        category: 'Resa',
+        category: 'travel',
       },
       suggestedFilename: '2025-03-15_SJ_Resa',
     }
@@ -548,7 +548,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 106,
         currency: 'SEK',
-        category: 'Noter',
+        category: 'sheet_music',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -570,7 +570,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 112,
         currency: 'SEK',
-        category: 'Mat',
+        category: 'food',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -592,7 +592,7 @@ describe('parseAIResponse — expense preprocessing', () => {
         vatAmount: null,
         total: 100,
         currency: 'EUR',
-        category: 'Utrustning',
+        category: 'equipment',
       },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -1007,16 +1007,16 @@ describe('Zod schema validation via classifyImageDocument', () => {
 
   it('accepts all valid categories', async () => {
     const categories = [
-      'Resa',
-      'Mat',
-      'Hotell',
-      'Instrument',
-      'Noter',
-      'Utrustning',
-      'Kontorsmaterial',
-      'Telefon',
-      'Prenumeration',
-      'Övrigt',
+      'travel',
+      'food',
+      'hotel',
+      'instrument',
+      'sheet_music',
+      'equipment',
+      'office',
+      'phone',
+      'subscription',
+      'other',
     ]
     for (const category of categories) {
       vi.clearAllMocks()

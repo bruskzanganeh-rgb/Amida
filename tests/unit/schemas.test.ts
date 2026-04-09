@@ -408,7 +408,7 @@ describe('expense schemas', () => {
         amount: 150.5,
         currency: 'SEK',
         amount_base: 150.5,
-        category: 'Supplies',
+        category: 'equipment',
         notes: 'Extra reeds',
         gig_id: VALID_UUID,
       })

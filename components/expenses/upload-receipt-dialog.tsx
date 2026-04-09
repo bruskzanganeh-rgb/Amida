@@ -35,6 +35,7 @@ import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { GigCombobox } from '@/components/expenses/gig-combobox'
 import { GigListBox } from '@/components/expenses/gig-listbox'
 import { isValidReceiptFile, ALLOWED_RECEIPT_EXTENSIONS } from '@/lib/upload/file-validation'
+import { EXPENSE_CATEGORIES, categoryLabel } from '@/lib/expenses/categories'
 
 type UploadReceiptDialogProps = {
   open: boolean
@@ -73,45 +74,6 @@ type DuplicateInfo = {
   inputSupplier?: string
 }
 
-const categories = [
-  'Resa',
-  'Mat',
-  'Hotell',
-  'Instrument',
-  'Noter',
-  'Utrustning',
-  'Kontorsmaterial',
-  'Telefon',
-  'Prenumeration',
-  'Redovisning',
-  'Övrigt',
-]
-
-// Map hardcoded Swedish category values to translation keys
-const CATEGORY_KEY_MAP: Record<string, string> = {
-  Resa: 'categoryTravel',
-  Mat: 'categoryFood',
-  Hotell: 'categoryHotel',
-  Instrument: 'categoryInstrument',
-  Noter: 'categorySheetMusic',
-  Utrustning: 'categoryEquipment',
-  Kontorsmaterial: 'categoryOffice',
-  Telefon: 'categoryPhone',
-  Prenumeration: 'categorySubscription',
-  Redovisning: 'categoryAccounting',
-  Övrigt: 'categoryOther',
-}
-
-function categoryLabel(category: string, t: (k: string) => string): string {
-  const key = CATEGORY_KEY_MAP[category]
-  if (!key) return category
-  try {
-    return t(key)
-  } catch {
-    return category
-  }
-}
-
 const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
 
 export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigTitle }: UploadReceiptDialogProps) {
@@ -135,7 +97,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
     supplier: '',
     amount: 0,
     currency: 'SEK',
-    category: 'Övrigt',
+    category: 'other',
     notes: '',
     confidence: 0,
   })
@@ -234,7 +196,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
       supplier: '',
       amount: 0,
       currency: 'SEK',
-      category: 'Resa',
+      category: 'travel',
       notes: '',
       confidence: 0,
     })
@@ -268,7 +230,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
         supplier: result.data.supplier,
         amount: result.data.amount,
         currency: result.data.currency || 'SEK',
-        category: result.data.category || 'Övrigt',
+        category: result.data.category || 'other',
         notes: result.data.notes || '',
         confidence: result.data.confidence,
       })
@@ -375,7 +337,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
       supplier: '',
       amount: 0,
       currency: 'SEK',
-      category: 'Övrigt',
+      category: 'other',
       notes: '',
       confidence: 0,
     })
@@ -606,7 +568,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
+                    {EXPENSE_CATEGORIES.map((c) => (
                       <SelectItem key={c} value={c}>
                         {categoryLabel(c, t)}
                       </SelectItem>
