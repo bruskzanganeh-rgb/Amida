@@ -145,13 +145,13 @@ export function StripeTab({ data }: { data: StripeData | null }) {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">{t('mrr')}</p>
-            <p className="text-2xl font-bold">{metrics.mrr} kr</p>
+            <p className="text-2xl font-bold">{metrics.mrr} SEK</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">{t('arr')}</p>
-            <p className="text-2xl font-bold">{metrics.arr} kr</p>
+            <p className="text-2xl font-bold">{metrics.arr} SEK</p>
           </CardContent>
         </Card>
         <Card>

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
 import { TrendingUp, TrendingDown, Minus, BarChart3, ArrowUpRight } from 'lucide-react'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import Link from 'next/link'
 
 type YearData = {
@@ -72,6 +73,7 @@ export function YearComparison() {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [currentYear, setCurrentYear] = useState<YearData | null>(null)
   const [previousYear, setPreviousYear] = useState<YearData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -227,7 +229,7 @@ export function YearComparison() {
             <div>
               <span className="text-xs text-muted-foreground">{t('ytdRevenue')}</span>
               <p className="text-sm font-bold">
-                {(currentYear?.ytdRevenue || 0).toLocaleString(formatLocale)} {tc('kr')}
+                {(currentYear?.ytdRevenue || 0).toLocaleString(formatLocale)} {baseCurrencySymbol}
               </p>
             </div>
             <ChangeIndicator current={currentYear?.ytdRevenue || 0} previous={previousYear?.ytdRevenue || 0} />

@@ -113,6 +113,33 @@ export async function GET(request: NextRequest) {
       .single()
     const exportLocale: 'sv' | 'en' = userSettings?.locale === 'en' ? 'en' : 'sv'
 
+    // Load company base currency for totals display
+    const { data: membership } = await serverSupabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single()
+    let baseCurrencySymbol = 'SEK'
+    if (membership?.company_id) {
+      const { data: companyRow } = await serverSupabase
+        .from('companies')
+        .select('base_currency')
+        .eq('id', membership.company_id)
+        .single()
+      const map: Record<string, string> = {
+        SEK: 'SEK',
+        EUR: 'EUR',
+        USD: 'USD',
+        DKK: 'DKK',
+        NOK: 'NOK',
+        GBP: 'GBP',
+        CHF: 'CHF',
+        CZK: 'CZK',
+        PLN: 'PLN',
+      }
+      baseCurrencySymbol = map[companyRow?.base_currency || 'SEK'] || 'SEK'
+    }
+
     // Beräkna start- och slutdatum för månaden
     const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
     const endDate = new Date(year, month, 0).toISOString().split('T')[0]
@@ -229,7 +256,7 @@ export async function GET(request: NextRequest) {
         size: 12,
         font,
       })
-      summaryPage.drawText(`Total summa: ${totalAmount.toLocaleString('sv-SE')} kr`, {
+      summaryPage.drawText(`Total summa: ${totalAmount.toLocaleString('sv-SE')} ${baseCurrencySymbol}`, {
         x: 50,
         y: pageHeight - 170,
         size: 12,
@@ -254,7 +281,12 @@ export async function GET(request: NextRequest) {
         summaryPage.drawText(expense.date, { x: 50, y, size: 9, font })
         summaryPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
         summaryPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
-        summaryPage.drawText(`${Math.round(expense.amount_base || expense.amount)} kr`, { x: 420, y, size: 9, font })
+        summaryPage.drawText(`${Math.round(expense.amount_base || expense.amount)} ${baseCurrencySymbol}`, {
+          x: 420,
+          y,
+          size: 9,
+          font,
+        })
         summaryPage.drawText(expense.attachment_url ? 'Ja' : 'Nej', { x: 500, y, size: 9, font })
         y -= 12
       }
@@ -346,7 +378,7 @@ export async function GET(request: NextRequest) {
         size: 12,
         font,
       })
-      summaryPage.drawText(`Total summa: ${totalAmount.toLocaleString('sv-SE')} kr`, {
+      summaryPage.drawText(`Total summa: ${totalAmount.toLocaleString('sv-SE')} ${baseCurrencySymbol}`, {
         x: 50,
         y: height - 170,
         size: 12,
@@ -372,7 +404,12 @@ export async function GET(request: NextRequest) {
         currentPage.drawText(expense.date, { x: 50, y, size: 9, font })
         currentPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
         currentPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
-        currentPage.drawText(`${Math.round(expense.amount_base || expense.amount)} kr`, { x: 420, y, size: 9, font })
+        currentPage.drawText(`${Math.round(expense.amount_base || expense.amount)} ${baseCurrencySymbol}`, {
+          x: 420,
+          y,
+          size: 9,
+          font,
+        })
         currentPage.drawText(expense.attachment_url ? 'Ja' : 'Nej', { x: 500, y, size: 9, font })
         y -= 12
       }

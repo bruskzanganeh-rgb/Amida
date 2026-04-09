@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
             isDuplicate: true,
             existingExpense: existing,
             matchType: duplicateResult.matchType,
-            message: `A similar expense already exists: ${existing.supplier} - ${existing.amount} kr (${existing.date})`,
+            message: `A similar expense already exists: ${existing.supplier} - ${existing.amount} (${existing.date})`,
           })
         }
       }

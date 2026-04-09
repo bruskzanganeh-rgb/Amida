@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BarChart3, TrendingUp, XCircle, Calendar, Music, CalendarClock, Wallet, HelpCircle } from 'lucide-react'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import dynamic from 'next/dynamic'
 
 const RevenueChart = dynamic(
@@ -52,6 +53,7 @@ export function AnalyticsContent() {
   const tGig = useTranslations('gig')
   const tStatus = useTranslations('status')
   const formatLocale = useFormatLocale()
+  const { symbol: currencySymbol, perDayLabel } = useBaseCurrency()
 
   const [gigs, setGigs] = useState<Gig[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -290,7 +292,7 @@ export function AnalyticsContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-900">
-                  {upcomingRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                  {upcomingRevenue.toLocaleString(formatLocale)} {currencySymbol}
                 </div>
                 <p className="text-xs text-blue-700">{t('acceptedGigsCount', { count: upcomingGigs.length })}</p>
               </CardContent>
@@ -340,7 +342,7 @@ export function AnalyticsContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {totalRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                  {totalRevenue.toLocaleString(formatLocale)} {currencySymbol}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t('completedGigsCount', { count: completedGigs.length })}
@@ -369,7 +371,7 @@ export function AnalyticsContent() {
               <CardContent>
                 <div className="text-2xl font-bold">{t('declinedCount', { count: declinedGigs.length })}</div>
                 <p className="text-xs text-muted-foreground">
-                  {declinedAmount.toLocaleString(formatLocale)} {tc('kr')} {tc('total').toLowerCase()}
+                  {declinedAmount.toLocaleString(formatLocale)} {currencySymbol} {tc('total').toLowerCase()}
                 </p>
               </CardContent>
             </Card>
@@ -381,7 +383,7 @@ export function AnalyticsContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {Math.round(avgPerDay).toLocaleString(formatLocale)} {tc('kr')}
+                  {Math.round(avgPerDay).toLocaleString(formatLocale)} {currencySymbol}
                 </div>
                 <p className="text-xs text-muted-foreground">{t('avgPerWorkDay')}</p>
               </CardContent>
@@ -424,11 +426,11 @@ export function AnalyticsContent() {
                         </TableCell>
                         <TableCell>{gig.gig_type.name}</TableCell>
                         <TableCell className="text-right">
-                          {Math.round(gig.feeBase).toLocaleString(formatLocale)} {tc('kr')}
+                          {Math.round(gig.feeBase).toLocaleString(formatLocale)} {currencySymbol}
                         </TableCell>
                         <TableCell className="text-right">{gig.total_days}</TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
-                          {Math.round(gig.dayRate).toLocaleString(formatLocale)} {t('krPerDay')}
+                          {Math.round(gig.dayRate).toLocaleString(formatLocale)} {perDayLabel}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -448,7 +450,7 @@ export function AnalyticsContent() {
                 <LazyBarChart
                   data={topClients}
                   formatLocale={formatLocale}
-                  currencyLabel={tc('kr')}
+                  currencyLabel={currencySymbol}
                   revenueLabel={t('totalRevenue')}
                 />
               </CardContent>
@@ -482,10 +484,10 @@ export function AnalyticsContent() {
                         <TableCell className="text-right">{stat.gigCount}</TableCell>
                         <TableCell className="text-right">{stat.totalDays}</TableCell>
                         <TableCell className="text-right">
-                          {stat.totalRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                          {stat.totalRevenue.toLocaleString(formatLocale)} {currencySymbol}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
-                          {Math.round(stat.avgPerDay).toLocaleString(formatLocale)} {t('krPerDay')}
+                          {Math.round(stat.avgPerDay).toLocaleString(formatLocale)} {perDayLabel}
                         </TableCell>
                       </TableRow>
                     ))}

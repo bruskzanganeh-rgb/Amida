@@ -78,6 +78,30 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .single()
 
+    // Get base currency for fee display
+    let baseCurrencySymbol = 'SEK'
+    if (membership?.company_id) {
+      const { data: companyRow } = await supabase
+        .from('companies')
+        .select('base_currency')
+        .eq('id', membership.company_id)
+        .single()
+      if (companyRow?.base_currency) {
+        const map: Record<string, string> = {
+          SEK: 'SEK',
+          EUR: '€',
+          USD: '$',
+          DKK: 'DKK',
+          NOK: 'NOK',
+          GBP: '£',
+          CHF: 'CHF',
+          CZK: 'Kč',
+          PLN: 'zł',
+        }
+        baseCurrencySymbol = map[companyRow.base_currency] || companyRow.base_currency
+      }
+    }
+
     let gigQuery = supabase
       .from('gigs')
       .select(
@@ -128,7 +152,10 @@ export async function GET(request: NextRequest) {
         const descParts: string[] = []
         descParts.push(`${labels.client}: ${clientName}`)
         descParts.push(`${labels.type}: ${gig.gig_type?.name || '-'}`)
-        if (gig.fee) descParts.push(`${labels.fee}: ${gig.fee.toLocaleString(locale === 'sv' ? 'sv-SE' : 'en-US')} kr`)
+        if (gig.fee)
+          descParts.push(
+            `${labels.fee}: ${gig.fee.toLocaleString(locale === 'sv' ? 'sv-SE' : 'en-US')} ${baseCurrencySymbol}`,
+          )
         descParts.push(`${labels.statusLabel}: ${getStatusLabel(gig.status, locale)}`)
         if (gig.notes) descParts.push(`\n${gig.notes}`)
 

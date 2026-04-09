@@ -7,6 +7,7 @@ import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/supabase'
 import { getDisplayVenue } from '@/lib/gigs/venue-helpers'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -230,6 +231,7 @@ export default function GigsPage() {
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const { company, members, allMembers } = useCompany()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const gigFilter = useGigFilter()
   const isSharedMode = company?.gig_visibility === 'shared' && members.length > 1
 
@@ -1532,7 +1534,7 @@ export default function GigsPage() {
                               {sortedDeclined
                                 .reduce((sum, g) => sum + (g.fee_base || g.fee || 0), 0)
                                 .toLocaleString(formatLocale)}{' '}
-                              {tc('kr')}
+                              {baseCurrencySymbol}
                             </p>
                           )}
                         </div>
@@ -2167,8 +2169,11 @@ export default function GigsPage() {
                                     <span className="truncate">{exp.supplier}</span>
                                   </div>
                                   <span className="font-medium shrink-0 ml-2">
-                                    {exp.amount.toLocaleString(formatLocale)}{' '}
-                                    {exp.currency === 'SEK' ? tc('kr') : exp.currency}
+                                    {formatCurrency(
+                                      exp.amount,
+                                      (exp.currency || 'SEK') as SupportedCurrency,
+                                      formatLocale,
+                                    )}
                                   </span>
                                 </li>
                               ))}
@@ -2179,7 +2184,7 @@ export default function GigsPage() {
                               <span className="text-muted-foreground">{tc('total')}</span>
                               <span className="font-semibold">
                                 {gigExpenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(formatLocale)}{' '}
-                                {tc('kr')}
+                                {baseCurrencySymbol}
                               </span>
                             </div>
                           )}

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -153,6 +154,7 @@ export default function ImportPage() {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const ti = useTranslations('invoice')
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [currentStep, setCurrentStep] = useState<Step>('select')
   const [files, setFiles] = useState<AnalyzedFile[]>([])
   const [analyzing, setAnalyzing] = useState(false)
@@ -836,7 +838,7 @@ export default function ImportPage() {
                               </p>
                               <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
                                 {file.existingExpense.supplier} - {file.existingExpense.amount.toLocaleString('sv-SE')}{' '}
-                                {tc('kr')} ({file.existingExpense.date})
+                                {baseCurrencySymbol} ({file.existingExpense.date})
                               </p>
                             </div>
                           </div>

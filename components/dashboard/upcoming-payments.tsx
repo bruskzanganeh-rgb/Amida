@@ -11,6 +11,7 @@ import { differenceInDays } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type Invoice = {
   id: string
@@ -26,6 +27,7 @@ export function UpcomingPayments({ className }: { className?: string }) {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -92,7 +94,7 @@ export function UpcomingPayments({ className }: { className?: string }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{t('unpaidInvoices')}</CardTitle>
           <span className="text-sm font-semibold">
-            {totalUnpaid.toLocaleString(formatLocale)} {tc('kr')}
+            {totalUnpaid.toLocaleString(formatLocale)} {baseCurrencySymbol}
           </span>
         </div>
       </CardHeader>

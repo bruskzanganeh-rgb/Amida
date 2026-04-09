@@ -19,6 +19,7 @@ const ClientInvoiceChart = dynamic(
 )
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type Client = {
   id: string
@@ -53,6 +54,7 @@ export default function ClientDetailPage() {
   const tis = useTranslations('invoice.status')
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
 
   const [client, setClient] = useState<Client | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -183,7 +185,7 @@ export default function ClientDetailPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {approx}
-              {totalRevenue.toLocaleString(formatLocale)} {tc('kr')}
+              {totalRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
             </div>
             <p className="text-xs text-muted-foreground">{t('allPaidSentInvoices')}</p>
           </CardContent>
@@ -197,7 +199,7 @@ export default function ClientDetailPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {approx}
-              {unpaidAmount.toLocaleString(formatLocale)} {tc('kr')}
+              {unpaidAmount.toLocaleString(formatLocale)} {baseCurrencySymbol}
             </div>
             <p className="text-xs text-muted-foreground">{t('awaitingPayment')}</p>
           </CardContent>

@@ -7,6 +7,8 @@ import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { categoryLabel } from '@/lib/expenses/categories'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -66,6 +68,7 @@ export default function ExpensesTab() {
   const formatLocale = useFormatLocale()
   const tTeam = useTranslations('team')
   const { company, members, allMembers } = useCompany()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const { shouldFilter, currentUserId: filterUserId, loaded: filterLoaded } = useGigFilter()
   const isSharedMode = company?.gig_visibility === 'shared' && members.length > 1
   const [currentUserId, setCurrentUserId] = useState<string>('')
@@ -284,7 +287,7 @@ export default function ExpensesTab() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalExpenses.toLocaleString(formatLocale)} {tc('kr')}
+                {totalExpenses.toLocaleString(formatLocale)} {baseCurrencySymbol}
               </div>
             </CardContent>
           </Card>
@@ -311,7 +314,7 @@ export default function ExpensesTab() {
                       />
                       <Tooltip
                         formatter={(value: number) => [
-                          `${value.toLocaleString(formatLocale)} ${tc('kr')}`,
+                          `${value.toLocaleString(formatLocale)} ${baseCurrencySymbol}`,
                           tc('total'),
                         ]}
                         labelFormatter={(label) => `${t('year')} ${label}`}
@@ -409,13 +412,15 @@ export default function ExpensesTab() {
                         </div>
                         <div className="text-right shrink-0">
                           <span className="font-semibold text-sm">
-                            {expense.currency && expense.currency !== 'SEK'
-                              ? `${expense.amount.toLocaleString(formatLocale)} ${expense.currency === 'EUR' ? '\u20AC' : '$'}`
-                              : `${expense.amount.toLocaleString(formatLocale)} ${tc('kr')}`}
+                            {formatCurrency(
+                              expense.amount,
+                              (expense.currency || 'SEK') as SupportedCurrency,
+                              formatLocale,
+                            )}
                           </span>
                           {expense.currency && expense.currency !== 'SEK' && expense.amount_base && (
                             <p className="text-xs text-muted-foreground">
-                              {expense.amount_base.toLocaleString(formatLocale)} {tc('kr')}
+                              {expense.amount_base.toLocaleString(formatLocale)} {baseCurrencySymbol}
                             </p>
                           )}
                         </div>
@@ -500,16 +505,15 @@ export default function ExpensesTab() {
                             {expense.currency && expense.currency !== 'SEK' ? (
                               <div>
                                 <span>
-                                  {expense.amount.toLocaleString(formatLocale)}{' '}
-                                  {expense.currency === 'EUR' ? '\u20AC' : '$'}
+                                  {formatCurrency(expense.amount, expense.currency as SupportedCurrency, formatLocale)}
                                 </span>
                                 <span className="text-xs text-muted-foreground ml-1">
-                                  ({expense.amount_base?.toLocaleString(formatLocale)} {tc('kr')})
+                                  ({expense.amount_base?.toLocaleString(formatLocale)} {baseCurrencySymbol})
                                 </span>
                               </div>
                             ) : (
                               <span>
-                                {expense.amount.toLocaleString(formatLocale)} {tc('kr')}
+                                {expense.amount.toLocaleString(formatLocale)} {baseCurrencySymbol}
                               </span>
                             )}
                           </TableCell>

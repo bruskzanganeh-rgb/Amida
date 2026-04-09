@@ -23,6 +23,7 @@ import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { getSignedUrl, type GigAttachment } from '@/lib/supabase/storage'
 import { useCompany } from '@/lib/hooks/use-company'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type Expense = {
   id: string
@@ -62,6 +63,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const { company } = useCompany()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [receipts, setReceipts] = useState<Expense[]>([])
@@ -363,7 +365,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(receipt.date), 'd MMM yyyy', { locale: dateLocale })} •{' '}
-                          {(receipt.amount_base || receipt.amount).toLocaleString(formatLocale)} {tc('kr')}
+                          {(receipt.amount_base || receipt.amount).toLocaleString(formatLocale)} {baseCurrencySymbol}
                         </p>
                       </div>
                       {receipt.attachment_url && (
@@ -383,7 +385,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                     <div className="pt-2 border-t mt-2 text-sm text-muted-foreground">
                       {t('receiptsSelected', { count: selectedReceipts.length })}
                       <span className="ml-1">
-                        ({selectedTotal.toLocaleString(formatLocale)} {tc('kr')})
+                        ({selectedTotal.toLocaleString(formatLocale)} {baseCurrencySymbol})
                       </span>
                     </div>
                   )}

@@ -899,8 +899,11 @@ export default function CalendarPage() {
                               <li key={exp.id} className="flex items-center justify-between text-xs">
                                 <span className="truncate">{exp.supplier}</span>
                                 <span className="font-medium shrink-0 ml-2">
-                                  {exp.amount.toLocaleString(formatLocale)}{' '}
-                                  {exp.currency === 'SEK' ? tc('kr') : exp.currency}
+                                  {formatCurrency(
+                                    exp.amount,
+                                    (exp.currency || 'SEK') as SupportedCurrency,
+                                    formatLocale,
+                                  )}
                                 </span>
                               </li>
                             ))}
@@ -1167,8 +1170,11 @@ export default function CalendarPage() {
                               <li key={exp.id} className="flex items-center justify-between text-xs">
                                 <span className="truncate text-gray-700">{exp.supplier}</span>
                                 <span className="font-medium shrink-0 ml-2 text-gray-900">
-                                  {exp.amount.toLocaleString(formatLocale)}{' '}
-                                  {exp.currency === 'SEK' ? tc('kr') : exp.currency}
+                                  {formatCurrency(
+                                    exp.amount,
+                                    (exp.currency || 'SEK') as SupportedCurrency,
+                                    formatLocale,
+                                  )}
                                 </span>
                               </li>
                             ))}

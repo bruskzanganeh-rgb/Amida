@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type MonthlyRevenue = {
   month: string
@@ -61,9 +62,9 @@ type RevenueChartProps = {
 
 export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueChartProps = {}) {
   const t = useTranslations('dashboard')
-  const tc = useTranslations('common')
   const monthNames = t.raw('monthNames') as string[]
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [data, setData] = useState<MonthlyRevenue[]>([])
   const [compareData, setCompareData] = useState<CompareRow[]>([])
   const [compareYears, setCompareYears] = useState<string[]>([])
@@ -395,7 +396,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
             {selectedYear !== 'all' ? ` ${selectedYear}` : ''}
           </CardTitle>
           <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-            {totalYearRevenue.toLocaleString(formatLocale)} {tc('kr')}
+            {totalYearRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -489,7 +490,10 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
                 width={35}
               />
               <Tooltip
-                formatter={(value: number, name: string) => [`${value.toLocaleString(formatLocale)} ${tc('kr')}`, name]}
+                formatter={(value: number, name: string) => [
+                  `${value.toLocaleString(formatLocale)} ${baseCurrencySymbol}`,
+                  name,
+                ]}
                 contentStyle={{
                   backgroundColor: 'var(--popover)',
                   border: '1px solid var(--border)',
@@ -545,7 +549,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
               />
               <Tooltip
                 formatter={(value: number, name: string) => [
-                  `${value.toLocaleString(formatLocale)} ${tc('kr')}`,
+                  `${value.toLocaleString(formatLocale)} ${baseCurrencySymbol}`,
                   name === 'revenue' ? (viewMode === 'invoice' ? t('invoiced') : t('worked')) : t('total'),
                 ]}
                 labelFormatter={(label) => (selectedYear !== 'all' ? `${label} ${selectedYear}` : label)}

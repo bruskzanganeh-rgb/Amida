@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type ClientRevenue = {
   name: string
@@ -29,6 +30,7 @@ export function TopClients() {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [data, setData] = useState<ClientRevenue[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -78,7 +80,7 @@ export function TopClients() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{t('topClients')}</CardTitle>
           <span className="text-sm font-semibold">
-            {totalRevenue.toLocaleString(formatLocale)} {tc('kr')}
+            {totalRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
           </span>
         </div>
       </CardHeader>
@@ -107,7 +109,10 @@ export function TopClients() {
                 tickFormatter={(value) => (value.length > 15 ? value.substring(0, 15) + '...' : value)}
               />
               <Tooltip
-                formatter={(value: number) => [`${value.toLocaleString(formatLocale)} ${tc('kr')}`, t('revenue')]}
+                formatter={(value: number) => [
+                  `${value.toLocaleString(formatLocale)} ${baseCurrencySymbol}`,
+                  t('revenue'),
+                ]}
                 contentStyle={{
                   backgroundColor: 'var(--popover)',
                   border: '1px solid var(--border)',

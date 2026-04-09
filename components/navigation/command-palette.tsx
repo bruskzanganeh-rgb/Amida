@@ -14,6 +14,7 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { LayoutDashboard, Calendar, CalendarDays, FileText, Receipt, Settings, Music, Building2 } from 'lucide-react'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 interface CommandPaletteProps {
   open: boolean
@@ -43,6 +44,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const [clients, setClients] = useState<ClientResult[]>([])
   const [invoices, setInvoices] = useState<InvoiceResult[]>([])
   const [expenses, setExpenses] = useState<ExpenseResult[]>([])
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const supabase = createClient()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
@@ -272,7 +274,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     <CommandItem key={e.id} value={e.id} onSelect={() => navigate('/expenses')}>
                       <Receipt className="h-4 w-4" />
                       <span>{e.supplier}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{e.amount} kr</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {e.amount} {baseCurrencySymbol}
+                      </span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

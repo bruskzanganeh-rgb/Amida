@@ -113,7 +113,7 @@ export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">{t('mrr')}</p>
-            <p className="text-2xl font-bold">{stats?.mrr ?? 0} kr</p>
+            <p className="text-2xl font-bold">{stats?.mrr ?? 0} SEK</p>
           </CardContent>
         </Card>
       </div>
@@ -123,7 +123,7 @@ export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">{t('arr')}</p>
-            <p className="text-2xl font-bold">{stats?.arr ?? 0} kr</p>
+            <p className="text-2xl font-bold">{stats?.arr ?? 0} SEK</p>
           </CardContent>
         </Card>
         <Card>

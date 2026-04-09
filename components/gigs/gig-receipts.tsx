@@ -11,6 +11,8 @@ import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 
 type Expense = {
   id: string
@@ -34,6 +36,7 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
   const dateLocale = useDateLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
@@ -91,7 +94,7 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
           <h3 className="font-medium">{t('receipts')}</h3>
           {expenses.length > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {expenses.length} {tc('items')} • {totalAmount.toLocaleString('sv-SE')} {tc('kr')}
+              {expenses.length} {tc('items')} • {totalAmount.toLocaleString('sv-SE')} {baseCurrencySymbol}
             </Badge>
           )}
         </div>
@@ -130,12 +133,12 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
                   {format(new Date(expense.date), 'PPP', { locale: dateLocale })} •{' '}
                   {expense.currency && expense.currency !== 'SEK' ? (
                     <>
-                      {expense.amount.toLocaleString('sv-SE')} {expense.currency === 'EUR' ? '€' : expense.currency} (
-                      {expense.amount_base?.toLocaleString('sv-SE')} {tc('kr')})
+                      {formatCurrency(expense.amount, expense.currency as SupportedCurrency, 'sv-SE')} (
+                      {expense.amount_base?.toLocaleString('sv-SE')} {baseCurrencySymbol})
                     </>
                   ) : (
                     <>
-                      {expense.amount.toLocaleString('sv-SE')} {tc('kr')}
+                      {expense.amount.toLocaleString('sv-SE')} {baseCurrencySymbol}
                     </>
                   )}
                 </p>

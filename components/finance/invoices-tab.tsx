@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCompany } from '@/lib/hooks/use-company'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import useSWR from 'swr'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -121,6 +122,7 @@ export default function InvoicesTab() {
   const formatLocale = useFormatLocale()
   const tTeam = useTranslations('team')
   const { company, members, allMembers } = useCompany()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const { shouldFilter, currentUserId: filterUserId, loaded: filterLoaded } = useGigFilter()
   const isSharedMode = company?.gig_visibility === 'shared' && members.length > 1
   const [currentUserId, setCurrentUserId] = useState<string>('')
@@ -517,10 +519,11 @@ export default function InvoicesTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {Math.round(invoicedThisYear).toLocaleString(formatLocale)} {tc('kr')}
+                    {Math.round(invoicedThisYear).toLocaleString(formatLocale)} {baseCurrencySymbol}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {tc('inclVat')}: {Math.round(invoicedThisYearInkl).toLocaleString(formatLocale)} {tc('kr')}
+                    {tc('inclVat')}: {Math.round(invoicedThisYearInkl).toLocaleString(formatLocale)}{' '}
+                    {baseCurrencySymbol}
                   </p>
                 </CardContent>
               </Card>
@@ -533,7 +536,7 @@ export default function InvoicesTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {paidThisYear.toLocaleString(formatLocale)} {tc('kr')}
+                    {paidThisYear.toLocaleString(formatLocale)} {baseCurrencySymbol}
                   </div>
                 </CardContent>
               </Card>
@@ -544,7 +547,7 @@ export default function InvoicesTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {unpaidTotal.toLocaleString(formatLocale)} {tc('kr')}
+                    {unpaidTotal.toLocaleString(formatLocale)} {baseCurrencySymbol}
                   </div>
                 </CardContent>
               </Card>
@@ -555,7 +558,7 @@ export default function InvoicesTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {upcomingRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                    {upcomingRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
                   </div>
                 </CardContent>
               </Card>

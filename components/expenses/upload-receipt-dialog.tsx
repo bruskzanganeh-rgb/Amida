@@ -36,6 +36,7 @@ import { GigCombobox } from '@/components/expenses/gig-combobox'
 import { GigListBox } from '@/components/expenses/gig-listbox'
 import { isValidReceiptFile, ALLOWED_RECEIPT_EXTENSIONS } from '@/lib/upload/file-validation'
 import { EXPENSE_CATEGORIES, categoryLabel } from '@/lib/expenses/categories'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type UploadReceiptDialogProps = {
   open: boolean
@@ -80,6 +81,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const { canScanReceipt, limits, usage, hasHadSubscription } = useSubscription()
   const [step, setStep] = useState<'upload' | 'review' | 'saving'>('upload')
   const [file, setFile] = useState<File | null>(null)
@@ -382,7 +384,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                 </p>
                 <p className="text-sm text-amber-700 mt-1">
                   {t('similarExpenseExists')}: <strong>{duplicateWarning.supplier}</strong> -{' '}
-                  {duplicateWarning.amount.toLocaleString('sv-SE')} {tc('kr')} ({duplicateWarning.date})
+                  {duplicateWarning.amount.toLocaleString('sv-SE')} {baseCurrencySymbol} ({duplicateWarning.date})
                   {duplicateWarning.category && ` [${duplicateWarning.category}]`}
                 </p>
                 {duplicateWarning.matchType &&

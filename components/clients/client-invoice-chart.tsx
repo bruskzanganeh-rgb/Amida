@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type Invoice = {
   id: string
@@ -23,8 +24,8 @@ type Props = {
 
 export function ClientInvoiceChart({ invoices }: Props) {
   const t = useTranslations('client')
-  const tc = useTranslations('common')
   const td = useTranslations('dashboard')
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
 
   // Get available years from invoices
   const availableYears = useMemo(() => {
@@ -76,7 +77,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
           <p className="text-sm text-muted-foreground mt-1">
             {t('totalYear', { year: selectedYear })}:{' '}
             <span className="font-semibold">
-              {yearTotal.toLocaleString('sv-SE')} {tc('kr')}
+              {yearTotal.toLocaleString('sv-SE')} {baseCurrencySymbol}
             </span>
           </p>
         </div>
@@ -111,7 +112,10 @@ export function ClientInvoiceChart({ invoices }: Props) {
               tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              formatter={(value: number) => [`${value.toLocaleString('sv-SE')} ${tc('kr')}`, t('invoicedLabel')]}
+              formatter={(value: number) => [
+                `${value.toLocaleString('sv-SE')} ${baseCurrencySymbol}`,
+                t('invoicedLabel'),
+              ]}
               labelFormatter={(label) => `${label} ${selectedYear}`}
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',

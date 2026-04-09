@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Loader2, Download, FileArchive, FileText, Files, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type ExportDialogProps = {
   open: boolean
@@ -35,6 +36,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const formatLocale = useFormatLocale()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [loading, setLoading] = useState(false)
   const [exporting, setExporting] = useState<string | null>(null)
   const [availableMonths, setAvailableMonths] = useState<MonthSummary[]>([])
@@ -263,7 +265,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                   <div className="col-span-2">
                     <span className="text-muted-foreground">{t('totalSum')}:</span>
                     <span className="ml-2 font-medium">
-                      {Math.round(selectedSummary.total).toLocaleString(formatLocale)} {tc('kr')}
+                      {Math.round(selectedSummary.total).toLocaleString(formatLocale)} {baseCurrencySymbol}
                     </span>
                   </div>
                 </div>

@@ -22,6 +22,7 @@ import { SponsorBanner } from '@/components/sponsor-banner'
 import { UsageSummary } from '@/components/dashboard/usage-summary'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -88,6 +89,7 @@ export default function DashboardPage() {
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
   const { fullName, loading: companyLoading } = useCompany()
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
 
   const [upcomingGigs, setUpcomingGigs] = useState<UpcomingGig[]>([])
   const [upcomingRevenue, setUpcomingRevenue] = useState(0)
@@ -360,7 +362,7 @@ export default function DashboardPage() {
                   {t('upcoming')}
                 </CardTitle>
                 <span className="text-sm font-semibold tabular-nums">
-                  {loading ? '—' : upcomingRevenue.toLocaleString(formatLocale)} {tc('kr')}
+                  {loading ? '—' : upcomingRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -393,7 +395,7 @@ export default function DashboardPage() {
                         </span>
                         {gig.fee && (
                           <span className="text-muted-foreground shrink-0 tabular-nums">
-                            {gig.fee.toLocaleString(formatLocale)} {tc('kr')}
+                            {gig.fee.toLocaleString(formatLocale)} {baseCurrencySymbol}
                           </span>
                         )}
                       </Link>

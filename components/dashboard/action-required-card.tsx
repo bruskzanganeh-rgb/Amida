@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { format, type Locale } from 'date-fns'
 import Link from 'next/link'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 export type PendingGig = {
   id: string
@@ -66,7 +67,7 @@ export function ActionRequiredCard({
 }: Props) {
   const t = useTranslations('dashboard')
   const tGig = useTranslations('gig')
-  const tc = useTranslations('common')
+  const { symbol: baseCurrencySymbol } = useBaseCurrency()
 
   const totalCount = pendingGigs.length + needsActionGigs.length
   if (totalCount === 0) return null
@@ -112,7 +113,7 @@ export function ActionRequiredCard({
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="font-semibold">
-                        {gig.fee?.toLocaleString(formatLocale) || '—'} {tc('kr')}
+                        {gig.fee?.toLocaleString(formatLocale) || '—'} {baseCurrencySymbol}
                       </span>
                       <Link
                         href="/gigs"
