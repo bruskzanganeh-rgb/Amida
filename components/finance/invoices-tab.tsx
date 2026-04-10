@@ -414,6 +414,17 @@ export default function InvoicesTab() {
       const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
       setPdfPreviewFilename(filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`)
       const blob = await res.blob()
+
+      // On mobile, open PDF in browser's native viewer instead of react-pdf dialog
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        const url = URL.createObjectURL(blob)
+        window.open(url, '_blank')
+        setPdfPreviewOpen(false)
+        setPdfPreviewLoading(false)
+        return
+      }
+
       setPdfPreviewData(new Uint8Array(await blob.arrayBuffer()))
       setPdfPreviewDownloadUrl(URL.createObjectURL(blob))
     } catch {

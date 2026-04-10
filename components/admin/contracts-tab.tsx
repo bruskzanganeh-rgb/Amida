@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Send, Download, Loader2, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contract, ContractAudit, ContractWithAudit } from '@/lib/contracts/types'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -520,6 +521,7 @@ function ContractDetail({
   onSend: () => void
   onCancel: () => void
 }) {
+  const formatLocale = useFormatLocale()
   const hasReviewer = contract.reviewer_email
   const statusSteps = hasReviewer
     ? ['draft', 'sent_to_reviewer', 'reviewed', 'sent', 'viewed', 'signed']
@@ -586,7 +588,7 @@ function ContractDetail({
           {contract.reviewer_name && <span className="text-muted-foreground"> ({contract.reviewer_email})</span>}
           {contract.reviewed_at && (
             <span className="text-green-600 ml-2">
-              Reviewed {new Date(contract.reviewed_at).toLocaleDateString('sv-SE')}
+              Reviewed {new Date(contract.reviewed_at).toLocaleDateString(formatLocale)}
             </span>
           )}
         </div>

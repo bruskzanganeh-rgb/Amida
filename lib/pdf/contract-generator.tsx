@@ -189,17 +189,19 @@ type ContractPdfParams = {
   signedAt?: string | null
   signerIp?: string | null
   documentHash?: string | null
+  locale?: string
 }
 
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency }).format(amount)
+function formatCurrency(amount: number, currency: string, locale = 'sv-SE'): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount)
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('sv-SE')
+function formatDate(dateStr: string, locale = 'sv-SE'): string {
+  return new Date(dateStr).toLocaleDateString(locale)
 }
 
 function ContractDocument(params: ContractPdfParams) {
+  const locale = params.locale || 'sv-SE'
   const vatAmount = params.annualPrice * (params.vatRatePct / 100)
   const totalWithVat = params.annualPrice + vatAmount
 
@@ -219,9 +221,9 @@ function ContractDocument(params: ContractPdfParams) {
             <Text style={styles.contractNumber}>{params.contractNumber}</Text>
           </View>
           <View>
-            <Text style={styles.dateText}>Date: {formatDate(params.contractStartDate)}</Text>
+            <Text style={styles.dateText}>Date: {formatDate(params.contractStartDate, locale)}</Text>
             {params.signed && params.signedAt && (
-              <Text style={styles.dateText}>Signed: {formatDate(params.signedAt)}</Text>
+              <Text style={styles.dateText}>Signed: {formatDate(params.signedAt, locale)}</Text>
             )}
           </View>
         </View>
@@ -260,15 +262,15 @@ function ContractDocument(params: ContractPdfParams) {
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>Annual Price (excl. VAT)</Text>
-          <Text style={styles.tableValue}>{formatCurrency(params.annualPrice, params.currency)}</Text>
+          <Text style={styles.tableValue}>{formatCurrency(params.annualPrice, params.currency, locale)}</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>VAT ({params.vatRatePct}%)</Text>
-          <Text style={styles.tableValue}>{formatCurrency(vatAmount, params.currency)}</Text>
+          <Text style={styles.tableValue}>{formatCurrency(vatAmount, params.currency, locale)}</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>Total (incl. VAT)</Text>
-          <Text style={styles.tableValue}>{formatCurrency(totalWithVat, params.currency)}</Text>
+          <Text style={styles.tableValue}>{formatCurrency(totalWithVat, params.currency, locale)}</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>Billing Interval</Text>
@@ -279,7 +281,7 @@ function ContractDocument(params: ContractPdfParams) {
         <Text style={styles.sectionTitle}>4. Contract Duration</Text>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>Start Date</Text>
-          <Text style={styles.tableValue}>{formatDate(params.contractStartDate)}</Text>
+          <Text style={styles.tableValue}>{formatDate(params.contractStartDate, locale)}</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableLabel}>Duration</Text>
@@ -324,7 +326,7 @@ function ContractDocument(params: ContractPdfParams) {
             <Text style={styles.signatureLabel}>Service Provider</Text>
             <Text style={styles.signatureName}>Amida</Text>
             <Text style={styles.signatureDetail}>Authorized Representative</Text>
-            <Text style={styles.signatureDetail}>Date: {formatDate(params.contractStartDate)}</Text>
+            <Text style={styles.signatureDetail}>Date: {formatDate(params.contractStartDate, locale)}</Text>
           </View>
 
           {/* Subscriber signature */}
@@ -343,7 +345,9 @@ function ContractDocument(params: ContractPdfParams) {
                 />
                 <Text style={styles.signatureName}>{params.signerName}</Text>
                 {params.signerTitle && <Text style={styles.signatureDetail}>{params.signerTitle}</Text>}
-                <Text style={styles.signatureDetail}>Date: {params.signedAt ? formatDate(params.signedAt) : ''}</Text>
+                <Text style={styles.signatureDetail}>
+                  Date: {params.signedAt ? formatDate(params.signedAt, locale) : ''}
+                </Text>
                 <Text style={styles.signatureDetail}>IP: {params.signerIp || ''}</Text>
               </>
             ) : (

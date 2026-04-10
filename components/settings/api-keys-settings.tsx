@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Key, Trash2, Copy, Check, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ const AVAILABLE_SCOPES = [
 ]
 
 export function ApiKeysSettings() {
+  const formatLocale = useFormatLocale()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [newKeyName, setNewKeyName] = useState('')
   const [selectedScopes, setSelectedScopes] = useState<string[]>([])
@@ -186,8 +188,10 @@ export function ApiKeysSettings() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Created {new Date(key.created_at).toLocaleDateString()}
-                      {key.last_used_at && <> · Last used {new Date(key.last_used_at).toLocaleDateString()}</>}
+                      Created {new Date(key.created_at).toLocaleDateString(formatLocale)}
+                      {key.last_used_at && (
+                        <> · Last used {new Date(key.last_used_at).toLocaleDateString(formatLocale)}</>
+                      )}
                     </p>
                   </div>
                   <Button

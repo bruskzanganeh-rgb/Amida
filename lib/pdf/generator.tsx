@@ -713,6 +713,12 @@ function InvoicePDF({
                   {line}
                 </Text>
               ))}
+              {company.vat_registration_number && (
+                <>
+                  <Text style={styles.footerLabel}>{l.vatRegNumber}</Text>
+                  <Text style={styles.footerValue}>{company.vat_registration_number}</Text>
+                </>
+              )}
             </View>
 
             {/* Column 2: Contact info */}
@@ -752,12 +758,6 @@ function InvoicePDF({
                 <>
                   <Text style={styles.footerLabel}>{l.bankAddress}</Text>
                   <Text style={styles.footerValue}>{company.bank_address}</Text>
-                </>
-              )}
-              {company.vat_registration_number && (
-                <>
-                  <Text style={styles.footerLabel}>{l.vatRegNumber}</Text>
-                  <Text style={styles.footerValue}>{company.vat_registration_number}</Text>
                 </>
               )}
             </View>

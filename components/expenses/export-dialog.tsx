@@ -128,7 +128,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       if (format === 'individual') {
         // Hämta lista med URLer
         const response = await fetch(
-          `/api/expenses/export?year=${selectedYear}&month=${selectedMonth}&format=individual`,
+          `/api/expenses/export?year=${selectedYear}&month=${selectedMonth}&format=individual&locale=${formatLocale}`,
         )
         const result = await response.json()
 
@@ -152,7 +152,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       } else {
         // Ladda ner ZIP eller PDF
         const response = await fetch(
-          `/api/expenses/export?year=${selectedYear}&month=${selectedMonth}&format=${format}`,
+          `/api/expenses/export?year=${selectedYear}&month=${selectedMonth}&format=${format}&locale=${formatLocale}`,
         )
 
         if (!response.ok) {

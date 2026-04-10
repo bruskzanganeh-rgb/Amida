@@ -25,11 +25,13 @@ import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 export function SubscriptionSettings() {
   const t = useTranslations('subscription')
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
+  const formatLocale = useFormatLocale()
 
   const { subscription, usage, isPro, isTeam, limits, loading, refresh, syncWithStripe, storageQuota, tierConfig } =
     useSubscription()
@@ -241,7 +243,7 @@ export function SubscriptionSettings() {
               <p className="text-sm text-muted-foreground mb-2">{isTeam ? t('teamAccess') : t('unlimitedAccess')}</p>
               {subscription?.current_period_end && (
                 <p className="text-xs text-muted-foreground">
-                  {t('renewsAt', { date: new Date(subscription.current_period_end).toLocaleDateString('sv-SE') })}
+                  {t('renewsAt', { date: new Date(subscription.current_period_end).toLocaleDateString(formatLocale) })}
                 </p>
               )}
               {storageQuota && (

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Plus, Copy, Trash2, RefreshCw, Ticket } from 'lucide-react'
 import { toast } from 'sonner'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 type InvitationCode = {
   id: string
@@ -24,6 +25,7 @@ type InvitationCode = {
 export function InvitationsTab() {
   const t = useTranslations('admin')
   const tc = useTranslations('common')
+  const formatLocale = useFormatLocale()
   const [codes, setCodes] = useState<InvitationCode[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -166,12 +168,12 @@ export function InvitationsTab() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {code.expires_at ? new Date(code.expires_at).toLocaleDateString('sv-SE') : '—'}
+                        {code.expires_at ? new Date(code.expires_at).toLocaleDateString(formatLocale) : '—'}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {new Date(code.created_at).toLocaleDateString('sv-SE')}
+                        {new Date(code.created_at).toLocaleDateString(formatLocale)}
                       </span>
                     </TableCell>
                     <TableCell>

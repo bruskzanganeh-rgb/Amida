@@ -13,10 +13,7 @@ function getClientInfo(request: NextRequest) {
 }
 
 // GET /api/contracts/review/[token] — Public: get contract data for review page
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { ip } = getClientInfo(request)
   const { success } = rateLimit(`contract-review-view:${ip}`, 10, 60_000)
   if (!success) return rateLimitResponse()
@@ -26,7 +23,9 @@ export async function GET(
 
   const { data: contract, error } = await adminClient
     .from('contracts')
-    .select('id, contract_number, tier, annual_price, currency, billing_interval, vat_rate_pct, contract_start_date, contract_duration_months, custom_terms, signer_name, signer_email, reviewer_name, reviewer_email, reviewer_title, status, reviewer_token_expires_at, document_hash_sha256, unsigned_pdf_path, company:companies(company_name, org_number, address)')
+    .select(
+      'id, contract_number, tier, annual_price, currency, billing_interval, vat_rate_pct, contract_start_date, contract_duration_months, custom_terms, signer_name, signer_email, reviewer_name, reviewer_email, reviewer_title, status, reviewer_token_expires_at, document_hash_sha256, unsigned_pdf_path, company:companies(company_name, org_number, address)',
+    )
     .eq('reviewer_token', token)
     .single()
 
@@ -91,10 +90,7 @@ export async function GET(
 }
 
 // POST /api/contracts/review/[token] — Reviewer approves and forwards to signer
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { ip, userAgent } = getClientInfo(request)
   const { success } = rateLimit(`contract-review-approve:${ip}`, 3, 60_000)
   if (!success) return rateLimitResponse()
@@ -182,7 +178,7 @@ export async function POST(
             </a>
           </div>
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-            This link expires on ${tokenExpiresAt.toLocaleDateString('sv-SE')}.
+            This link expires on ${tokenExpiresAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
           </p>
         </div>
       `,

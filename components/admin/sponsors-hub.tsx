@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 type InstrumentCategory = {
   id: string
@@ -102,6 +103,7 @@ export function SponsorsHub({
   onReload,
 }: Props) {
   const t = useTranslations('admin')
+  const formatLocale = useFormatLocale()
   const tc = useTranslations('common')
   const tToast = useTranslations('toast')
   const supabase = createClient()
@@ -473,7 +475,7 @@ export function SponsorsHub({
     d.setMonth(d.getMonth() - i)
     const from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
     const to = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString()
-    const label = d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })
+    const label = d.toLocaleDateString(formatLocale, { month: 'long', year: 'numeric' })
     return { value: `${from}|${to}`, label }
   })
 

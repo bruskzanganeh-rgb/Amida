@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
     const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString())
     const month = parseInt(searchParams.get('month') || (new Date().getMonth() + 1).toString())
     const format = searchParams.get('format') || 'zip'
+    const locale = searchParams.get('locale') || 'sv-SE'
 
     // Load user locale to localize category labels in export
     const { data: userSettings } = await serverSupabase
@@ -180,7 +181,7 @@ export async function GET(request: NextRequest) {
     // Filtrera ut utgifter med bilagor
     const expensesWithAttachments = typedExpenses.filter((e) => e.attachment_url)
 
-    const monthName = new Date(year, month - 1).toLocaleDateString('sv-SE', { month: 'long' })
+    const monthName = new Date(year, month - 1).toLocaleDateString(locale, { month: 'long' })
     const fileBaseName = `${year}-${month.toString().padStart(2, '0')}-Kvitton`
 
     // Format: individual - returnera bara URLer
@@ -235,7 +236,7 @@ export async function GET(request: NextRequest) {
         color: rgb(0, 0, 0),
       })
 
-      summaryPage.drawText(`Genererad: ${new Date().toLocaleDateString('sv-SE')}`, {
+      summaryPage.drawText(`Genererad: ${new Date().toLocaleDateString(locale)}`, {
         x: 50,
         y: pageHeight - 90,
         size: 10,
@@ -357,7 +358,7 @@ export async function GET(request: NextRequest) {
         color: rgb(0, 0, 0),
       })
 
-      summaryPage.drawText(`Genererad: ${new Date().toLocaleDateString('sv-SE')}`, {
+      summaryPage.drawText(`Genererad: ${new Date().toLocaleDateString(locale)}`, {
         x: 50,
         y: height - 90,
         size: 10,

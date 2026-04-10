@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             </a>
           </div>
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-            This link expires on ${tokenExpiresAt.toLocaleDateString('sv-SE')}.<br/>
+            This link expires on ${tokenExpiresAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.<br/>
             If you did not expect this email, please disregard it.
           </p>
         </div>
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           </a>
         </div>
         <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-          This link expires on ${tokenExpiresAt.toLocaleDateString('sv-SE')}.<br/>
+          This link expires on ${tokenExpiresAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.<br/>
           If you did not expect this email, please disregard it.
         </p>
       </div>
