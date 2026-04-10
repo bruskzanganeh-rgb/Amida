@@ -32,7 +32,7 @@ export function PdfViewer({ data }: PdfViewerProps) {
   }, [])
 
   if (error) {
-    const blob = new Blob([data], { type: 'application/pdf' })
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/pdf' })
     const url = URL.createObjectURL(blob)
     return (
       <div className="h-[80vh] flex flex-col items-center justify-center bg-gray-100 rounded-lg gap-4">
