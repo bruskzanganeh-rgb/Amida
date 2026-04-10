@@ -402,6 +402,20 @@ export default function InvoicesTab() {
   }
 
   async function openPdfPreview(invoiceId: string, invoiceNumber: number) {
+    // On mobile, open PDF directly via link navigation instead of react-pdf dialog.
+    // Safari blocks window.open() in async context, so we use link click instead.
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      const a = document.createElement('a')
+      a.href = `/api/invoices/${invoiceId}/pdf`
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     setPdfPreviewInvoiceNumber(invoiceNumber)
     setPdfPreviewOpen(true)
     setPdfPreviewLoading(true)
@@ -414,17 +428,6 @@ export default function InvoicesTab() {
       const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
       setPdfPreviewFilename(filenameMatch?.[1] || `Faktura-${invoiceNumber}.pdf`)
       const blob = await res.blob()
-
-      // On mobile, open PDF in browser's native viewer instead of react-pdf dialog
-      const isMobile = window.innerWidth < 768
-      if (isMobile) {
-        const url = URL.createObjectURL(blob)
-        window.open(url, '_blank')
-        setPdfPreviewOpen(false)
-        setPdfPreviewLoading(false)
-        return
-      }
-
       setPdfPreviewData(new Uint8Array(await blob.arrayBuffer()))
       setPdfPreviewDownloadUrl(URL.createObjectURL(blob))
     } catch {
