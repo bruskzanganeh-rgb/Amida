@@ -297,37 +297,42 @@ describe('Cross-tenant RLS isolation', () => {
   // =========================================================================
 
   test('cannot INSERT a gig into another company', async () => {
-    // Fetch a gig_type from the test company (needed for FK)
-    const { data: gt } = await userClient
+    const admin = getAdminClient()
+    // Create a temporary gig_type in the test company (needed for FK)
+    const { data: gt } = await admin
       .from('gig_types')
+      .insert({ name: 'RLS-Test-Temp-GigType', vat_rate: 0, company_id: TEST_COMPANY_ID })
       .select('id')
-      .eq('company_id', TEST_COMPANY_ID)
-      .limit(1)
       .single()
 
     expect(gt).not.toBeNull()
 
-    const { data } = await userClient
-      .from('gigs')
-      .insert({
-        date: '2099-12-31',
-        gig_type_id: gt!.id,
-        project_name: 'RLS-Insert-Attack-Gig',
-        company_id: OTHER_COMPANY_ID,
-        status: 'accepted',
-      })
-      .select('id')
-      .single()
+    try {
+      const { data } = await userClient
+        .from('gigs')
+        .insert({
+          date: '2099-12-31',
+          gig_type_id: gt!.id,
+          project_name: 'RLS-Insert-Attack-Gig',
+          company_id: OTHER_COMPANY_ID,
+          status: 'accepted',
+        })
+        .select('id')
+        .single()
 
-    // RLS WITH CHECK should block this insert
-    // Either we get an error or the insert silently fails
-    if (data?.id) {
-      // If somehow inserted, clean up and fail
-      await getAdminClient().from('gigs').delete().eq('id', data.id)
-      expect.fail('INSERT into another company should have been blocked by RLS')
-    } else {
-      // Expected: error or null data
-      expect(data).toBeNull()
+      // RLS WITH CHECK should block this insert
+      // Either we get an error or the insert silently fails
+      if (data?.id) {
+        // If somehow inserted, clean up and fail
+        await admin.from('gigs').delete().eq('id', data.id)
+        expect.fail('INSERT into another company should have been blocked by RLS')
+      } else {
+        // Expected: error or null data
+        expect(data).toBeNull()
+      }
+    } finally {
+      // Clean up the temporary gig_type
+      if (gt?.id) await admin.from('gig_types').delete().eq('id', gt.id)
     }
   })
 
