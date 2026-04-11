@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { SessionTracker } from '@/components/session-tracker'
+import { GlobalErrorHandler } from '@/components/global-error-handler'
 import { createClient } from '@/lib/supabase/server'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -94,6 +95,7 @@ export default async function RootLayout({
                 <Header />
                 <main className="flex-1 overflow-y-auto overscroll-none bg-background">
                   <SessionTracker />
+                  <GlobalErrorHandler />
                   <div className="p-4 pt-2 pb-4 md:px-6 md:pt-4 md:pb-6 max-w-[1600px] mx-auto w-full">{children}</div>
                 </main>
                 <BottomNav />

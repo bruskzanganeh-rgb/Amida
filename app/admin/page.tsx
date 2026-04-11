@@ -17,6 +17,7 @@ import {
   CreditCard,
   Ticket,
   PenLine,
+  AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -30,6 +31,7 @@ import { SessionsTab } from '@/components/admin/sessions-tab'
 import { StripeTab } from '@/components/admin/stripe-tab'
 import { InvitationsTab } from '@/components/admin/invitations-tab'
 import { ContractsTab } from '@/components/admin/contracts-tab'
+import { ClientErrorsTab } from '@/components/admin/client-errors-tab'
 
 type User = {
   user_id: string
@@ -350,6 +352,10 @@ export default function AdminPage() {
               <PenLine className="h-4 w-4" />
               <span className="hidden sm:inline">Contracts</span>
             </TabsTrigger>
+            <TabsTrigger value="errors" className="gap-1.5">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Errors</span>
+            </TabsTrigger>
             <TabsTrigger value="config" className="gap-1.5">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">{t('config')}</span>
@@ -389,6 +395,9 @@ export default function AdminPage() {
           </TabsContent>
           <TabsContent value="contracts" className="mt-4">
             <ContractsTab />
+          </TabsContent>
+          <TabsContent value="errors" className="mt-4">
+            <ClientErrorsTab />
           </TabsContent>
           <TabsContent value="config" className="mt-4">
             <ConfigTab
