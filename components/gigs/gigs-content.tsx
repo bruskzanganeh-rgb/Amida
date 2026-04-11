@@ -893,18 +893,30 @@ export default function GigsPage() {
                                       </p>
                                     )}
                                   </div>
-                                  <div className="text-right shrink-0">
-                                    <span className="font-semibold text-sm">
-                                      {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
-                                    </span>
-                                    <div className="mt-0.5">
-                                      <Badge
-                                        className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
-                                      >
-                                        {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
-                                        {tStatus(gig.status)}
-                                      </Badge>
+                                  <div className="text-right shrink-0 flex items-start gap-1.5">
+                                    <div>
+                                      <span className="font-semibold text-sm">
+                                        {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
+                                      </span>
+                                      <div className="mt-0.5">
+                                        <Badge
+                                          className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
+                                        >
+                                          {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
+                                          {tStatus(gig.status)}
+                                        </Badge>
+                                      </div>
                                     </div>
+                                    <button
+                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      title={t('editGig')}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openEditById(gig.id)
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -1272,18 +1284,30 @@ export default function GigsPage() {
                                       </p>
                                     )}
                                   </div>
-                                  <div className="text-right shrink-0">
-                                    <span className="font-semibold text-sm">
-                                      {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
-                                    </span>
-                                    <div className="mt-0.5">
-                                      <Badge
-                                        className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
-                                      >
-                                        {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
-                                        {tStatus(gig.status)}
-                                      </Badge>
+                                  <div className="text-right shrink-0 flex items-start gap-1.5">
+                                    <div>
+                                      <span className="font-semibold text-sm">
+                                        {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
+                                      </span>
+                                      <div className="mt-0.5">
+                                        <Badge
+                                          className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
+                                        >
+                                          {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
+                                          {tStatus(gig.status)}
+                                        </Badge>
+                                      </div>
                                     </div>
+                                    <button
+                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      title={t('editGig')}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openEditById(gig.id)
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -1585,18 +1609,30 @@ export default function GigsPage() {
                                       </p>
                                     )}
                                   </div>
-                                  <div className="text-right shrink-0">
-                                    <span className="font-semibold text-sm">
-                                      {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
-                                    </span>
-                                    <div className="mt-0.5">
-                                      <Badge
-                                        className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
-                                      >
-                                        {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
-                                        {tStatus(gig.status)}
-                                      </Badge>
+                                  <div className="text-right shrink-0 flex items-start gap-1.5">
+                                    <div>
+                                      <span className="font-semibold text-sm">
+                                        {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
+                                      </span>
+                                      <div className="mt-0.5">
+                                        <Badge
+                                          className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
+                                        >
+                                          {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
+                                          {tStatus(gig.status)}
+                                        </Badge>
+                                      </div>
                                     </div>
+                                    <button
+                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      title={t('editGig')}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openEditById(gig.id)
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
                                   </div>
                                 </div>
                               </div>

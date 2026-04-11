@@ -20,6 +20,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/supabase'
 import { downloadFile } from '@/lib/download'
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 
 type Invoice = {
   id: string
@@ -33,6 +34,7 @@ type Invoice = {
   total: number
   status: string
   client_id: string
+  currency: string | null
   original_pdf_url: string | null
   pdf_url: string | null
   imported_from_pdf: boolean
@@ -77,6 +79,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
     total: 0,
     status: 'draft',
     paid_date: '',
+    currency: 'SEK',
   })
 
   const statuses = [
@@ -100,6 +103,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
         total: invoice.total,
         status: invoice.status,
         paid_date: invoice.paid_date || '',
+        currency: invoice.currency || 'SEK',
       })
       const hasSentPdf = !!invoice.pdf_url
       const hasOriginalPdf = !!invoice.original_pdf_url
@@ -167,6 +171,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
           total: formData.total,
           status: formData.status as Database['public']['Enums']['invoice_status'],
           paid_date: formData.paid_date || null,
+          currency: formData.currency,
         })
         .eq('id', invoice.id)
 
@@ -320,13 +325,31 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
 
                 <div className="space-y-1">
                   <Label htmlFor="subtotal">{t('netAmount')}</Label>
-                  <Input
-                    id="subtotal"
-                    type="number"
-                    step="0.01"
-                    value={formData.subtotal}
-                    onChange={(e) => setFormData({ ...formData, subtotal: parseFloat(e.target.value) || 0 })}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="subtotal"
+                      type="number"
+                      step="0.01"
+                      className="flex-1"
+                      value={formData.subtotal}
+                      onChange={(e) => setFormData({ ...formData, subtotal: parseFloat(e.target.value) || 0 })}
+                    />
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({ ...formData, currency: value as SupportedCurrency })}
+                    >
+                      <SelectTrigger className="w-[90px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-1">

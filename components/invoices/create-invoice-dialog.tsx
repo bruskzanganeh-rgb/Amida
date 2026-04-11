@@ -18,7 +18,7 @@ import { InvoicePreview } from './invoice-preview'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
-import { getRate, formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { getRate, formatCurrency, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
 
 type GigExpense = {
@@ -137,6 +137,7 @@ export function CreateInvoiceDialog({
   const [lines, setLines] = useState<InvoiceLine[]>([{ description: '', amount: '', gig_type_id: '' }])
   const [selectedGigIds, setSelectedGigIds] = useState<Set<string>>(new Set())
   const [clientGigs, setClientGigs] = useState<InitialGig[]>([])
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(null)
   const initializedRef = useRef(false)
 
   const supabase = createClient()
@@ -169,7 +170,8 @@ export function CreateInvoiceDialog({
     return companyCurrency
   }, [clientGigs, selectedGigIds, companyCurrency])
 
-  const currencyLabel = invoiceCurrency === 'SEK' ? 'kr' : invoiceCurrency
+  const effectiveCurrency = (currencyOverride || invoiceCurrency) as SupportedCurrency
+  const currencyLabel = effectiveCurrency === 'SEK' ? 'kr' : effectiveCurrency
 
   // Auto-detect reverse charge
   const isReverseCharge = useMemo(() => {
@@ -436,9 +438,9 @@ export function CreateInvoiceDialog({
     // Convert to base currency (SEK) if invoice is in foreign currency
     let exchangeRate = 1.0
     let totalBase = total
-    if (invoiceCurrency !== 'SEK') {
+    if (effectiveCurrency !== 'SEK') {
       try {
-        exchangeRate = await getRate(invoiceCurrency as SupportedCurrency, 'SEK', formData.invoice_date)
+        exchangeRate = await getRate(effectiveCurrency, 'SEK', formData.invoice_date)
         totalBase = Math.round(total * exchangeRate * 100) / 100
       } catch (err) {
         console.error('Exchange rate fetch failed:', err)
@@ -462,7 +464,7 @@ export function CreateInvoiceDialog({
           vat_amount: vatAmount,
           total,
           total_base: totalBase,
-          currency: invoiceCurrency,
+          currency: effectiveCurrency,
           exchange_rate: exchangeRate,
           status: 'draft',
           reference_person_override: referencePersonOverride,
@@ -577,7 +579,7 @@ export function CreateInvoiceDialog({
                   notes={formData.notes}
                   reverseCharge={isReverseCharge}
                   locale={selectedClient?.invoice_language || undefined}
-                  currency={invoiceCurrency}
+                  currency={effectiveCurrency}
                 />
               </div>
             </div>
@@ -726,6 +728,23 @@ export function CreateInvoiceDialog({
                     onChange={(e) => setFormData({ ...formData, reference_person: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground">{t('referencePrefilledHint')}</p>
+                </div>
+
+                {/* Valuta */}
+                <div className="space-y-2">
+                  <Label>{tc('currency')}</Label>
+                  <Select value={effectiveCurrency} onValueChange={(value) => setCurrencyOverride(value)}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Fakturarader */}
