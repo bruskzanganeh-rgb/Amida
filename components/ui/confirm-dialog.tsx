@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   AlertDialog,
@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useTranslations } from 'next-intl'
 
 type ConfirmDialogProps = {
   open: boolean
@@ -27,27 +28,28 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Bekräfta',
-  cancelLabel = 'Avbryt',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   onConfirm,
 }: ConfirmDialogProps) {
+  const tc = useTranslations('common')
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="whitespace-pre-line">
-            {description}
-          </AlertDialogDescription>
+          <AlertDialogDescription className="whitespace-pre-line">{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogCancel>{cancelLabel || tc('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className={variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            className={
+              variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''
+            }
           >
-            {confirmLabel}
+            {confirmLabel || tc('confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
