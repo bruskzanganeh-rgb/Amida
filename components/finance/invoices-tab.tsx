@@ -151,7 +151,6 @@ export default function InvoicesTab() {
   const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
   const [pdfPreviewFilename, setPdfPreviewFilename] = useState<string>('')
-  const [mobilePdfUrl, setMobilePdfUrl] = useState<string | null>(null)
   const [mobileInvoiceLimit, setMobileInvoiceLimit] = useState(20)
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -403,15 +402,6 @@ export default function InvoicesTab() {
   }
 
   async function openPdfPreview(invoiceId: string, invoiceNumber: number) {
-    // On mobile, show PDF in a fullscreen iframe overlay using Safari's native PDF renderer.
-    // This avoids react-pdf issues on mobile and keeps the user in the app with a close button.
-    const isMobile = window.innerWidth < 768
-    if (isMobile) {
-      setPdfPreviewInvoiceNumber(invoiceNumber)
-      setMobilePdfUrl(`/api/invoices/${invoiceId}/pdf`)
-      return
-    }
-
     setPdfPreviewInvoiceNumber(invoiceNumber)
     setPdfPreviewOpen(true)
     setPdfPreviewLoading(true)
@@ -1153,11 +1143,14 @@ export default function InvoicesTab() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-[700px] p-0" showCloseButton={false}>
+          <DialogContent
+            className="max-w-[100vw] max-h-[100dvh] w-full h-[100dvh] sm:max-w-[700px] sm:h-auto sm:max-h-[90vh] p-0 rounded-none sm:rounded-lg"
+            showCloseButton={false}
+          >
             <DialogTitle className="sr-only">
               {t('invoice')} #{pdfPreviewInvoiceNumber}
             </DialogTitle>
-            <div className="relative">
+            <div className="relative h-full flex flex-col">
               <div className="absolute top-2 right-2 z-10 flex gap-1">
                 {pdfPreviewDownloadUrl && (
                   <a
@@ -1177,40 +1170,19 @@ export default function InvoicesTab() {
                 </button>
               </div>
               {pdfPreviewLoading ? (
-                <div className="flex items-center justify-center h-96">
+                <div className="flex items-center justify-center h-96 sm:h-96 flex-1 sm:flex-none">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               ) : pdfPreviewData ? (
-                <PdfViewer data={pdfPreviewData} />
+                <div className="flex-1 sm:flex-none overflow-auto">
+                  <PdfViewer data={pdfPreviewData} />
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-96 text-gray-500">{t('errorLoadingPdf')}</div>
               )}
             </div>
           </DialogContent>
         </Dialog>
-
-        {/* Mobile PDF fullscreen overlay — uses iframe for native Safari PDF rendering */}
-        {mobilePdfUrl && (
-          <div className="fixed inset-0 z-50 bg-white flex flex-col">
-            <div className="flex items-center justify-between p-3 border-b bg-white">
-              <span className="font-medium text-sm">
-                {t('invoice')} #{pdfPreviewInvoiceNumber}
-              </span>
-              <div className="flex gap-2">
-                <a href={mobilePdfUrl} download className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
-                  <Download className="h-5 w-5" />
-                </a>
-                <button
-                  onClick={() => setMobilePdfUrl(null)}
-                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <iframe src={mobilePdfUrl} className="flex-1 w-full" title="PDF" />
-          </div>
-        )}
       </div>
     </PageTransition>
   )
