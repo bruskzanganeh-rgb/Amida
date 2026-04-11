@@ -45,22 +45,31 @@ let _initPromise: Promise<void> | null = null
 function ensureLoaded() {
   if (_initPromise) return _initPromise
   _initPromise = (async () => {
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
+    try {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        _loaded = true
+        notify()
+        return
+      }
+      _currentUserId = user.id
+
+      const { data } = await supabase
+        .from('company_settings')
+        .select('show_only_my_data')
+        .eq('user_id', user.id)
+        .single()
+
+      _showOnlyMine = data?.show_only_my_data ?? false
+    } catch {
+      _showOnlyMine = false
+    } finally {
       _loaded = true
       notify()
-      return
     }
-    _currentUserId = user.id
-
-    const { data } = await supabase.from('company_settings').select('show_only_my_data').eq('user_id', user.id).single()
-
-    _showOnlyMine = data?.show_only_my_data ?? false
-    _loaded = true
-    notify()
   })()
   return _initPromise
 }

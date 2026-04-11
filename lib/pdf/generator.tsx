@@ -474,14 +474,14 @@ function formatCurrencyPdf(amount: number, currency = 'SEK'): string {
   return `${formatted} ${symbol}`
 }
 
-// Format date — always ISO yyyy-MM-dd (unambiguous across locales)
-function formatDate(dateStr: string): string {
-  // Input is typically already yyyy-MM-dd, but normalize to be safe
+// Format date — locale-aware: sv → yyyy-MM-dd, en → dd/MM/yyyy
+function formatDate(dateStr: string, locale = 'sv'): string {
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
+  if (locale === 'en') return `${day}/${month}/${year}`
   return `${year}-${month}-${day}`
 }
 
@@ -555,11 +555,11 @@ function InvoicePDF({
           <View style={styles.datesSection}>
             <View style={styles.dateRow}>
               <Text style={styles.dateLabel}>{l.invoiceDate}</Text>
-              <Text style={styles.dateValue}>{formatDate(invoice.invoice_date)}</Text>
+              <Text style={styles.dateValue}>{formatDate(invoice.invoice_date, locale)}</Text>
             </View>
             <View style={styles.dateRow}>
               <Text style={styles.dateLabel}>{l.dueDate}</Text>
-              <Text style={styles.dateValue}>{formatDate(invoice.due_date)}</Text>
+              <Text style={styles.dateValue}>{formatDate(invoice.due_date, locale)}</Text>
             </View>
           </View>
         </View>
@@ -598,14 +598,14 @@ function InvoicePDF({
                 </Text>
               </View>
             )}
-            {company.bankgiro ? (
+            {company.bankgiro?.trim() ? (
               <View style={styles.invoiceDetailItem}>
                 <Text>
                   <Text style={styles.invoiceDetailLabel}>{l.bankgiro} </Text>
                   <Text style={styles.invoiceDetailValue}>{company.bankgiro}</Text>
                 </Text>
               </View>
-            ) : company.bank_account ? (
+            ) : company.bank_account?.trim() ? (
               <View style={styles.invoiceDetailItem}>
                 <Text>
                   <Text style={styles.invoiceDetailLabel}>{l.bankAccount} </Text>
@@ -613,7 +613,7 @@ function InvoicePDF({
                 </Text>
               </View>
             ) : null}
-            {company.iban && (
+            {company.iban?.trim() && (
               <View style={styles.invoiceDetailItem}>
                 <Text>
                   <Text style={styles.invoiceDetailLabel}>{l.iban} </Text>
@@ -621,7 +621,7 @@ function InvoicePDF({
                 </Text>
               </View>
             )}
-            {company.bic && (
+            {company.bic?.trim() && (
               <View style={styles.invoiceDetailItem}>
                 <Text>
                   <Text style={styles.invoiceDetailLabel}>{l.bic} </Text>
@@ -713,7 +713,7 @@ function InvoicePDF({
                   {line}
                 </Text>
               ))}
-              {company.vat_registration_number && (
+              {company.vat_registration_number?.trim() && (
                 <>
                   <Text style={styles.footerLabel}>{l.vatRegNumber}</Text>
                   <Text style={styles.footerValue}>{company.vat_registration_number}</Text>
@@ -731,30 +731,30 @@ function InvoicePDF({
 
             {/* Column 3: Payment info */}
             <View style={styles.footerColumnRight}>
-              {company.bankgiro ? (
+              {company.bankgiro?.trim() ? (
                 <>
                   <Text style={styles.footerLabel}>{l.bankgiro}</Text>
                   <Text style={styles.footerValueBold}>{company.bankgiro}</Text>
                 </>
-              ) : company.bank_account ? (
+              ) : company.bank_account?.trim() ? (
                 <>
                   <Text style={styles.footerLabel}>{l.bankAccount}</Text>
                   <Text style={styles.footerValueBold}>{company.bank_account}</Text>
                 </>
               ) : null}
-              {company.iban && (
+              {company.iban?.trim() && (
                 <>
                   <Text style={styles.footerLabel}>{l.iban}</Text>
                   <Text style={styles.footerValue}>{company.iban}</Text>
                 </>
               )}
-              {company.bic && (
+              {company.bic?.trim() && (
                 <>
                   <Text style={styles.footerLabel}>{l.bic}</Text>
                   <Text style={styles.footerValue}>{company.bic}</Text>
                 </>
               )}
-              {company.bank_address && (
+              {company.bank_address?.trim() && (
                 <>
                   <Text style={styles.footerLabel}>{l.bankAddress}</Text>
                   <Text style={styles.footerValue}>{company.bank_address}</Text>

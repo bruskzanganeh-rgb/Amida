@@ -226,7 +226,7 @@ export default function InvoicesTab() {
   const invoices = searchQuery.trim()
     ? allInvoices.filter((inv) => {
         const q = searchQuery.toLowerCase()
-        return String(inv.invoice_number).includes(q) || inv.client.name.toLowerCase().includes(q)
+        return String(inv.invoice_number).includes(q) || (inv.client?.name?.toLowerCase() ?? '').includes(q)
       })
     : allInvoices
 

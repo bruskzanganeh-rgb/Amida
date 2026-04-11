@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -15,13 +15,16 @@ export function PdfViewer({ data }: PdfViewerProps) {
   const [numPages, setNumPages] = useState(0)
   const [containerWidth, setContainerWidth] = useState(0)
   const [error, setError] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Copy the data on each render to avoid "buffer already detached" errors
   // when pdf.js transfers the ArrayBuffer to its worker
   const file = useMemo(() => ({ data: new Uint8Array(data) }), [data])
 
-  const containerRef = useCallback((node: HTMLDivElement | null) => {
+  useEffect(() => {
+    const node = containerRef.current
     if (!node) return
+    setContainerWidth(node.clientWidth)
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerWidth(entry.contentRect.width)
@@ -32,7 +35,7 @@ export function PdfViewer({ data }: PdfViewerProps) {
   }, [])
 
   if (error) {
-    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/pdf' })
+    const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' })
     const url = URL.createObjectURL(blob)
     return (
       <div className="h-[80vh] flex flex-col items-center justify-center bg-gray-100 rounded-lg gap-4">
@@ -49,7 +52,10 @@ export function PdfViewer({ data }: PdfViewerProps) {
       <Document
         file={file}
         onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-        onLoadError={() => setError(true)}
+        onLoadError={(err) => {
+          console.error('PDF load error:', err)
+          setError(true)
+        }}
         loading={null}
       >
         {Array.from({ length: numPages }, (_, i) => (

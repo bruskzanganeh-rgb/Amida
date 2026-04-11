@@ -88,23 +88,31 @@ export function useSubscription() {
     }
 
     async function loadSubscription() {
-      const { data: sub } = await supabase.from('subscriptions').select('*').limit(1).single()
-      if (cancelled) return
+      try {
+        const { data: sub } = await supabase.from('subscriptions').select('*').limit(1).single()
+        if (cancelled) return
 
-      setSubscription(sub)
+        setSubscription(sub)
 
-      const now = new Date()
-      const { data: usageData } = await supabase
-        .from('usage_tracking')
-        .select('invoice_count, receipt_scan_count, email_send_count')
-        .eq('year', now.getFullYear())
-        .eq('month', now.getMonth() + 1)
-        .limit(1)
-        .single()
+        const now = new Date()
+        const { data: usageData } = await supabase
+          .from('usage_tracking')
+          .select('invoice_count, receipt_scan_count, email_send_count')
+          .eq('year', now.getFullYear())
+          .eq('month', now.getMonth() + 1)
+          .limit(1)
+          .single()
 
-      if (!cancelled) {
-        setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0, email_send_count: 0 })
-        setSubLoaded(true)
+        if (!cancelled) {
+          setUsage(usageData || { invoice_count: 0, receipt_scan_count: 0, email_send_count: 0 })
+          setSubLoaded(true)
+        }
+      } catch {
+        if (!cancelled) {
+          setSubscription(null)
+          setUsage({ invoice_count: 0, receipt_scan_count: 0, email_send_count: 0 })
+          setSubLoaded(true)
+        }
       }
     }
 
