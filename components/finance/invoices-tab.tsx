@@ -151,6 +151,7 @@ export default function InvoicesTab() {
   const [pdfPreviewLoading, setPdfPreviewLoading] = useState(false)
   const [pdfPreviewInvoiceNumber, setPdfPreviewInvoiceNumber] = useState<number>(0)
   const [pdfPreviewFilename, setPdfPreviewFilename] = useState<string>('')
+  const [mobilePdfUrl, setMobilePdfUrl] = useState<string | null>(null)
   const [mobileInvoiceLimit, setMobileInvoiceLimit] = useState(20)
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -402,17 +403,12 @@ export default function InvoicesTab() {
   }
 
   async function openPdfPreview(invoiceId: string, invoiceNumber: number) {
-    // On mobile, open PDF directly via link navigation instead of react-pdf dialog.
-    // Safari blocks window.open() in async context, so we use link click instead.
+    // On mobile, show PDF in a fullscreen iframe overlay using Safari's native PDF renderer.
+    // This avoids react-pdf issues on mobile and keeps the user in the app with a close button.
     const isMobile = window.innerWidth < 768
     if (isMobile) {
-      const a = document.createElement('a')
-      a.href = `/api/invoices/${invoiceId}/pdf`
-      a.target = '_blank'
-      a.rel = 'noopener noreferrer'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      setPdfPreviewInvoiceNumber(invoiceNumber)
+      setMobilePdfUrl(`/api/invoices/${invoiceId}/pdf`)
       return
     }
 
@@ -1192,6 +1188,29 @@ export default function InvoicesTab() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Mobile PDF fullscreen overlay — uses iframe for native Safari PDF rendering */}
+        {mobilePdfUrl && (
+          <div className="fixed inset-0 z-50 bg-white flex flex-col">
+            <div className="flex items-center justify-between p-3 border-b bg-white">
+              <span className="font-medium text-sm">
+                {t('invoice')} #{pdfPreviewInvoiceNumber}
+              </span>
+              <div className="flex gap-2">
+                <a href={mobilePdfUrl} download className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                  <Download className="h-5 w-5" />
+                </a>
+                <button
+                  onClick={() => setMobilePdfUrl(null)}
+                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <iframe src={mobilePdfUrl} className="flex-1 w-full" title="PDF" />
+          </div>
+        )}
       </div>
     </PageTransition>
   )
