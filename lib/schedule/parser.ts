@@ -155,7 +155,7 @@ Returnera ENDAST JSON:
 }
 
 Regler:
-- Datum i ISO-format (YYYY-MM-DD)
+- Datum i ISO-format (YYYY-MM-DD). Tvetydiga datum som 04/03/2026 ska tolkas som europeiskt (dd/mm/yyyy = 4 mars), INTE amerikanskt (mm/dd/yyyy)
 - Tider i HH:MM-format
 - Om sluttid saknas, sätt end till null
 - project_name och venue kan vara null om otydliga
@@ -205,7 +205,7 @@ Return ONLY JSON:
 }
 
 Rules:
-- Dates in ISO format (YYYY-MM-DD)
+- Dates in ISO format (YYYY-MM-DD). Ambiguous dates like 04/03/2026 should be interpreted as European (dd/mm/yyyy = March 4th), NOT American (mm/dd/yyyy)
 - Times in HH:MM format
 - If end time is missing, set end to null
 - project_name and venue can be null if unclear

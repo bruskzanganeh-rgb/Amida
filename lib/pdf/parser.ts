@@ -28,7 +28,7 @@ The client name is typically found after labels like "Kund:", "Faktureras till:"
 
 Rules:
 - All monetary amounts in SEK (kr)
-- Dates in ISO format (YYYY-MM-DD)
+- Dates in ISO format (YYYY-MM-DD). Ambiguous dates like 04/03/2026 should be interpreted as European (dd/mm/yyyy = March 4th), NOT American (mm/dd/yyyy)
 - VAT rate must be exactly 0, 6, or 25 (Swedish rates)
 - Invoice numbers are integers
 - Client name MUST be the actual organization name from the invoice, not "Företag AB" or similar placeholders
@@ -50,9 +50,7 @@ Do NOT use placeholder names like "Företag AB", "Company AB", or similar generi
 
 Return ONLY a JSON object with these exact keys.`
 
-export async function parseInvoiceWithAI(
-  extractedText: string
-): Promise<ParsedInvoiceData> {
+export async function parseInvoiceWithAI(extractedText: string): Promise<ParsedInvoiceData> {
   try {
     const model = 'claude-haiku-4-5-20251001'
     const message = await anthropic.messages.create({
@@ -76,9 +74,7 @@ export async function parseInvoiceWithAI(
       outputTokens: message.usage.output_tokens,
     })
 
-    const responseText = message.content[0]?.type === 'text'
-      ? message.content[0].text
-      : null
+    const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
 
     if (!responseText) {
       throw new Error('No response from Claude')
@@ -110,8 +106,6 @@ export async function parseInvoiceWithAI(
     if (error instanceof z.ZodError) {
       throw new Error(`Invalid AI response format: ${error.message}`)
     }
-    throw new Error(
-      `Failed to parse invoice with Claude: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
+    throw new Error(`Failed to parse invoice with Claude: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

@@ -67,7 +67,7 @@ function getSystemPrompt(locale: 'sv' | 'en' = 'sv'): string {
 Extract data from receipt images with high accuracy.
 
 Rules:
-- Date in ISO format (YYYY-MM-DD)
+- Date in ISO format (YYYY-MM-DD). Ambiguous dates like 04/03/2026 should be interpreted as European (dd/mm/yyyy = March 4th), NOT American (mm/dd/yyyy)
 - Amount should be the TOTAL (including VAT/tax)
 - Detect currency from symbols (kr/SEK, €/EUR, $/USD, £/GBP)
 - Choose the best-fitting category
@@ -91,7 +91,7 @@ IMPORTANT: Return ONLY JSON, nothing else. The "notes" field must be in English.
 Extrahera data från kvittobilder med hög noggrannhet.
 
 Regler:
-- Datum i ISO-format (YYYY-MM-DD)
+- Datum i ISO-format (YYYY-MM-DD). Tvetydiga datum som 04/03/2026 ska tolkas som europeiskt (dd/mm/yyyy = 4 mars), INTE amerikanskt (mm/dd/yyyy)
 - Belopp ska vara TOTALSUMMAN (inklusive moms)
 - Gissa valuta baserat på symboler (kr/SEK, €/EUR, $/USD, £/GBP)
 - Välj kategori som passar bäst
