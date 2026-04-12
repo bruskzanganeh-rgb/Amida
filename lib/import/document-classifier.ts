@@ -326,12 +326,22 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
     throw new Error('Inget svar från Claude')
   }
 
-  // Rensa eventuell markdown
+  // Extrahera JSON-objekt robust — hanterar markdown-wrapping och extra text
   let jsonText = responseText.trim()
-  if (jsonText.startsWith('```json')) {
-    jsonText = jsonText.replace(/^```json\n?/, '').replace(/\n?```$/, '')
-  } else if (jsonText.startsWith('```')) {
-    jsonText = jsonText.replace(/^```\n?/, '').replace(/\n?```$/, '')
+
+  // Ta bort markdown code blocks
+  const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlockMatch) {
+    jsonText = codeBlockMatch[1].trim()
+  }
+
+  // Om det fortfarande inte börjar med { — hitta första { och sista }
+  if (!jsonText.startsWith('{')) {
+    const start = jsonText.indexOf('{')
+    const end = jsonText.lastIndexOf('}')
+    if (start !== -1 && end > start) {
+      jsonText = jsonText.substring(start, end + 1)
+    }
   }
 
   // Parsa JSON
