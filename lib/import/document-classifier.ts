@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
-import { extractText, renderPageAsImage } from 'unpdf'
+import { extractText } from 'unpdf'
 import { logAiUsage } from '@/lib/ai/usage-logger'
 import { EXPENSE_CATEGORIES } from '@/lib/expenses/categories'
 
@@ -152,25 +152,50 @@ async function extractPdfText(buffer: ArrayBuffer): Promise<string> {
   return result.text.join('\n')
 }
 
-// Konvertera första sidan i PDF till base64 PNG
-async function pdfPageToBase64(buffer: ArrayBuffer): Promise<string> {
-  const uint8Array = new Uint8Array(buffer)
-  const imageArrayBuffer = await renderPageAsImage(uint8Array, 1, {
-    scale: 2.0,
-    canvasImport: () => import('@napi-rs/canvas'),
+// Klassificera PDF direkt via Claude API (stöder PDF nativt)
+async function classifyPdfWithVision(buffer: ArrayBuffer, originalFilename: string): Promise<ClassifiedDocument> {
+  const base64 = Buffer.from(buffer).toString('base64')
+  const model = 'claude-haiku-4-5-20251001'
+  const message = await anthropic.messages.create({
+    model,
+    max_tokens: 1024,
+    temperature: 0,
+    system: CLASSIFIER_PROMPT,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: base64,
+            },
+          },
+          {
+            type: 'text',
+            text: `Klassificera detta dokument.\n\nFilnamn: ${originalFilename}`,
+          },
+        ],
+      },
+    ],
   })
-  // Konvertera ArrayBuffer till base64
-  const bytes = new Uint8Array(imageArrayBuffer)
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
+
+  await logAiUsage({
+    usageType: 'document_classify_vision',
+    model,
+    inputTokens: message.usage.input_tokens,
+    outputTokens: message.usage.output_tokens,
+    metadata: { filename: originalFilename },
+  })
+
+  return parseAIResponse(message)
 }
 
 // Klassificera med text (snabbare, använder Haiku utan vision)
 async function classifyWithText(text: string, originalFilename: string): Promise<ClassifiedDocument> {
-  const model = 'claude-haiku-4-5-latest'
+  const model = 'claude-haiku-4-5-20251001'
   const message = await anthropic.messages.create({
     model,
     max_tokens: 1024,
@@ -198,27 +223,24 @@ async function classifyWithText(text: string, originalFilename: string): Promise
 
 // Klassificera PDF-dokument (med automatisk Vision-fallback)
 export async function classifyPdfDocument(buffer: ArrayBuffer, originalFilename: string): Promise<ClassifiedDocument> {
-  // Skapa en kopia av buffern eftersom unpdf kan detacha den
-  const bufferCopy = buffer.slice(0)
-
-  // 1. Försök extrahera text först (snabbast)
+  // 1. Försök extrahera text först (snabbast, billigast)
   try {
-    const text = await extractPdfText(buffer)
+    const bufferCopy = buffer.slice(0)
+    const text = await extractPdfText(bufferCopy)
     if (text && text.trim().length >= 50) {
       try {
         return await classifyWithText(text, originalFilename)
       } catch {
-        // Text classification failed — fall through to vision
+        // Text classification failed — fall through to PDF vision
       }
     }
   } catch {
-    // Text extraction failed — fall back to vision
+    // Text extraction failed — fall back to PDF vision
   }
 
-  // 2. Fallback: Rendera PDF som bild och använd Vision
+  // 2. Fallback: Skicka PDF direkt till Claude API (ingen canvas behövs)
   try {
-    const imageBase64 = await pdfPageToBase64(bufferCopy)
-    return classifyImageDocument(imageBase64, 'image/png', originalFilename)
+    return await classifyPdfWithVision(buffer, originalFilename)
   } catch (error) {
     throw new Error(`Kunde inte analysera PDF: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
