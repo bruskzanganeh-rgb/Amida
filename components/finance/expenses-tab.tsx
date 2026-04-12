@@ -320,8 +320,9 @@ export default function ExpensesTab() {
                         labelFormatter={(label) => `${t('year')} ${label}`}
                         contentStyle={{
                           backgroundColor: 'var(--popover)',
-                          border: '1px solid var(--border)',
+                          border: 'none',
                           borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                         }}
                       />
                       <Bar dataKey="total" radius={[4, 4, 0, 0]}>
