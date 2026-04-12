@@ -517,8 +517,8 @@ export default function ExpensesTab() {
                               </span>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">{expense.notes || '-'}</span>
+                          <TableCell className="max-w-[300px]">
+                            <span className="text-sm text-muted-foreground line-clamp-1">{expense.notes || '-'}</span>
                           </TableCell>
                           {isSharedMode && (
                             <TableCell>
