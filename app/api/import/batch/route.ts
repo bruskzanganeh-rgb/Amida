@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
               amount: expenseData.total,
               currency: expenseData.currency || 'SEK',
               amount_base: expenseData.total,
-              category: expenseData.category || 'Övrigt',
+              category: expenseData.category || 'other',
               notes: expenseData.notes || null,
               attachment_url: attachmentUrl,
               user_id: user.id,
