@@ -225,11 +225,11 @@ export default function AvailabilityPage() {
   function getStatusColor(status: WeekStatus): string {
     switch (status) {
       case 'free':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200'
+        return 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
       case 'partial':
-        return 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
+        return 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50'
       case 'busy':
-        return 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+        return 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-200 dark:hover:bg-red-900/50'
     }
   }
 
@@ -247,9 +247,9 @@ export default function AvailabilityPage() {
   function getStatusIcon(status: WeekStatus) {
     switch (status) {
       case 'free':
-        return <CheckCircle className="h-4 w-4 text-emerald-600" />
+        return <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
       case 'partial':
-        return <Clock className="h-4 w-4 text-amber-600" />
+        return <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
       case 'busy':
         return <AlertCircle className="h-4 w-4 text-red-600" />
     }
@@ -326,31 +326,31 @@ export default function AvailabilityPage() {
 
         {/* Statistik */}
         <div className="grid gap-3 md:grid-cols-3 shrink-0">
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/30 border-emerald-200/50 py-3 px-4">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/30 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200/50 dark:border-emerald-800/50 py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-emerald-700">{t('freeWeeks')}</p>
-                <p className="text-lg font-bold text-emerald-900">{freeWeeks}</p>
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">{t('freeWeeks')}</p>
+                <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">{freeWeeks}</p>
               </div>
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
+              <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
           </Card>
-          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/30 border-amber-200/50 py-3 px-4">
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50 dark:border-amber-800/50 py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-amber-700">{t('partiallyBooked')}</p>
-                <p className="text-lg font-bold text-amber-900">{partialWeeks}</p>
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">{t('partiallyBooked')}</p>
+                <p className="text-lg font-bold text-amber-900 dark:text-amber-100">{partialWeeks}</p>
               </div>
-              <Clock className="h-4 w-4 text-amber-600" />
+              <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
           </Card>
-          <Card className="bg-gradient-to-br from-red-50 to-red-100/30 border-red-200/50 py-3 px-4">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100/30 dark:from-red-950/30 dark:to-red-900/20 border-red-200/50 dark:border-red-800/50 py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-red-700">{t('fullyBooked')}</p>
-                <p className="text-lg font-bold text-red-900">{busyWeeks}</p>
+                <p className="text-xs font-medium text-red-700 dark:text-red-400">{t('fullyBooked')}</p>
+                <p className="text-lg font-bold text-red-900 dark:text-red-100">{busyWeeks}</p>
               </div>
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
             </div>
           </Card>
         </div>
@@ -479,7 +479,7 @@ export default function AvailabilityPage() {
                 <div ref={detailScrollRef} className="h-full overflow-y-auto px-4 py-3 space-y-2">
                   {selectedWeek.gigs.length === 0 ? (
                     <div className="text-center py-6 text-muted-foreground">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-500 dark:text-emerald-400" />
                       <p>{t('entirelyFreeThisWeek')}</p>
                     </div>
                   ) : (
@@ -544,7 +544,7 @@ export default function AvailabilityPage() {
               <div className="space-y-2">
                 {selectedWeek.gigs.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    <CheckCircle className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                    <CheckCircle className="h-6 w-6 mx-auto mb-2 text-emerald-500 dark:text-emerald-400" />
                     <p className="text-sm">{t('entirelyFreeThisWeek')}</p>
                   </div>
                 ) : (
