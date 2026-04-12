@@ -170,7 +170,7 @@ export function GigDialog({
       setManualExchangeRate('')
 
       // Reset date entry mode — skip chooser for edit or when a date is pre-selected
-      setDateEntryMode(gig || initialDate ? 'manual' : 'choose')
+      setDateEntryMode(gig ? 'manual' : 'choose')
 
       // Reset form for create mode
       if (!gig) {
