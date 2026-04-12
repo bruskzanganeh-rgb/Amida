@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getRateServer, type SupportedCurrency } from '@/lib/currency/exchange'
+
+/** Convert amount to SEK. For future dates, uses today's rate. */
+async function toBaseSEK(amount: number, currency: string, date: string | null): Promise<number> {
+  if (currency === 'SEK') return amount
+  try {
+    // Use expense date or today — Frankfurter only has historical rates,
+    // so clamp to today if the date is in the future
+    const today = new Date().toISOString().split('T')[0]
+    const rateDate = !date || date > today ? today : date
+    const rate = await getRateServer(currency as SupportedCurrency, 'SEK', rateDate)
+    return Math.round(amount * rate * 100) / 100
+  } catch {
+    return amount
+  }
+}
 
 type FileMetadata = {
   id: string
@@ -205,7 +221,7 @@ export async function POST(request: NextRequest) {
               vat_amount: expenseData.vatAmount,
               amount: expenseData.total,
               currency: expenseData.currency || 'SEK',
-              amount_base: expenseData.total,
+              amount_base: await toBaseSEK(expenseData.total, expenseData.currency || 'SEK', expenseData.date),
               category: expenseData.category || 'other',
               notes: expenseData.notes || null,
               attachment_url: attachmentUrl,
@@ -218,7 +234,16 @@ export async function POST(request: NextRequest) {
             throw insertError
           }
 
-          // Expense imported
+          // Track newly inserted expense for intra-batch duplicate detection
+          if (expense) {
+            existingExpenses?.push({
+              id: expense.id,
+              date: expenseData.date || new Date().toISOString().split('T')[0],
+              supplier: expenseData.supplier,
+              amount: expenseData.total,
+              category: expenseData.category || 'other',
+            })
+          }
 
           results.push({
             fileId: fileMeta.id,

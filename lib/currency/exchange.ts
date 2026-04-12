@@ -57,7 +57,7 @@ async function fetchRateFromAPI(from: SupportedCurrency, to: SupportedCurrency, 
 async function fetchRateFromFrankfurter(from: SupportedCurrency, to: SupportedCurrency, date: string): Promise<number> {
   if (from === to) return 1.0
 
-  const url = `https://api.frankfurter.app/${date}?from=${from}&to=${to}`
+  const url = `https://api.frankfurter.dev/v1/${date}?from=${from}&to=${to}`
   const response = await fetch(url)
 
   if (!response.ok) {

@@ -9,7 +9,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.anthropic.com https://api.frankfurter.app",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.anthropic.com https://api.frankfurter.dev",
   "frame-src 'self' blob: https://js.stripe.com https://*.supabase.co",
   "object-src 'none'",
   "base-uri 'self'",

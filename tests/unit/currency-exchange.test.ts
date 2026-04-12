@@ -320,7 +320,7 @@ describe('getRateServer', () => {
 
     const rate = await getRateServer('EUR', 'SEK', '2025-06-01')
     expect(rate).toBe(10.8)
-    expect(mockFetch).toHaveBeenCalledWith('https://api.frankfurter.app/2025-06-01?from=EUR&to=SEK')
+    expect(mockFetch).toHaveBeenCalledWith('https://api.frankfurter.dev/v1/2025-06-01?from=EUR&to=SEK')
   })
 
   it('throws when API returns an error', async () => {

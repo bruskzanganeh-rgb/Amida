@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `https://api.frankfurter.app/${date}?from=${from}&to=${to}`
+    const url = `https://api.frankfurter.dev/v1/${date}?from=${from}&to=${to}`
     const response = await fetch(url, {
       // Cache at the edge — exchange rates for past dates never change
       next: { revalidate: 60 * 60 * 24 }, // 24h
