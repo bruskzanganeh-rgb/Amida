@@ -362,6 +362,11 @@ export default function ImportPage() {
           }
         }),
       )
+
+      // Small delay between batches to avoid overwhelming the server
+      if (i + BATCH_SIZE < files.length) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
     }
 
     setAnalyzing(false)

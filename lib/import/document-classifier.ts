@@ -204,8 +204,12 @@ export async function classifyPdfDocument(buffer: ArrayBuffer, originalFilename:
   // 1. Försök extrahera text först (snabbast)
   try {
     const text = await extractPdfText(buffer)
-    if (text && text.trim().length >= 10) {
-      return classifyWithText(text, originalFilename)
+    if (text && text.trim().length >= 50) {
+      try {
+        return await classifyWithText(text, originalFilename)
+      } catch {
+        // Text classification failed — fall through to vision
+      }
     }
   } catch {
     // Text extraction failed — fall back to vision
