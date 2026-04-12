@@ -319,8 +319,8 @@ export default function ExpensesTab() {
                         ]}
                         labelFormatter={(label) => `${t('year')} ${label}`}
                         contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
+                          backgroundColor: 'var(--popover)',
+                          border: '1px solid var(--border)',
                           borderRadius: '8px',
                         }}
                       />
