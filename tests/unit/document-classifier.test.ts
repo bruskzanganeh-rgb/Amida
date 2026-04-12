@@ -21,7 +21,6 @@ vi.mock('@anthropic-ai/sdk', () => {
 // Mock unpdf
 vi.mock('unpdf', () => ({
   extractText: vi.fn(),
-  renderPageAsImage: vi.fn(),
 }))
 
 // Mock AI usage logger
@@ -75,7 +74,7 @@ import type { ExpenseData, InvoiceData } from '@/lib/import/document-classifier'
 
 import { matchClient } from '@/lib/import/client-matcher'
 
-import { extractText, renderPageAsImage } from 'unpdf'
+import { extractText } from 'unpdf'
 
 // ===========================================================================
 // Helpers
@@ -726,7 +725,6 @@ describe('parseAIResponse — invoice preprocessing', () => {
 // ===========================================================================
 describe('classifyPdfDocument', () => {
   const mockedExtractText = vi.mocked(extractText)
-  const mockedRenderPage = vi.mocked(renderPageAsImage)
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -746,18 +744,15 @@ describe('classifyPdfDocument', () => {
 
     expect(result.type).toBe('expense')
     expect(mockedExtractText).toHaveBeenCalledTimes(1)
-    expect(mockedRenderPage).not.toHaveBeenCalled()
+    // Only one AI call (text classification), no PDF vision fallback
+    expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to vision when text extraction yields too little text', async () => {
+  it('falls back to PDF vision when text extraction yields too little text', async () => {
     mockedExtractText.mockResolvedValueOnce({
       text: ['short'],
       totalPages: 1,
     } as unknown)
-
-    // renderPageAsImage returns an ArrayBuffer
-    const imageBuffer = new ArrayBuffer(4)
-    mockedRenderPage.mockResolvedValueOnce(imageBuffer as unknown)
 
     const response = makeExpenseResponse()
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -766,14 +761,12 @@ describe('classifyPdfDocument', () => {
     const result = await classifyPdfDocument(buffer, 'scan.pdf')
 
     expect(result.type).toBe('expense')
-    expect(mockedRenderPage).toHaveBeenCalledTimes(1)
+    // PDF sent directly to Claude API as document
+    expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to vision when text extraction throws', async () => {
+  it('falls back to PDF vision when text extraction throws', async () => {
     mockedExtractText.mockRejectedValueOnce(new Error('PDF parse error'))
-
-    const imageBuffer = new ArrayBuffer(4)
-    mockedRenderPage.mockResolvedValueOnce(imageBuffer as unknown)
 
     const response = makeExpenseResponse()
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -782,25 +775,22 @@ describe('classifyPdfDocument', () => {
     const result = await classifyPdfDocument(buffer, 'corrupt.pdf')
 
     expect(result.type).toBe('expense')
-    expect(mockedRenderPage).toHaveBeenCalledTimes(1)
+    expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 
-  it('throws when both text extraction and vision fail', async () => {
+  it('throws when both text extraction and PDF vision fail', async () => {
     mockedExtractText.mockRejectedValueOnce(new Error('Text parse error'))
-    mockedRenderPage.mockRejectedValueOnce(new Error('Render error'))
+    mockCreate.mockRejectedValueOnce(new Error('API error'))
 
     const buffer = new ArrayBuffer(10)
     await expect(classifyPdfDocument(buffer, 'broken.pdf')).rejects.toThrow('Kunde inte analysera PDF')
   })
 
-  it('falls back to vision when extracted text is empty', async () => {
+  it('falls back to PDF vision when extracted text is empty', async () => {
     mockedExtractText.mockResolvedValueOnce({
       text: [''],
       totalPages: 1,
     } as unknown)
-
-    const imageBuffer = new ArrayBuffer(4)
-    mockedRenderPage.mockResolvedValueOnce(imageBuffer as unknown)
 
     const response = makeInvoiceResponse()
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -809,17 +799,14 @@ describe('classifyPdfDocument', () => {
     const result = await classifyPdfDocument(buffer, 'scanned-invoice.pdf')
 
     expect(result.type).toBe('invoice')
-    expect(mockedRenderPage).toHaveBeenCalled()
+    expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to vision when extracted text is only whitespace', async () => {
+  it('falls back to PDF vision when extracted text is only whitespace', async () => {
     mockedExtractText.mockResolvedValueOnce({
       text: ['   \n\t  '],
       totalPages: 1,
     } as unknown)
-
-    const imageBuffer = new ArrayBuffer(4)
-    mockedRenderPage.mockResolvedValueOnce(imageBuffer as unknown)
 
     const response = makeExpenseResponse()
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
@@ -828,7 +815,7 @@ describe('classifyPdfDocument', () => {
     const result = await classifyPdfDocument(buffer, 'whitespace.pdf')
 
     expect(result.type).toBe('expense')
-    expect(mockedRenderPage).toHaveBeenCalled()
+    expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 })
 
