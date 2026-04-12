@@ -191,15 +191,38 @@ function getDeadlineStatus(
   const diffDays = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0) {
-    return { label: '', color: 'bg-red-100 text-red-800', urgent: true, key: 'overdue' }
+    return {
+      label: '',
+      color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+      urgent: true,
+      key: 'overdue',
+    }
   } else if (diffDays === 0) {
-    return { label: '', color: 'bg-red-100 text-red-800', urgent: true, key: 'todayDeadline' }
+    return {
+      label: '',
+      color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+      urgent: true,
+      key: 'todayDeadline',
+    }
   } else if (diffDays <= 2) {
-    return { label: `${diffDays}`, color: 'bg-orange-100 text-orange-800', urgent: true, key: 'daysCount' }
+    return {
+      label: `${diffDays}`,
+      color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+      urgent: true,
+      key: 'daysCount',
+    }
   } else if (diffDays <= 7) {
-    return { label: format(deadlineDate, 'd MMM', { locale }), color: 'bg-yellow-100 text-yellow-800', urgent: false }
+    return {
+      label: format(deadlineDate, 'd MMM', { locale }),
+      color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      urgent: false,
+    }
   } else {
-    return { label: format(deadlineDate, 'd MMM', { locale }), color: 'bg-gray-100 text-gray-600', urgent: false }
+    return {
+      label: format(deadlineDate, 'd MMM', { locale }),
+      color: 'bg-gray-100 dark:bg-gray-800/40 text-gray-600 dark:text-gray-400',
+      urgent: false,
+    }
   }
 }
 
@@ -210,13 +233,13 @@ function gigHasPassed(gig: Gig): boolean {
 }
 
 const statusConfig = {
-  tentative: { icon: HelpCircle, color: 'bg-orange-100 text-orange-800' },
-  pending: { icon: Clock, color: 'bg-yellow-100 text-yellow-800' },
-  accepted: { icon: Check, color: 'bg-green-100 text-green-800' },
-  declined: { icon: X, color: 'bg-red-100 text-red-800' },
-  completed: { icon: Check, color: 'bg-blue-100 text-blue-800' },
-  invoiced: { icon: FileText, color: 'bg-purple-100 text-purple-800' },
-  paid: { icon: DollarSign, color: 'bg-green-200 text-green-900' },
+  tentative: { icon: HelpCircle, color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' },
+  pending: { icon: Clock, color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' },
+  accepted: { icon: Check, color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' },
+  declined: { icon: X, color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' },
+  completed: { icon: Check, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' },
+  invoiced: { icon: FileText, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' },
+  paid: { icon: DollarSign, color: 'bg-green-200 dark:bg-green-900/30 text-green-900 dark:text-green-300' },
 }
 
 const activeStatuses = new Set(['tentative', 'pending', 'accepted'])

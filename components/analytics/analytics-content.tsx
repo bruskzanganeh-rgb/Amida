@@ -285,29 +285,35 @@ export function AnalyticsContent() {
         <>
           {/* Upcoming gigs */}
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-blue-200 bg-blue-50/50">
+            <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-900">{t('upcomingRevenue')}</CardTitle>
-                <Wallet className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {t('upcomingRevenue')}
+                </CardTitle>
+                <Wallet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                   {upcomingRevenue.toLocaleString(formatLocale)} {currencySymbol}
                 </div>
-                <p className="text-xs text-blue-700">{t('acceptedGigsCount', { count: upcomingGigs.length })}</p>
+                <p className="text-xs text-blue-700 dark:text-blue-400">
+                  {t('acceptedGigsCount', { count: upcomingGigs.length })}
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="border-blue-200 bg-blue-50/50">
+            <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-900">{t('upcomingWorkDays')}</CardTitle>
-                <CalendarClock className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {t('upcomingWorkDays')}
+                </CardTitle>
+                <CalendarClock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                   {upcomingDays} {tc('days')}
                 </div>
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-blue-700 dark:text-blue-400">
                   {nextGig
                     ? t('nextGig', { date: new Date(nextGig.date).toLocaleDateString(formatLocale) })
                     : t('noUpcomingGigs')}
@@ -315,16 +321,18 @@ export function AnalyticsContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-orange-200 bg-orange-50/50">
+            <Card className="border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-900">{tStatus('tentative')}</CardTitle>
-                <HelpCircle className="h-4 w-4 text-orange-600" />
+                <CardTitle className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                  {tStatus('tentative')}
+                </CardTitle>
+                <HelpCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-900">
+                <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">
                   {t('tentativeCount', { count: tentativeGigs.length })}
                 </div>
-                <p className="text-xs text-orange-700">
+                <p className="text-xs text-orange-700 dark:text-orange-400">
                   {tentativeRevenue > 0
                     ? t('potentialRevenue', { amount: tentativeRevenue.toLocaleString(formatLocale) })
                     : t('potentialDays', { count: tentativeDays })}
@@ -429,7 +437,7 @@ export function AnalyticsContent() {
                           {Math.round(gig.feeBase).toLocaleString(formatLocale)} {currencySymbol}
                         </TableCell>
                         <TableCell className="text-right">{gig.total_days}</TableCell>
-                        <TableCell className="text-right font-semibold text-green-600">
+                        <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
                           {Math.round(gig.dayRate).toLocaleString(formatLocale)} {perDayLabel}
                         </TableCell>
                       </TableRow>
@@ -486,7 +494,7 @@ export function AnalyticsContent() {
                         <TableCell className="text-right">
                           {stat.totalRevenue.toLocaleString(formatLocale)} {currencySymbol}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-green-600">
+                        <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
                           {Math.round(stat.avgPerDay).toLocaleString(formatLocale)} {perDayLabel}
                         </TableCell>
                       </TableRow>

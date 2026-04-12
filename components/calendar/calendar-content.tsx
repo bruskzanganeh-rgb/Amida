@@ -95,13 +95,13 @@ const statusColors: Record<string, string> = {
 }
 
 const statusConfigColors: Record<string, string> = {
-  tentative: 'bg-orange-100 text-orange-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  accepted: 'bg-green-100 text-green-800',
-  declined: 'bg-red-100 text-red-800',
-  completed: 'bg-blue-100 text-blue-800',
-  invoiced: 'bg-purple-100 text-purple-800',
-  paid: 'bg-green-200 text-green-900',
+  tentative: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+  pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+  accepted: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+  declined: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+  completed: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+  invoiced: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+  paid: 'bg-green-200 dark:bg-green-900/30 text-green-900 dark:text-green-300',
 }
 
 type ViewMode = 'month' | 'year'
