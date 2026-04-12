@@ -931,31 +931,37 @@ describe('Zod schema validation via classifyImageDocument', () => {
     await expect(classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')).rejects.toThrow()
   })
 
-  it('rejects invalid currency', async () => {
+  it('normalizes invalid currency to SEK', async () => {
     const response = makeExpenseResponse({
       data: { ...makeExpenseResponse().data, currency: 'JPY' },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
 
-    await expect(classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')).rejects.toThrow()
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')
+    const data = result.data as ExpenseData
+    expect(data.currency).toBe('SEK')
   })
 
-  it('rejects invalid category', async () => {
+  it('normalizes invalid category to other', async () => {
     const response = makeExpenseResponse({
       data: { ...makeExpenseResponse().data, category: 'Bilar' },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
 
-    await expect(classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')).rejects.toThrow()
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')
+    const data = result.data as ExpenseData
+    expect(data.category).toBe('other')
   })
 
-  it('rejects invalid date format', async () => {
+  it('normalizes invalid date format to null', async () => {
     const response = makeExpenseResponse({
       data: { ...makeExpenseResponse().data, date: '15/03/2025' },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
 
-    await expect(classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')).rejects.toThrow()
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')
+    const data = result.data as ExpenseData
+    expect(data.date).toBeNull()
   })
 
   it('allows null date', async () => {
@@ -1018,13 +1024,15 @@ describe('Zod schema validation via classifyImageDocument', () => {
     }
   })
 
-  it('rejects invalid vatRate', async () => {
+  it('preserves non-standard vatRate from AI', async () => {
     const response = makeExpenseResponse({
-      data: { ...makeExpenseResponse().data, subtotal: 100, vatRate: 10, vatAmount: 10, total: 110 },
+      data: { ...makeExpenseResponse().data, subtotal: 100, vatRate: 30, vatAmount: 30, total: 130 },
     })
     mockCreate.mockResolvedValueOnce(makeMockMessage(response))
 
-    await expect(classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')).rejects.toThrow()
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'receipt.jpg')
+    const data = result.data as ExpenseData
+    expect(data.vatRate).toBe(30)
   })
 
   it('accepts all valid vatRate values', async () => {

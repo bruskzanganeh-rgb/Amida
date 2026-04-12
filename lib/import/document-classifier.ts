@@ -16,7 +16,7 @@ const ExpenseDataSchema = z.object({
     .nullable(),
   supplier: z.string(),
   subtotal: z.number().nonnegative(),
-  vatRate: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(25)]),
+  vatRate: z.number().nonnegative(),
   vatAmount: z.number().nonnegative(),
   total: z.number().nonnegative(),
   currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']),
@@ -37,7 +37,7 @@ const InvoiceDataSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable(),
   subtotal: z.number().nonnegative(),
-  vatRate: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(25)]),
+  vatRate: z.number().nonnegative(),
   vatAmount: z.number().nonnegative(),
   total: z.number().nonnegative(),
 })
@@ -295,6 +295,29 @@ export async function classifyImageDocument(
   }
 }
 
+// Normaliseringshjälpare — gör AI-output Zod-säker
+function normalizeDate(d: unknown): string | null {
+  if (typeof d !== 'string' || !d) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
+  const parsed = new Date(d)
+  if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10)
+  return null
+}
+
+function normalizeCurrency(c: unknown): 'SEK' | 'EUR' | 'USD' | 'GBP' | 'DKK' | 'NOK' {
+  if (typeof c !== 'string') return 'SEK'
+  const upper = c.toUpperCase().trim()
+  const valid = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK'] as const
+  for (const v of valid) if (upper === v) return v
+  const map: Record<string, (typeof valid)[number]> = { KR: 'SEK', KRONOR: 'SEK', '€': 'EUR', $: 'USD', '£': 'GBP' }
+  return map[upper] || 'SEK'
+}
+
+function normalizeCategory(c: unknown): string {
+  if (typeof c === 'string' && (EXPENSE_CATEGORIES as readonly string[]).includes(c)) return c
+  return 'other'
+}
+
 // Parsa AI-svar
 function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
   const responseText = message.content[0]?.type === 'text' ? message.content[0].text : null
@@ -317,22 +340,21 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
   // Preprocessa data för att hantera null/undefined värden
   if (parsed.data) {
     if (parsed.type === 'expense') {
-      // Sätt defaults för utgifter
+      // Normalisera alla fält till Zod-säkra värden
+      parsed.data.date = normalizeDate(parsed.data.date)
       parsed.data.supplier = parsed.data.supplier || 'Okänd leverantör'
-      parsed.data.currency = parsed.data.currency || 'SEK'
-      parsed.data.category = parsed.data.category || 'other'
+      parsed.data.currency = normalizeCurrency(parsed.data.currency)
+      parsed.data.category = normalizeCategory(parsed.data.category)
 
       // Hantera moms - beräkna saknade värden
-      const total = parsed.data.total ?? parsed.data.amount ?? 0
-      const vatRate = parsed.data.vatRate ?? 25
+      const total = Number(parsed.data.total ?? parsed.data.amount ?? 0) || 0
+      const vatRate = parsed.data.vatRate != null ? Number(parsed.data.vatRate) : 25
 
       if (parsed.data.subtotal && parsed.data.vatAmount) {
-        // Båda finns - använd dem
-        parsed.data.subtotal = parsed.data.subtotal
-        parsed.data.vatAmount = parsed.data.vatAmount
+        parsed.data.subtotal = Number(parsed.data.subtotal) || 0
+        parsed.data.vatAmount = Number(parsed.data.vatAmount) || 0
         parsed.data.total = total
       } else if (total > 0) {
-        // Bara total - beräkna subtotal och moms
         const divisor = 1 + vatRate / 100
         parsed.data.subtotal = Math.round((total / divisor) * 100) / 100
         parsed.data.vatAmount = Math.round((total - parsed.data.subtotal) * 100) / 100
@@ -347,18 +369,19 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
       // Ta bort gamla amount fältet om det finns
       delete parsed.data.amount
     } else if (parsed.type === 'invoice') {
-      // Konvertera invoiceNumber till heltal om det är en sträng
+      // Konvertera invoiceNumber till heltal
       if (typeof parsed.data.invoiceNumber === 'string') {
         const digits = parsed.data.invoiceNumber.match(/\d+/)
         parsed.data.invoiceNumber = digits ? parseInt(digits[0], 10) : 0
       }
-      // Sätt defaults för fakturor
-      parsed.data.invoiceNumber = parsed.data.invoiceNumber ?? 0
+      parsed.data.invoiceNumber = Number(parsed.data.invoiceNumber) || 0
       parsed.data.clientName = parsed.data.clientName || 'Okänd kund'
-      parsed.data.subtotal = parsed.data.subtotal ?? 0
-      parsed.data.vatRate = parsed.data.vatRate ?? 25
-      parsed.data.vatAmount = parsed.data.vatAmount ?? 0
-      parsed.data.total = parsed.data.total ?? 0
+      parsed.data.invoiceDate = normalizeDate(parsed.data.invoiceDate)
+      parsed.data.dueDate = normalizeDate(parsed.data.dueDate)
+      parsed.data.subtotal = Number(parsed.data.subtotal) || 0
+      parsed.data.vatRate = Number(parsed.data.vatRate) || 25
+      parsed.data.vatAmount = Number(parsed.data.vatAmount) || 0
+      parsed.data.total = Number(parsed.data.total) || 0
     }
   }
 
