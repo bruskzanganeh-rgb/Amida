@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -106,18 +106,7 @@ type ImportResult = {
   skippedAsDuplicate?: boolean
 }
 
-const categories = [
-  'Resa',
-  'Mat',
-  'Hotell',
-  'Instrument',
-  'Noter',
-  'Utrustning',
-  'Kontorsmaterial',
-  'Telefon',
-  'Prenumeration',
-  'Övrigt',
-]
+import { EXPENSE_CATEGORIES, categoryLabelStatic } from '@/lib/expenses/categories'
 
 const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
 
@@ -154,6 +143,7 @@ export default function ImportPage() {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const ti = useTranslations('invoice')
+  const locale = useLocale()
   const { symbol: baseCurrencySymbol } = useBaseCurrency()
   const [currentStep, setCurrentStep] = useState<Step>('select')
   const [files, setFiles] = useState<AnalyzedFile[]>([])
@@ -240,7 +230,7 @@ export default function ImportPage() {
           vatAmount: 0,
           total: 0,
           currency: 'SEK',
-          category: 'Övrigt',
+          category: 'other',
         },
         suggestedFilename: file.name,
         status: 'pending',
@@ -460,7 +450,7 @@ export default function ImportPage() {
             vatAmount: invoiceData.vatAmount || 0,
             total: invoiceData.total || 0,
             currency: 'SEK',
-            category: 'Övrigt',
+            category: 'other',
             notes: t('convertedFromInvoice', { number: invoiceData.invoiceNumber }),
           }
         } else {
@@ -931,9 +921,9 @@ export default function ImportPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {categories.map((c) => (
+                                {EXPENSE_CATEGORIES.map((c) => (
                                   <SelectItem key={c} value={c}>
-                                    {t('categories.' + c)}
+                                    {categoryLabelStatic(c, locale as 'sv' | 'en')}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
