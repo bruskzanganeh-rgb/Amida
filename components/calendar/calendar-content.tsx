@@ -473,8 +473,8 @@ export default function CalendarPage() {
                       <div
                         key={monthIndex}
                         className={cn(
-                          'border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors',
-                          isCurrentMonth && 'bg-blue-50 border-blue-300',
+                          'border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors',
+                          isCurrentMonth && 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800',
                         )}
                         onClick={() => goToMonth(monthIndex)}
                       >
@@ -528,7 +528,7 @@ export default function CalendarPage() {
                   {/* Calendar days */}
                   {calendarDays.map((day, index) => {
                     if (day === null) {
-                      return <div key={`empty-${index}`} className="min-h-20 lg:min-h-0 bg-gray-50" />
+                      return <div key={`empty-${index}`} className="min-h-20 lg:min-h-0 bg-muted/50" />
                     }
 
                     const date = new Date(year, month, day)
@@ -540,7 +540,9 @@ export default function CalendarPage() {
                         key={day}
                         className={cn(
                           'min-h-20 lg:min-h-0 border rounded-lg p-1 transition-colors cursor-pointer overflow-hidden',
-                          today ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50',
+                          today
+                            ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800'
+                            : 'hover:bg-muted/50',
                         )}
                         onClick={() => {
                           if (dayGigs.length === 0) {
@@ -966,10 +968,10 @@ export default function CalendarPage() {
                         style={{ backgroundColor: selectedGig.gig_type?.color || '#6366f1' }}
                       />
                       <div className="space-y-0.5">
-                        <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+                        <h2 className="text-xl font-semibold tracking-tight text-foreground">
                           {selectedGig.project_name || selectedGig.gig_type?.name || tGig('newGig')}
                         </h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {selectedGig.client?.name || <span className="italic">{tGig('clientNotSpecified')}</span>}
                         </p>
                         <div className="flex items-center gap-2 pt-0.5">
@@ -978,7 +980,7 @@ export default function CalendarPage() {
                           >
                             {tStatus(selectedGig.status)}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {selectedGig.gig_type?.name}
                             {selectedGig.position && ` · ${selectedGig.position.name}`}
                           </span>
@@ -991,7 +993,7 @@ export default function CalendarPage() {
                       className="rounded-full hover:bg-gray-100 -mt-1"
                       onClick={() => setSelectedGig(null)}
                     >
-                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </div>
                   <div className="flex-1 overflow-y-auto pb-2">
@@ -1011,27 +1013,27 @@ export default function CalendarPage() {
                               ? getVenueForDate(selectedGig, selectedGigDate)
                               : selectedGig.venue
                             return venueForDay ? (
-                              <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                              <div className="bg-card rounded-xl p-3 border shadow-sm">
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                  <MapPin className="h-3 w-3 text-gray-400" />
-                                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                                     {tGig('venue')}
                                   </p>
                                 </div>
-                                <p className="text-sm font-medium text-gray-900">{venueForDay}</p>
+                                <p className="text-sm font-medium text-foreground">{venueForDay}</p>
                               </div>
                             ) : (
-                              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">
+                              <div className="bg-muted/50 rounded-xl p-3 border border-border">
+                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                                   {tGig('venue')}
                                 </p>
-                                <p className="text-sm text-gray-400">—</p>
+                                <p className="text-sm text-muted-foreground">—</p>
                               </div>
                             )
                           })()}
                         </div>
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-100">
-                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">
+                        <div className="bg-muted/30 rounded-xl p-3 border">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
                             {tGig('date')} ({selectedGig.gig_dates?.length || selectedGig.total_days} {tc('days')})
                           </p>
                           {selectedGig.gig_dates && selectedGig.gig_dates.length > 0 ? (
@@ -1044,15 +1046,15 @@ export default function CalendarPage() {
                                     return (
                                       <div
                                         key={i}
-                                        className="flex flex-col items-center bg-white rounded-lg px-2 py-1 border border-gray-200 shadow-sm min-w-[44px]"
+                                        className="flex flex-col items-center bg-card rounded-lg px-2 py-1 border shadow-sm min-w-[44px]"
                                       >
-                                        <span className="text-[8px] font-medium text-gray-400 uppercase">
+                                        <span className="text-[8px] font-medium text-muted-foreground uppercase">
                                           {format(dateObj, 'EEE', { locale: dateLocale })}
                                         </span>
-                                        <span className="text-sm font-bold text-gray-900">
+                                        <span className="text-sm font-bold text-foreground">
                                           {format(dateObj, 'd', { locale: dateLocale })}
                                         </span>
-                                        <span className="text-[8px] font-medium text-gray-500">
+                                        <span className="text-[8px] font-medium text-muted-foreground">
                                           {format(dateObj, 'MMM', { locale: dateLocale })}
                                         </span>
                                       </div>
@@ -1068,7 +1070,7 @@ export default function CalendarPage() {
                                       const date = new Date(gd.date + 'T12:00:00')
                                       return (
                                         <div key={i} className="flex items-baseline gap-1.5 text-[10px]">
-                                          <span className="text-gray-400 w-[55px] shrink-0">
+                                          <span className="text-muted-foreground w-[55px] shrink-0">
                                             {format(date, 'EEE d MMM', { locale: dateLocale })}
                                           </span>
                                           <span className="text-gray-700">
@@ -1088,7 +1090,7 @@ export default function CalendarPage() {
                               )}
                             </>
                           ) : (
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-foreground">
                               {format(new Date(selectedGig.date), 'PPP', { locale: dateLocale })}
                             </p>
                           )}
@@ -1096,9 +1098,9 @@ export default function CalendarPage() {
                       </div>
 
                       {/* Notes */}
-                      <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                      <div className="bg-card rounded-xl p-3 border shadow-sm">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                             {tGig('notes')}
                           </p>
                           {!editingNotes && (
@@ -1111,7 +1113,7 @@ export default function CalendarPage() {
                                 setEditingNotes(true)
                               }}
                             >
-                              <Pencil className="h-2.5 w-2.5 text-gray-400" />
+                              <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
                             </Button>
                           )}
                         </div>
@@ -1143,33 +1145,33 @@ export default function CalendarPage() {
                             </div>
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500 whitespace-pre-wrap leading-snug">
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-snug">
                             {selectedGig.notes || <span className="italic">{tc('noNotes')}</span>}
                           </p>
                         )}
                       </div>
 
                       {/* Attachments */}
-                      <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                      <div className="bg-card rounded-xl p-3 border shadow-sm">
                         <GigAttachments gigId={selectedGig.id} />
                       </div>
 
                       {/* Receipts */}
-                      <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                      <div className="bg-card rounded-xl p-3 border shadow-sm">
                         <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                             <Receipt className="h-2.5 w-2.5" />
                             {tGig('receipts')} ({gigExpenses.length})
                           </p>
                         </div>
                         {gigExpenses.length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">{tGig('noReceiptsLinked')}</p>
+                          <p className="text-xs text-muted-foreground italic">{tGig('noReceiptsLinked')}</p>
                         ) : (
                           <ul className="space-y-1">
                             {gigExpenses.map((exp) => (
                               <li key={exp.id} className="flex items-center justify-between text-xs">
                                 <span className="truncate text-gray-700">{exp.supplier}</span>
-                                <span className="font-medium shrink-0 ml-2 text-gray-900">
+                                <span className="font-medium shrink-0 ml-2 text-foreground">
                                   {formatCurrency(
                                     exp.amount,
                                     (exp.currency || 'SEK') as SupportedCurrency,
@@ -1183,7 +1185,7 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="py-3 pb-5 border-t border-gray-100 flex items-center gap-2 shrink-0">
+                  <div className="py-3 pb-5 border-t border-border flex items-center gap-2 shrink-0">
                     <Button
                       className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg px-4 h-9 text-sm shadow-lg shadow-gray-900/10"
                       onClick={() => setEditingGig(selectedGig)}
@@ -1193,7 +1195,7 @@ export default function CalendarPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="rounded-lg px-4 h-9 text-sm border-gray-200 hover:bg-gray-50"
+                      className="rounded-lg px-4 h-9 text-sm border-border hover:bg-muted/50"
                       onClick={() => setShowReceiptDialog(true)}
                     >
                       <Receipt className="h-3.5 w-3.5 mr-1.5" />
