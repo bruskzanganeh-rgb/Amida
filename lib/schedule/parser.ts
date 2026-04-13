@@ -63,9 +63,10 @@ export type ScannedScheduleData = Omit<z.infer<typeof ScannedScheduleSchema>, 'd
   dates: Record<string, Session[]>
 }
 
-function getParsePrompt(locale: string) {
+function getParsePrompt(locale: string, today: string = new Date().toISOString().split('T')[0]) {
   if (locale === 'sv') {
     return `Du parsar schematext för en frilansmusiker.
+Dagens datum är ${today}. Om inget år anges, välj det närmaste framtida datumet.
 
 Input: en lista av datum med fritext som beskriver dagens schema.
 Output: strukturerade sessions per datum.
@@ -90,6 +91,7 @@ VIKTIGT: Returnera BARA JSON, inget annat.`
   }
 
   return `You parse schedule text for a freelance musician.
+Today's date is ${today}. When dates lack a year, use the nearest future occurrence.
 
 Input: a list of dates with free text describing the day's schedule.
 Output: structured sessions per date.
@@ -113,9 +115,10 @@ Return ONLY JSON:
 IMPORTANT: Return ONLY JSON, nothing else.`
 }
 
-function getScanPrompt(locale: string) {
+function getScanPrompt(locale: string, today: string = new Date().toISOString().split('T')[0]) {
   if (locale === 'sv') {
     return `Du läser ett repetitions- eller konsertschema för en frilansmusiker.
+Dagens datum är ${today}. Om inget år anges, välj det närmaste framtida datumet.
 Extrahera alla datum med tider, typ av aktivitet, OCH plats per datum.
 
 Typer (normalisera till dessa):
@@ -166,6 +169,7 @@ VIKTIGT: Returnera BARA JSON, inget annat.`
   }
 
   return `You are reading a rehearsal or concert schedule for a freelance musician.
+Today's date is ${today}. When dates lack a year, use the nearest future occurrence.
 Extract all dates with times, activity type, AND venue per date.
 
 Types (normalize to these):
@@ -213,6 +217,40 @@ Rules:
 - confidence: 0-1, your certainty
 
 IMPORTANT: Return ONLY JSON, nothing else.`
+}
+
+/**
+ * Post-processing safety net: if the AI returns dates >6 months in the past,
+ * bump them forward by 1 year. Schedules are almost always for upcoming events.
+ */
+export function correctPastDates<T extends { dates: Record<string, unknown>; venues?: Record<string, string> | null }>(
+  data: T,
+  now: Date = new Date(),
+): T {
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+  const threshold = sixMonthsAgo.toISOString().split('T')[0]
+
+  const correctedDates: Record<string, unknown> = {}
+  const correctedVenues: Record<string, string> | null = data.venues ? {} : null
+
+  for (const [dateStr, sessions] of Object.entries(data.dates)) {
+    if (dateStr < threshold) {
+      // Bump year by 1 via string replacement — avoids timezone issues
+      const year = parseInt(dateStr.substring(0, 4), 10)
+      const newKey = `${year + 1}${dateStr.substring(4)}`
+      correctedDates[newKey] = sessions
+      if (correctedVenues && data.venues?.[dateStr]) {
+        correctedVenues[newKey] = data.venues[dateStr]
+      }
+    } else {
+      correctedDates[dateStr] = sessions
+      if (correctedVenues && data.venues?.[dateStr]) {
+        correctedVenues[dateStr] = data.venues[dateStr]
+      }
+    }
+  }
+
+  return { ...data, dates: correctedDates, ...(data.venues !== undefined ? { venues: correctedVenues } : {}) }
 }
 
 function cleanJsonResponse(text: string): string {
@@ -273,8 +311,9 @@ export async function parseScheduleTexts(
 
     const parsed = JSON.parse(cleanJsonResponse(responseText))
     const validated = ParsedScheduleSchema.parse(parsed)
+    const corrected = correctPastDates(validated)
 
-    return filterValidSessions(validated.dates)
+    return filterValidSessions(corrected.dates)
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(`Ogiltigt AI-svar: ${error.message}`)
@@ -341,10 +380,11 @@ export async function parseScheduleWithVision(
 
     const parsed = JSON.parse(cleanJsonResponse(responseText))
     const validated = ScannedScheduleSchema.parse(parsed)
+    const corrected = correctPastDates(validated)
 
     return {
-      ...validated,
-      dates: filterValidSessions(validated.dates),
+      ...corrected,
+      dates: filterValidSessions(corrected.dates),
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -412,10 +452,11 @@ export async function parseScheduleWithPdf(
 
     const parsed = JSON.parse(cleanJsonResponse(responseText))
     const validated = ScannedScheduleSchema.parse(parsed)
+    const corrected = correctPastDates(validated)
 
     return {
-      ...validated,
-      dates: filterValidSessions(validated.dates),
+      ...corrected,
+      dates: filterValidSessions(corrected.dates),
     }
   } catch (error) {
     if (error instanceof z.ZodError) {

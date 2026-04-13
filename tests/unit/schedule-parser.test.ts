@@ -25,6 +25,7 @@ import {
   parseScheduleTexts,
   parseScheduleWithVision,
   parseScheduleWithPdf,
+  correctPastDates,
 } from '@/lib/schedule/parser'
 import type { Session } from '@/lib/schedule/parser'
 
@@ -637,5 +638,89 @@ describe('parseScheduleWithPdf', () => {
     mockCreate.mockResolvedValueOnce(makeMockResponse('this is not json'))
 
     await expect(parseScheduleWithPdf('pdfbase64data')).rejects.toThrow('Kunde inte läsa schema')
+  })
+})
+
+// ─── correctPastDates ─────────────────────────────────────────────────
+
+describe('correctPastDates', () => {
+  it('shifts dates >6 months in the past forward by 1 year', () => {
+    const now = new Date('2026-04-13')
+    const data = {
+      dates: {
+        '2025-05-18': [{ start: '10:00', end: '12:00' }],
+        '2025-05-22': [{ start: '19:00', end: null }],
+      },
+    }
+
+    const result = correctPastDates(data, now)
+
+    expect(result.dates).toEqual({
+      '2026-05-18': [{ start: '10:00', end: '12:00' }],
+      '2026-05-22': [{ start: '19:00', end: null }],
+    })
+  })
+
+  it('does not shift dates that are in the future', () => {
+    const now = new Date('2026-04-13')
+    const data = {
+      dates: {
+        '2026-05-18': [{ start: '10:00', end: '12:00' }],
+      },
+    }
+
+    const result = correctPastDates(data, now)
+
+    expect(result.dates).toEqual({
+      '2026-05-18': [{ start: '10:00', end: '12:00' }],
+    })
+  })
+
+  it('does not shift dates that are less than 6 months in the past', () => {
+    const now = new Date('2026-04-13')
+    const data = {
+      dates: {
+        '2026-01-15': [{ start: '10:00', end: '12:00' }],
+      },
+    }
+
+    const result = correctPastDates(data, now)
+
+    expect(result.dates).toEqual({
+      '2026-01-15': [{ start: '10:00', end: '12:00' }],
+    })
+  })
+
+  it('also corrects venue keys when dates are shifted', () => {
+    const now = new Date('2026-04-13')
+    const data = {
+      dates: {
+        '2025-05-18': [{ start: '10:00', end: '12:00' }],
+        '2025-05-22': [{ start: '19:00', end: null }],
+      },
+      venues: {
+        '2025-05-22': 'Grünewaldsalen',
+      } as Record<string, string>,
+    }
+
+    const result = correctPastDates(data, now)
+
+    expect(result.venues).toEqual({
+      '2026-05-22': 'Grünewaldsalen',
+    })
+  })
+
+  it('handles mix of past and future dates', () => {
+    const now = new Date('2026-04-13')
+    const data = {
+      dates: {
+        '2025-05-18': [{ start: '10:00', end: '12:00' }],
+        '2026-06-01': [{ start: '19:00', end: null }],
+      },
+    }
+
+    const result = correctPastDates(data, now)
+
+    expect(Object.keys(result.dates).sort()).toEqual(['2026-05-18', '2026-06-01'])
   })
 })
