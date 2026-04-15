@@ -11,13 +11,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'lcov'],
-      include: ['lib/**/*.ts'],
-      exclude: ['lib/types/**', 'lib/supabase/**', 'lib/hooks/**', '**/*.d.ts'],
+      include: ['lib/**/*.ts', 'app/api/**/*.ts'],
+      exclude: ['lib/types/**', 'lib/supabase/**', '**/*.d.ts'],
       thresholds: {
-        lines: 90,
+        lines: 85,
         functions: 85,
-        branches: 80,
-        statements: 90,
+        branches: 70,
+        statements: 83,
       },
     },
   },

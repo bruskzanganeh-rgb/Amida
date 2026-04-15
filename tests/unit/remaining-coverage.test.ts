@@ -575,3 +575,144 @@ describe('lib/usage.ts', () => {
     })
   })
 })
+
+// ============================================================
+// 4. lib/polyfills.ts
+// ============================================================
+
+describe('lib/polyfills.ts', () => {
+  it('polyfills Promise.withResolvers when missing', () => {
+    // Save original
+    const original = Promise.withResolvers
+
+    // Remove it to simulate older environment
+    // @ts-expect-error — intentionally deleting for test
+    delete Promise.withResolvers
+
+    // Re-run the polyfill (need to re-import)
+    vi.resetModules()
+
+    return import('@/lib/polyfills').then(() => {
+      expect(Promise.withResolvers).toBeDefined()
+      expect(typeof Promise.withResolvers).toBe('function')
+
+      // Test it actually works
+      const { promise, resolve, reject } = Promise.withResolvers<string>()
+      expect(promise).toBeInstanceOf(Promise)
+      expect(typeof resolve).toBe('function')
+      expect(typeof reject).toBe('function')
+
+      // Test resolve works
+      resolve('hello')
+      return promise.then((val) => {
+        expect(val).toBe('hello')
+        // Restore original
+        Promise.withResolvers = original
+      })
+    })
+  })
+
+  it('does not overwrite existing Promise.withResolvers', () => {
+    const original = Promise.withResolvers
+    expect(original).toBeDefined()
+
+    vi.resetModules()
+    return import('@/lib/polyfills').then(() => {
+      // Should still be the same function (not overwritten)
+      expect(Promise.withResolvers).toBe(original)
+    })
+  })
+
+  it('polyfilled withResolvers reject works', async () => {
+    const original = Promise.withResolvers
+    // @ts-expect-error — intentionally deleting for test
+    delete Promise.withResolvers
+    vi.resetModules()
+
+    await import('@/lib/polyfills')
+    const { promise, reject } = Promise.withResolvers<string>()
+    reject(new Error('test error'))
+
+    await expect(promise).rejects.toThrow('test error')
+    Promise.withResolvers = original
+  })
+})
+
+// ============================================================
+// 5. lib/native-init.ts
+// ============================================================
+
+vi.mock('@/lib/capacitor', () => ({
+  isNative: vi.fn(() => false),
+}))
+
+import { initNativePlugins } from '@/lib/native-init'
+import { isNative } from '@/lib/capacitor'
+
+describe('lib/native-init.ts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('does nothing when not running natively', async () => {
+    vi.mocked(isNative).mockReturnValue(false)
+    await initNativePlugins()
+    // Should return early without any errors
+    expect(isNative).toHaveBeenCalled()
+  })
+
+  it('initializes native plugins when running natively', async () => {
+    vi.mocked(isNative).mockReturnValue(true)
+
+    // Mock the dynamic imports
+    const mockSetStyle = vi.fn().mockResolvedValue(undefined)
+    const mockHide = vi.fn().mockResolvedValue(undefined)
+    const mockAddListener = vi.fn()
+
+    vi.doMock('@capacitor/status-bar', () => ({
+      StatusBar: { setStyle: mockSetStyle },
+      Style: { Dark: 'DARK' },
+    }))
+
+    vi.doMock('@capacitor/splash-screen', () => ({
+      SplashScreen: { hide: mockHide },
+    }))
+
+    vi.doMock('@capacitor/network', () => ({
+      Network: { addListener: mockAddListener },
+    }))
+
+    vi.resetModules()
+
+    const { initNativePlugins: freshInit } = await import('@/lib/native-init')
+    const cap = await import('@/lib/capacitor')
+    vi.spyOn(cap, 'isNative').mockReturnValue(true)
+
+    await freshInit()
+
+    expect(mockSetStyle).toHaveBeenCalledWith({ style: 'DARK' })
+    expect(mockHide).toHaveBeenCalledWith({ fadeOutDuration: 300 })
+    expect(mockAddListener).toHaveBeenCalledWith('networkStatusChange', expect.any(Function))
+  })
+
+  it('handles native plugin errors gracefully', async () => {
+    vi.mocked(isNative).mockReturnValue(true)
+
+    vi.doMock('@capacitor/status-bar', () => {
+      throw new Error('Plugin not available')
+    })
+
+    vi.resetModules()
+
+    const { initNativePlugins: freshInit } = await import('@/lib/native-init')
+    const cap = await import('@/lib/capacitor')
+    vi.spyOn(cap, 'isNative').mockReturnValue(true)
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    // Should not throw
+    await freshInit()
+    expect(warnSpy).toHaveBeenCalledWith('Native plugin init error:', expect.any(Error))
+    warnSpy.mockRestore()
+  })
+})
