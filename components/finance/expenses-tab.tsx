@@ -78,6 +78,7 @@ export default function ExpensesTab() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [supplierFilter, setSupplierFilter] = useState<string>('all')
   const [gigFilter, setGigFilter] = useState<string>('all')
+  const [memberFilter, setMemberFilter] = useState<string>('all')
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
@@ -171,6 +172,7 @@ export default function ExpensesTab() {
     if (supplierFilter !== 'all' && e.supplier !== supplierFilter) return false
     if (gigFilter === 'linked' && !e.gig_id) return false
     if (gigFilter === 'unlinked' && e.gig_id) return false
+    if (memberFilter !== 'all' && e.user_id !== memberFilter) return false
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       const matchesSupplier = e.supplier.toLowerCase().includes(q)
@@ -274,13 +276,36 @@ export default function ExpensesTab() {
               </SelectContent>
             </Select>
           </div>
+          {isSharedMode && (
+            <div>
+              <Select value={memberFilter} onValueChange={setMemberFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder={tTeam('allMembers')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{tTeam('allMembers')}</SelectItem>
+                  {allMembers.map((m) => (
+                    <SelectItem key={m.user_id} value={m.user_id}>
+                      {m.user_id === currentUserId
+                        ? tTeam('me')
+                        : m.full_name?.split(' ')[0] || m.email?.split('@')[0] || m.user_id.slice(0, 6)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:shrink-0">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {yearFilter !== 'all' || categoryFilter !== 'all' || supplierFilter !== 'all' || gigFilter !== 'all'
+                {yearFilter !== 'all' ||
+                categoryFilter !== 'all' ||
+                supplierFilter !== 'all' ||
+                gigFilter !== 'all' ||
+                memberFilter !== 'all'
                   ? `${t('filteredExpenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
                   : t('totalExpenses')}
               </CardTitle>
@@ -343,7 +368,11 @@ export default function ExpensesTab() {
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5" />
-                {yearFilter !== 'all' || categoryFilter !== 'all' || supplierFilter !== 'all' || gigFilter !== 'all'
+                {yearFilter !== 'all' ||
+                categoryFilter !== 'all' ||
+                supplierFilter !== 'all' ||
+                gigFilter !== 'all' ||
+                memberFilter !== 'all'
                   ? `${t('expenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
                   : `${t('allExpenses')} (${expenses.length})`}
               </CardTitle>
