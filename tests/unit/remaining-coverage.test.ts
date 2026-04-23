@@ -613,13 +613,22 @@ describe('lib/polyfills.ts', () => {
   })
 
   it('does not overwrite existing Promise.withResolvers', () => {
-    const original = Promise.withResolvers
-    expect(original).toBeDefined()
+    // First ensure polyfill is loaded so withResolvers exists
+    const setupPromise = Promise.withResolvers
+      ? Promise.resolve()
+      : import('@/lib/polyfills').then(() => {
+          vi.resetModules()
+        })
 
-    vi.resetModules()
-    return import('@/lib/polyfills').then(() => {
-      // Should still be the same function (not overwritten)
-      expect(Promise.withResolvers).toBe(original)
+    return setupPromise.then(() => {
+      const original = Promise.withResolvers
+      expect(original).toBeDefined()
+
+      vi.resetModules()
+      return import('@/lib/polyfills').then(() => {
+        // Should still be the same function (not overwritten)
+        expect(Promise.withResolvers).toBe(original)
+      })
     })
   })
 

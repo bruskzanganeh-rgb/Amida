@@ -322,7 +322,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Generera ZIP
-      const zipBuffer = await zip.generateAsync({ type: 'blob' })
+      const zipBuffer = await zip.generateAsync({ type: 'arraybuffer' })
 
       await logActivity({
         userId: user.id,
@@ -331,7 +331,7 @@ export async function GET(request: NextRequest) {
         metadata: { format: 'zip', year, month, count: typedExpenses.length },
       })
 
-      return new NextResponse(zipBuffer, {
+      return new NextResponse(Buffer.from(zipBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'application/zip',

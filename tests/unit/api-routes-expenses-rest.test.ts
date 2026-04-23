@@ -56,7 +56,7 @@ vi.mock('jszip', () => {
     default: class MockJSZip {
       file() {}
       generateAsync() {
-        return Promise.resolve(new Blob(['zip-content']))
+        return Promise.resolve(new ArrayBuffer(8))
       }
     },
   }
