@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +26,7 @@ type GigType = {
 export default function GigTypesPage() {
   const tc = useTranslations('common')
   const tGigTypes = useTranslations('gigTypes')
+  const locale = useLocale()
 
   const [gigTypes, setGigTypes] = useState<GigType[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,7 +93,7 @@ export default function GigTypesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{tGigTypes('name')}</TableHead>
-                  <TableHead>{tGigTypes('nameEn')}</TableHead>
+                  {locale !== 'en' && <TableHead>{tGigTypes('nameEn')}</TableHead>}
                   <TableHead>{tGigTypes('vatRate')}</TableHead>
                   <TableHead>{tGigTypes('color')}</TableHead>
                   <TableHead className="text-right">{tGigTypes('actions')}</TableHead>
@@ -102,9 +103,11 @@ export default function GigTypesPage() {
                 {gigTypes.map((type) => (
                   <TableRow key={type.id}>
                     <TableCell className="font-medium">{type.name}</TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">{type.name_en || '-'}</span>
-                    </TableCell>
+                    {locale !== 'en' && (
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">{type.name_en || '-'}</span>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Badge variant="outline">{type.vat_rate}%</Badge>
                     </TableCell>

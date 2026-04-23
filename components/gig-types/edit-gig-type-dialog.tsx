@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import {
   Dialog,
@@ -32,12 +32,7 @@ type EditGigTypeDialogProps = {
   onSuccess: () => void
 }
 
-export function EditGigTypeDialog({
-  gigType,
-  open,
-  onOpenChange,
-  onSuccess,
-}: EditGigTypeDialogProps) {
+export function EditGigTypeDialog({ gigType, open, onOpenChange, onSuccess }: EditGigTypeDialogProps) {
   const [loading, setLoading] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [formData, setFormData] = useState({
@@ -50,6 +45,7 @@ export function EditGigTypeDialog({
   const supabase = createClient()
   const t = useTranslations('gigTypes')
   const tc = useTranslations('common')
+  const locale = useLocale()
 
   useEffect(() => {
     if (gigType) {
@@ -73,7 +69,7 @@ export function EditGigTypeDialog({
       })
       const data = await res.json()
       if (data.translation) {
-        setFormData(prev => ({ ...prev, name_en: data.translation }))
+        setFormData((prev) => ({ ...prev, name_en: data.translation }))
       }
     } catch {
       // Silently fail
@@ -90,7 +86,7 @@ export function EditGigTypeDialog({
       .from('gig_types')
       .update({
         name: formData.name,
-        name_en: formData.name_en || null,
+        name_en: locale === 'en' ? formData.name : formData.name_en || null,
         vat_rate: parseFloat(formData.vat_rate),
         color: formData.color,
       })
@@ -114,9 +110,7 @@ export function EditGigTypeDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{t('editGigType')}</DialogTitle>
-            <DialogDescription>
-              {t('editGigTypeDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('editGigTypeDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -128,45 +122,35 @@ export function EditGigTypeDialog({
                 id="edit-name"
                 placeholder={t('namePlaceholder')}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name_en">
-                {t('nameEn')}
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="edit-name_en"
-                  placeholder={t('nameEnPlaceholder')}
-                  value={formData.name_en}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name_en: e.target.value })
-                  }
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTranslate}
-                  disabled={translating || !formData.name.trim()}
-                  className="shrink-0"
-                >
-                  {translating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Languages className="h-4 w-4" />
-                  )}
-                </Button>
+            {locale !== 'en' && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name_en">{t('nameEn')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="edit-name_en"
+                    placeholder={t('nameEnPlaceholder')}
+                    value={formData.name_en}
+                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTranslate}
+                    disabled={translating || !formData.name.trim()}
+                    className="shrink-0"
+                  >
+                    {translating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">{t('nameEnHint')}</p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t('nameEnHint')}
-              </p>
-            </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="edit-vat_rate">
@@ -179,14 +163,10 @@ export function EditGigTypeDialog({
                 max="100"
                 step="0.01"
                 value={formData.vat_rate}
-                onChange={(e) =>
-                  setFormData({ ...formData, vat_rate: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, vat_rate: e.target.value })}
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                {t('vatRateHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('vatRateHint')}</p>
             </div>
 
             <div className="grid gap-2">
@@ -196,25 +176,16 @@ export function EditGigTypeDialog({
                   id="edit-color"
                   type="color"
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                   className="w-20 h-10"
                 />
-                <span className="text-sm text-muted-foreground">
-                  {formData.color}
-                </span>
+                <span className="text-sm text-muted-foreground">{formData.color}</span>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               {tc('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>

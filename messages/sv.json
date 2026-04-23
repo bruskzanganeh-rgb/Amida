@@ -147,6 +147,7 @@
     "attachmentsPdf": "Bilagor (PDF)",
     "loadingAttachments": "Laddar bilagor...",
     "noAttachments": "Inga bilagor ännu",
+    "previewFile": "Förhandsgranska fil",
     "openFile": "Öppna fil",
     "deleteFile": "Ta bort fil",
     "deleteAttachment": "Ta bort bilaga",

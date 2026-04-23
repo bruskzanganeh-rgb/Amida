@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import {
   Dialog,
@@ -37,6 +37,7 @@ export function CreateGigTypeDialog({ open, onOpenChange, onSuccess, onCreated }
   const supabase = createClient()
   const t = useTranslations('gigTypes')
   const tc = useTranslations('common')
+  const locale = useLocale()
 
   async function handleTranslate() {
     if (!formData.name.trim()) return
@@ -66,7 +67,7 @@ export function CreateGigTypeDialog({ open, onOpenChange, onSuccess, onCreated }
       .insert([
         {
           name: formData.name,
-          name_en: formData.name_en || null,
+          name_en: locale === 'en' ? formData.name : formData.name_en || null,
           vat_rate: parseFloat(formData.vat_rate),
           color: formData.color,
           is_default: false,
@@ -117,28 +118,30 @@ export function CreateGigTypeDialog({ open, onOpenChange, onSuccess, onCreated }
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="name_en">{t('nameEn')}</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="name_en"
-                  placeholder={t('nameEnPlaceholder')}
-                  value={formData.name_en}
-                  onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTranslate}
-                  disabled={translating || !formData.name.trim()}
-                  className="shrink-0"
-                >
-                  {translating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
-                </Button>
+            {locale !== 'en' && (
+              <div className="grid gap-2">
+                <Label htmlFor="name_en">{t('nameEn')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="name_en"
+                    placeholder={t('nameEnPlaceholder')}
+                    value={formData.name_en}
+                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTranslate}
+                    disabled={translating || !formData.name.trim()}
+                    className="shrink-0"
+                  >
+                    {translating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">{t('nameEnHint')}</p>
               </div>
-              <p className="text-xs text-muted-foreground">{t('nameEnHint')}</p>
-            </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="vat_rate">

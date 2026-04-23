@@ -17,6 +17,7 @@ type Invoice = {
   id: string
   invoice_number: number
   total: number
+  total_base: number | null
   currency: string | null
   due_date: string
   status: string
@@ -38,7 +39,7 @@ export function UpcomingPayments({ className }: { className?: string }) {
 
       const { data } = await supabase
         .from('invoices')
-        .select('id, invoice_number, total, currency, due_date, status, client:clients(name)')
+        .select('id, invoice_number, total, total_base, currency, due_date, status, client:clients(name)')
         .in('status', ['sent', 'overdue'])
         .order('due_date', { ascending: true })
         .limit(8)
@@ -86,7 +87,7 @@ export function UpcomingPayments({ className }: { className?: string }) {
     )
   }
 
-  const totalUnpaid = invoices.reduce((sum, inv) => sum + inv.total, 0)
+  const totalUnpaid = invoices.reduce((sum, inv) => sum + (inv.total_base || inv.total), 0)
 
   return (
     <Card className={cn(className)}>

@@ -1,5 +1,6 @@
 'use client'
 
+import '@/lib/polyfills'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'

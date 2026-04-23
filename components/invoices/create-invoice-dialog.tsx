@@ -276,15 +276,23 @@ export function CreateInvoiceDialog({
     (gigs: InitialGig[]): InvoiceLine[] => {
       const client = clients.find((c) => c.id === formData.client_id)
       const useEnglish = client?.invoice_language === 'en'
+      const invoiceLang = client?.invoice_language || 'sv'
+      // Format dates matching the PDF output: sv → yyyy-MM-dd, en → dd/MM/yyyy
+      const fmtDate = (dateStr: string) => {
+        const d = new Date(dateStr)
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        if (invoiceLang === 'en') return `${day}/${m}/${y}`
+        return `${y}-${m}-${day}`
+      }
       const newLines: InvoiceLine[] = []
       for (const gig of gigs) {
         let dateDescription: string
         if (gig.total_days > 1 && gig.start_date && gig.end_date) {
-          const startFormatted = new Date(gig.start_date).toLocaleDateString(formatLocale)
-          const endFormatted = new Date(gig.end_date).toLocaleDateString(formatLocale)
-          dateDescription = `${startFormatted} - ${endFormatted} (${gig.total_days} ${tc('days')})`
+          dateDescription = `${fmtDate(gig.start_date)} - ${fmtDate(gig.end_date)} (${gig.total_days} ${tc('days')})`
         } else {
-          dateDescription = new Date(gig.date).toLocaleDateString(formatLocale)
+          dateDescription = fmtDate(gig.date)
         }
 
         const typeName = useEnglish && gig.gig_type_name_en ? gig.gig_type_name_en : gig.gig_type_name
@@ -307,7 +315,7 @@ export function CreateInvoiceDialog({
       }
       return newLines.length > 0 ? newLines : [{ description: '', amount: '', gig_type_id: '' }]
     },
-    [clients, formData.client_id, formatLocale, tc, tg, gigTypes],
+    [clients, formData.client_id, tc, tg, gigTypes],
   )
 
   // Auto-populate form when initialGig or initialGigs are provided (once per dialog open)
@@ -435,12 +443,12 @@ export function CreateInvoiceDialog({
     const referencePersonOverride =
       formData.reference_person !== (client?.reference_person || '') ? formData.reference_person || null : null
 
-    // Convert to base currency (SEK) if invoice is in foreign currency
+    // Convert to base currency if invoice is in a different currency
     let exchangeRate = 1.0
     let totalBase = total
-    if (effectiveCurrency !== 'SEK') {
+    if (effectiveCurrency !== companyCurrency) {
       try {
-        exchangeRate = await getRate(effectiveCurrency, 'SEK', formData.invoice_date)
+        exchangeRate = await getRate(effectiveCurrency, companyCurrency as SupportedCurrency, formData.invoice_date)
         totalBase = Math.round(total * exchangeRate * 100) / 100
       } catch (err) {
         console.error('Exchange rate fetch failed:', err)

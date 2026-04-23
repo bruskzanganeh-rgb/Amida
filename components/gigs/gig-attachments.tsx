@@ -13,8 +13,10 @@ import {
   type GigAttachment,
   type AttachmentCategory,
 } from '@/lib/supabase/storage'
-import { FileText, Upload, Trash2, Download, Loader2, AlertCircle } from 'lucide-react'
+import { FileText, Upload, Trash2, Download, Loader2, AlertCircle, Eye, X } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { PdfViewer } from '@/components/ui/pdf-viewer'
 import { useTranslations } from 'next-intl'
 import { downloadFile } from '@/lib/download'
 
@@ -27,22 +29,26 @@ type GigAttachmentsProps = {
 
 type AttachmentRowProps = {
   attachment: GigAttachment
+  onPreview: (attachment: GigAttachment) => void
   onDownload: (attachment: GigAttachment) => void
   onDelete: (attachment: GigAttachment) => void
   onCategoryChange: (attachment: GigAttachment, category: AttachmentCategory) => void
   disabled?: boolean
   categoryLabels: CategoryLabels
+  previewFileLabel: string
   openFileLabel: string
   deleteFileLabel: string
 }
 
 function AttachmentRow({
   attachment,
+  onPreview,
   onDownload,
   onDelete,
   onCategoryChange,
   disabled,
   categoryLabels,
+  previewFileLabel,
   openFileLabel,
   deleteFileLabel,
 }: AttachmentRowProps) {
@@ -69,6 +75,16 @@ function AttachmentRow({
             <SelectItem value="schedule">{categoryLabels.schedule}</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => onPreview(attachment)}
+          title={previewFileLabel}
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </Button>
         <Button
           type="button"
           variant="ghost"
@@ -105,6 +121,11 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [attachmentToDelete, setAttachmentToDelete] = useState<GigAttachment | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewData, setPreviewData] = useState<Uint8Array | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewFilename, setPreviewFilename] = useState('')
+  const [previewDownloadUrl, setPreviewDownloadUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const categoryLabels: CategoryLabels = {
@@ -206,6 +227,28 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
     }
   }
 
+  async function handlePreview(attachment: GigAttachment) {
+    setPreviewFilename(attachment.file_name)
+    setPreviewOpen(true)
+    setPreviewLoading(true)
+    setPreviewData(null)
+
+    try {
+      const url = await getSignedUrl(attachment.file_path)
+      if (!url) throw new Error(t('downloadError'))
+      const res = await fetch(url)
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      setPreviewData(new Uint8Array(await blob.arrayBuffer()))
+      setPreviewDownloadUrl(URL.createObjectURL(blob))
+    } catch {
+      setError(t('openError'))
+      setPreviewOpen(false)
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -253,11 +296,13 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
             <AttachmentRow
               key={attachment.id}
               attachment={attachment}
+              onPreview={handlePreview}
               onDownload={handleDownload}
               onDelete={confirmDelete}
               onCategoryChange={handleCategoryChange}
               disabled={disabled}
               categoryLabels={categoryLabels}
+              previewFileLabel={t('previewFile')}
               openFileLabel={t('openFile')}
               deleteFileLabel={t('deleteFile')}
             />
@@ -283,6 +328,58 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
           setAttachmentToDelete(null)
         }}
       />
+
+      <Dialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          setPreviewOpen(open)
+          if (!open) {
+            if (previewDownloadUrl) {
+              URL.revokeObjectURL(previewDownloadUrl)
+              setPreviewDownloadUrl(null)
+            }
+            setPreviewData(null)
+          }
+        }}
+      >
+        <DialogContent
+          className="max-w-[100vw] max-h-[100dvh] w-full h-[100dvh] sm:max-w-[700px] sm:h-auto sm:max-h-[90vh] p-0 rounded-none sm:rounded-lg"
+          showCloseButton={false}
+        >
+          <DialogTitle className="sr-only">{previewFilename}</DialogTitle>
+          <div className="relative h-full flex flex-col">
+            <div className="absolute top-2 right-2 z-10 flex gap-1">
+              {previewDownloadUrl && (
+                <a
+                  href={previewDownloadUrl}
+                  download={previewFilename}
+                  className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                  title={t('openFile')}
+                >
+                  <Download className="h-5 w-5" />
+                </a>
+              )}
+              <button
+                onClick={() => setPreviewOpen(false)}
+                className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {previewLoading ? (
+              <div className="flex items-center justify-center h-96 sm:h-96 flex-1 sm:flex-none">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : previewData ? (
+              <div className="flex-1 sm:flex-none overflow-auto">
+                <PdfViewer data={previewData} />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-96 text-gray-500">{t('openError')}</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -147,6 +147,7 @@
     "attachmentsPdf": "Attachments (PDF)",
     "loadingAttachments": "Loading attachments...",
     "noAttachments": "No attachments yet",
+    "previewFile": "Preview file",
     "openFile": "Open file",
     "deleteFile": "Delete file",
     "deleteAttachment": "Delete attachment",

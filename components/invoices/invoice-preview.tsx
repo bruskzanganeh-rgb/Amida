@@ -173,10 +173,11 @@ export function InvoicePreview({
     if (!dateStr) return '-'
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) return dateStr
-    // ISO yyyy-MM-dd — unambiguous across locales (avoids US MM/DD/YYYY)
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
+    // Match PDF generator: sv → yyyy-MM-dd, en → dd/MM/yyyy
+    if (localeProp === 'en') return `${day}/${month}/${year}`
     return `${year}-${month}-${day}`
   }
 
