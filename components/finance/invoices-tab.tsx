@@ -824,6 +824,19 @@ export default function InvoicesTab() {
                                     {t('markAsSent')}
                                   </DropdownMenuItem>
                                 )}
+                              {(invoice.status === 'sent' ||
+                                invoice.status === 'paid' ||
+                                invoice.status === 'overdue') && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedInvoice(invoice)
+                                    setShowSendDialog(true)
+                                  }}
+                                >
+                                  <Mail className="mr-2 h-4 w-4" />
+                                  {t('resendInvoice')}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => confirmDeleteInvoice(invoice)}
@@ -1005,6 +1018,19 @@ export default function InvoicesTab() {
                                             {t('markAsSent')}
                                           </DropdownMenuItem>
                                         )}
+                                      {(invoice.status === 'sent' ||
+                                        invoice.status === 'paid' ||
+                                        invoice.status === 'overdue') && (
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setSelectedInvoice(invoice)
+                                            setShowSendDialog(true)
+                                          }}
+                                        >
+                                          <Mail className="mr-2 h-4 w-4" />
+                                          {t('resendInvoice')}
+                                        </DropdownMenuItem>
+                                      )}
                                       <DropdownMenuItem
                                         className="text-destructive"
                                         onClick={() => confirmDeleteInvoice(invoice)}

@@ -61,7 +61,8 @@
     "noNotes": "No notes",
     "writeNotesHere": "Write notes here...",
     "chooseImage": "Choose image",
-    "saveSettings": "Save settings"
+    "saveSettings": "Save settings",
+    "currency": "Currency"
   },
   "status": {
     "tentative": "Tentative",
@@ -250,6 +251,7 @@
     "markPaidConfirmDescription": "The invoice will be marked as paid with today's date. Continue?",
     "sendInvoice": "Send invoice",
     "sendViaEmail": "Send via email",
+    "resendInvoice": "Resend",
     "markAsSent": "Mark as sent",
     "markedAsSent": "Invoice marked as sent",
     "downloadPdf": "Download PDF",
