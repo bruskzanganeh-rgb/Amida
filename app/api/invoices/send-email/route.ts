@@ -231,13 +231,8 @@ export async function POST(request: NextRequest) {
         .from('invoices')
         .update({ status: 'sent', sent_date: new Date().toISOString() })
         .eq('id', invoiceId)
-        .eq('user_id', user.id)
     } else if (!invoice.sent_date) {
-      await serviceSupabase
-        .from('invoices')
-        .update({ sent_date: new Date().toISOString() })
-        .eq('id', invoiceId)
-        .eq('user_id', user.id)
+      await serviceSupabase.from('invoices').update({ sent_date: new Date().toISOString() }).eq('id', invoiceId)
     }
 
     // Track email usage
