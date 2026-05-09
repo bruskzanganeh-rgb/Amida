@@ -153,10 +153,6 @@ export default function DocumentsTab() {
             ))}
           </SelectContent>
         </Select>
-        <Button size="sm" onClick={() => setShowUploadDialog(true)}>
-          <Upload className="h-4 w-4 mr-2" />
-          {t('upload')}
-        </Button>
       </div>
 
       {loading ? (
