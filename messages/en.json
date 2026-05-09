@@ -1643,6 +1643,16 @@
     "exportButton": "Export {month} {year}",
     "exportSuccess": "Export complete",
     "exportError": "Export failed",
-    "selectAtLeastOne": "Select at least one type to export"
+    "selectAtLeastOne": "Select at least one type to export",
+    "periodFrom": "From",
+    "periodTo": "To",
+    "selectedPeriod": "Selected period",
+    "noDataForPeriod": "No expenses for selected period",
+    "pdfSummaryOnly": "PDF — Summary",
+    "pdfSummaryDesc": "Overview with table of all expenses",
+    "pdfWithReceipts": "PDF — Summary + receipts",
+    "pdfWithReceiptsDesc": "Complete PDF with summary and all receipts",
+    "zipWithReceipts": "ZIP — CSV + receipts",
+    "zipWithReceiptsDesc": "CSV file and receipts as separate files"
   }
 }

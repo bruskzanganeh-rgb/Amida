@@ -444,8 +444,9 @@ export async function GET(request: NextRequest) {
         y -= 12
       }
 
-      // Lägg till kvitton (bilder och PDF:er)
-      for (const expense of expensesWithAttachments) {
+      // Lägg till kvitton (bilder och PDF:er) — hoppa över om skipAttachments
+      const skipAttachments = searchParams.get('skipAttachments') === 'true'
+      for (const expense of skipAttachments ? [] : expensesWithAttachments) {
         if (!expense.attachment_url) continue
 
         try {

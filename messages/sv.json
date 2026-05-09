@@ -1642,6 +1642,16 @@
     "exportButton": "Exportera {month} {year}",
     "exportSuccess": "Export klar",
     "exportError": "Exporten misslyckades",
-    "selectAtLeastOne": "Välj minst en typ att exportera"
+    "selectAtLeastOne": "Välj minst en typ att exportera",
+    "periodFrom": "Från",
+    "periodTo": "Till",
+    "selectedPeriod": "Vald period",
+    "noDataForPeriod": "Inga utgifter för vald period",
+    "pdfSummaryOnly": "PDF — Summering",
+    "pdfSummaryDesc": "Översikt med tabell över alla utgifter",
+    "pdfWithReceipts": "PDF — Summering + kvitton",
+    "pdfWithReceiptsDesc": "Komplett PDF med summering och alla kvitton",
+    "zipWithReceipts": "ZIP — CSV + kvitton",
+    "zipWithReceiptsDesc": "CSV-fil och kvitton som separata filer"
   }
 }
