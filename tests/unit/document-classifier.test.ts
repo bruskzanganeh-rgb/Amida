@@ -70,7 +70,7 @@ import {
   fileToBase64,
   getImageMimeType,
 } from '@/lib/import/document-classifier'
-import type { ExpenseData, InvoiceData } from '@/lib/import/document-classifier'
+import type { ExpenseData, InvoiceData, DocumentData } from '@/lib/import/document-classifier'
 
 import { matchClient } from '@/lib/import/client-matcher'
 
@@ -127,6 +127,22 @@ function makeInvoiceResponse(overrides: Partial<Record<string, unknown>> = {}) {
       ...((overrides.data as Record<string, unknown>) || {}),
     },
     suggestedFilename: '2025-03-20_Konserthuset_Faktura127',
+    ...overrides,
+  }
+}
+
+/** Build a document classification response */
+function makeDocumentResponse(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    type: 'document',
+    confidence: 0.95,
+    data: {
+      category: 'registration',
+      description: 'Registreringsbevis för föreningen',
+      documentDate: '2022-01-31',
+      ...((overrides.data as Record<string, unknown>) || {}),
+    },
+    suggestedFilename: '2022-01-31_Registreringsbevis',
     ...overrides,
   }
 }
@@ -248,6 +264,33 @@ describe('classifyImageDocument', () => {
     expect(data.invoiceNumber).toBe(127)
     expect(data.clientName).toBe('Konserthuset')
     expect(data.total).toBe(12500)
+  })
+
+  it('classifies a document image correctly', async () => {
+    const response = makeDocumentResponse()
+    mockCreate.mockResolvedValueOnce(makeMockMessage(response))
+
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'registreringsbevis.jpg')
+
+    expect(result.type).toBe('document')
+    expect(result.confidence).toBe(0.95)
+    const data = result.data as DocumentData
+    expect(data.category).toBe('registration')
+    expect(data.description).toBe('Registreringsbevis för föreningen')
+    expect(data.documentDate).toBe('2022-01-31')
+  })
+
+  it('normalizes invalid document category to other', async () => {
+    const response = makeDocumentResponse({
+      data: { category: 'invalid_category', description: 'Test', documentDate: null },
+    })
+    mockCreate.mockResolvedValueOnce(makeMockMessage(response))
+
+    const result = await classifyImageDocument('base64data', 'image/jpeg', 'test.jpg')
+
+    expect(result.type).toBe('document')
+    const data = result.data as DocumentData
+    expect(data.category).toBe('other')
   })
 
   it('sanitizes the suggested filename', async () => {
