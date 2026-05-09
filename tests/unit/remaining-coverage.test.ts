@@ -479,6 +479,15 @@ describe('lib/usage.ts', () => {
               }),
             }
           }
+          if (table === 'company_documents') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({
+                  data: [],
+                }),
+              }),
+            }
+          }
           return {}
         }),
       }
@@ -563,6 +572,13 @@ describe('lib/usage.ts', () => {
                 eq: vi.fn().mockReturnValue({
                   not: vi.fn().mockResolvedValue({ data: null }),
                 }),
+              }),
+            }
+          }
+          if (table === 'company_documents') {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: null }),
               }),
             }
           }
