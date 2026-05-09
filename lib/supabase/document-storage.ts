@@ -102,7 +102,11 @@ export async function deleteCompanyDocument(id: string, filePath: string): Promi
 export async function getCompanyDocuments(category?: DocumentCategory): Promise<CompanyDocument[]> {
   const supabase = createClient()
 
-  let query = supabase.from('company_documents').select('*').order('uploaded_at', { ascending: false })
+  let query = supabase
+    .from('company_documents')
+    .select('*')
+    .order('document_date', { ascending: false, nullsFirst: false })
+    .order('uploaded_at', { ascending: false })
 
   if (category) {
     query = query.eq('category', category)

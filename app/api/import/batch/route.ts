@@ -146,6 +146,9 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .in('date', expenseDates.length > 0 ? expenseDates : ['1900-01-01'])
 
+    // Hämta befintliga dokument för dublettkontroll (filename + file_size)
+    const { data: existingDocuments } = await supabase.from('company_documents').select('id, file_name, file_size')
+
     const results: ImportResult[] = []
 
     for (const fileMeta of metadata) {
@@ -164,9 +167,24 @@ export async function POST(request: NextRequest) {
 
       try {
         if (fileMeta.type === 'document') {
+          // Dublettkontroll för dokument (filnamn + storlek)
+          const docDuplicate = existingDocuments?.find(
+            (doc) => doc.file_name === file.name && doc.file_size === file.size,
+          )
+
+          if (docDuplicate && skipDuplicates) {
+            results.push({
+              fileId: fileMeta.id,
+              success: false,
+              type: 'document',
+              filename: fileMeta.suggestedFilename,
+              skippedAsDuplicate: true,
+            })
+            continue
+          }
+
           // Importera som företagsdokument
           const docData = fileMeta.data as DocumentData
-          const fileExt = file.name.split('.').pop() || 'pdf'
           const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
           const docStoragePath = `${user.id}/${Date.now()}-${sanitizedName}`
 
