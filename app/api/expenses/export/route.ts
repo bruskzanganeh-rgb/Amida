@@ -101,10 +101,23 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient()
     const { searchParams } = new URL(request.url)
-    const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString())
-    const month = parseInt(searchParams.get('month') || (new Date().getMonth() + 1).toString())
     const format = searchParams.get('format') || 'zip'
     const locale = searchParams.get('locale') || 'sv-SE'
+
+    // Support both old (year+month) and new (from+to) params
+    let year: number
+    let month: number
+    const fromParam = searchParams.get('from')
+    const toParam = searchParams.get('to')
+
+    if (fromParam && toParam) {
+      // New date range mode
+      year = parseInt(fromParam.substring(0, 4))
+      month = parseInt(fromParam.substring(5, 7))
+    } else {
+      year = parseInt(searchParams.get('year') || new Date().getFullYear().toString())
+      month = parseInt(searchParams.get('month') || (new Date().getMonth() + 1).toString())
+    }
 
     // Load user locale to localize category labels in export
     const { data: userSettings } = await serverSupabase
@@ -141,9 +154,17 @@ export async function GET(request: NextRequest) {
       baseCurrencySymbol = map[companyRow?.base_currency || 'SEK'] || 'SEK'
     }
 
-    // Beräkna start- och slutdatum för månaden
-    const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0]
+    // Beräkna start- och slutdatum
+    let startDate: string
+    let endDate: string
+
+    if (fromParam && toParam) {
+      startDate = fromParam
+      endDate = toParam
+    } else {
+      startDate = `${year}-${month.toString().padStart(2, '0')}-01`
+      endDate = new Date(year, month, 0).toISOString().split('T')[0]
+    }
 
     // Hämta utgifter för månaden
     const { data: expenses, error } = await supabase
@@ -181,8 +202,16 @@ export async function GET(request: NextRequest) {
     // Filtrera ut utgifter med bilagor
     const expensesWithAttachments = typedExpenses.filter((e) => e.attachment_url)
 
-    const monthName = new Date(year, month - 1).toLocaleDateString(locale, { month: 'long' })
-    const fileBaseName = `${year}-${month.toString().padStart(2, '0')}-Kvitton`
+    // Build file name based on date range
+    let fileBaseName: string
+    if (fromParam && toParam) {
+      fileBaseName = `${fromParam}_${toParam}-Kvitton`
+    } else {
+      fileBaseName = `${year}-${month.toString().padStart(2, '0')}-Kvitton`
+    }
+    const monthName = fromParam
+      ? `${fromParam} – ${toParam}`
+      : new Date(year, month - 1).toLocaleDateString(locale, { month: 'long' })
 
     // Format: individual - returnera bara URLer
     if (format === 'individual') {

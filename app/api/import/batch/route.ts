@@ -149,6 +149,16 @@ export async function POST(request: NextRequest) {
     // Hämta befintliga dokument för dublettkontroll (filename + file_size)
     const { data: existingDocuments } = await supabase.from('company_documents').select('id, file_name, file_size')
 
+    // Hämta högsta fakturanumret för att generera nya nummer
+    const { data: maxInvoice } = await supabase
+      .from('invoices')
+      .select('invoice_number')
+      .order('invoice_number', { ascending: false })
+      .limit(1)
+      .single()
+
+    let nextInvoiceNumber = (maxInvoice?.invoice_number || 0) + 1
+
     const results: ImportResult[] = []
 
     for (const fileMeta of metadata) {
@@ -384,10 +394,13 @@ export async function POST(request: NextRequest) {
             dueDate = dueDateObj.toISOString().split('T')[0]
           }
 
+          // Använd nästa lediga fakturanummer (inte AI:ns parsade nummer)
+          const invoiceNumber = nextInvoiceNumber++
+
           const { data: invoice, error: insertError } = await supabase
             .from('invoices')
             .insert({
-              invoice_number: invoiceData.invoiceNumber,
+              invoice_number: invoiceNumber,
               client_id: clientId,
               invoice_date: invoiceDate,
               due_date: dueDate,
