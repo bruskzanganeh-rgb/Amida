@@ -181,8 +181,8 @@ export default function ImportPage() {
   const [duplicatesChecked, setDuplicatesChecked] = useState(false)
   useEffect(() => {
     if (currentStep === 'review' && !duplicatesChecked) {
-      const analyzedExpenses = files.filter((f) => f.status === 'done' && f.type === 'expense')
-      if (analyzedExpenses.length > 0) {
+      const analyzedFiles = files.filter((f) => f.status === 'done' && (f.type === 'expense' || f.type === 'invoice'))
+      if (analyzedFiles.length > 0) {
         checkDuplicates()
         setDuplicatesChecked(true)
       }
@@ -372,8 +372,9 @@ export default function ImportPage() {
 
   // Kontrollera dubletter mot befintliga utgifter
   const checkDuplicates = async () => {
-    const currentFiles = files.filter((f) => f.status === 'done' && f.type === 'expense')
-    const expensesToCheck = currentFiles
+    // Check expense duplicates
+    const expenseFiles = files.filter((f) => f.status === 'done' && f.type === 'expense')
+    const expensesToCheck = expenseFiles
       .map((f) => {
         const data = f.data as ExpenseData
         return {
@@ -385,47 +386,86 @@ export default function ImportPage() {
       })
       .filter((e) => e.date && e.supplier && e.amount > 0)
 
-    if (expensesToCheck.length === 0) return
-
-    try {
-      const response = await fetch('/api/expenses/check-duplicate', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expenses: expensesToCheck.map((e) => ({
-            date: e.date,
-            supplier: e.supplier,
-            amount: e.amount,
-          })),
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setFiles((prev) =>
-          prev.map((f) => {
-            if (f.type !== 'expense' || f.status !== 'done') return f
-
-            const fileData = f.data as ExpenseData
-            const matchIndex = expensesToCheck.findIndex(
-              (e) => e.date === fileData.date && e.supplier === fileData.supplier && e.amount === fileData.total,
-            )
-
-            if (matchIndex >= 0 && data.results[matchIndex]) {
-              const dupResult = data.results[matchIndex]
-              return {
-                ...f,
-                isDuplicate: dupResult.isDuplicate,
-                existingExpense: dupResult.existingExpense,
-                selected: dupResult.isDuplicate ? false : f.selected,
-              }
-            }
-            return f
+    if (expensesToCheck.length > 0) {
+      try {
+        const response = await fetch('/api/expenses/check-duplicate', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            expenses: expensesToCheck.map((e) => ({
+              date: e.date,
+              supplier: e.supplier,
+              amount: e.amount,
+            })),
           }),
-        )
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setFiles((prev) =>
+            prev.map((f) => {
+              if (f.type !== 'expense' || f.status !== 'done') return f
+
+              const fileData = f.data as ExpenseData
+              const matchIndex = expensesToCheck.findIndex(
+                (e) => e.date === fileData.date && e.supplier === fileData.supplier && e.amount === fileData.total,
+              )
+
+              if (matchIndex >= 0 && data.results[matchIndex]) {
+                const dupResult = data.results[matchIndex]
+                return {
+                  ...f,
+                  isDuplicate: dupResult.isDuplicate,
+                  existingExpense: dupResult.existingExpense,
+                  selected: dupResult.isDuplicate ? false : f.selected,
+                }
+              }
+              return f
+            }),
+          )
+        }
+      } catch (err) {
+        console.error('Expense duplicate check failed:', err)
       }
-    } catch (err) {
-      console.error('Duplicate check failed:', err)
+    }
+
+    // Check invoice duplicates
+    const invoiceFiles = files.filter((f) => f.status === 'done' && f.type === 'invoice')
+    if (invoiceFiles.length > 0) {
+      try {
+        const response = await fetch('/api/import/check-invoice-duplicates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invoices: invoiceFiles.map((f) => {
+              const data = f.data as InvoiceData
+              return {
+                id: f.id,
+                invoiceNumber: data.invoiceNumber,
+                clientName: data.clientName,
+                invoiceDate: data.invoiceDate,
+                total: data.total,
+              }
+            }),
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setFiles((prev) =>
+            prev.map((f) => {
+              if (f.type !== 'invoice' || f.status !== 'done') return f
+              const match = data.results?.find((r: { id: string; isDuplicate: boolean }) => r.id === f.id)
+              if (match?.isDuplicate) {
+                return { ...f, isDuplicate: true, selected: false }
+              }
+              return f
+            }),
+          )
+        }
+      } catch (err) {
+        console.error('Invoice duplicate check failed:', err)
+      }
     }
   }
 

@@ -146,6 +146,12 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .in('date', expenseDates.length > 0 ? expenseDates : ['1900-01-01'])
 
+    // Hämta befintliga fakturor för dublettkontroll
+    const { data: existingInvoices } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, invoice_date, total, client:clients(name)')
+      .eq('user_id', user.id)
+
     // Hämta befintliga dokument för dublettkontroll (filename + file_size)
     const { data: existingDocuments } = await supabase.from('company_documents').select('id, file_name, file_size')
 
@@ -332,6 +338,30 @@ export async function POST(request: NextRequest) {
         } else {
           // Importera som faktura
           const invoiceData = fileMeta.data as InvoiceData
+
+          // Dublettkontroll för fakturor (datum + belopp + kundnamn)
+          const invoiceDuplicate = existingInvoices?.find((inv) => {
+            const client = inv.client as unknown as { name: string } | null
+            const nameMatch = client?.name?.toLowerCase() === invoiceData.clientName?.toLowerCase()
+            const dateMatch = inv.invoice_date === invoiceData.invoiceDate
+            const amountMatch = Math.abs(Number(inv.total) - invoiceData.total) < 0.01
+            return (
+              (dateMatch && amountMatch) ||
+              (nameMatch && amountMatch) ||
+              (inv.invoice_number === invoiceData.invoiceNumber && invoiceData.invoiceNumber > 0)
+            )
+          })
+
+          if (invoiceDuplicate && skipDuplicates) {
+            results.push({
+              fileId: fileMeta.id,
+              success: false,
+              type: 'invoice',
+              filename: fileMeta.suggestedFilename,
+              skippedAsDuplicate: true,
+            })
+            continue
+          }
 
           // Hantera kund baserat på användarens val
           let clientId: string | null = null
