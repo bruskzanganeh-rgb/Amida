@@ -146,7 +146,11 @@ export async function checkStorageQuota(userId: string): Promise<{
 
   const expBytes = (expRows || []).reduce((sum, r) => sum + (r.file_size || 0), 0)
 
-  const usedBytes = attBytes + expBytes
+  const { data: docRows } = await supabaseAdmin.from('company_documents').select('file_size').eq('user_id', userId)
+
+  const docBytes = (docRows || []).reduce((sum, r) => sum + (r.file_size || 0), 0)
+
+  const usedBytes = attBytes + expBytes + docBytes
 
   return { allowed: usedBytes < limitBytes, usedBytes, limitBytes, plan }
 }

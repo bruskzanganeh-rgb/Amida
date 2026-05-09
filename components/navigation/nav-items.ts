@@ -1,11 +1,4 @@
-import {
-  LayoutDashboard,
-  Calendar,
-  CalendarDays,
-  FileText,
-  Receipt,
-  type LucideIcon,
-} from 'lucide-react'
+import { LayoutDashboard, Calendar, CalendarDays, FileText, Receipt, FolderOpen, type LucideIcon } from 'lucide-react'
 
 export type NavItem = {
   nameKey: string
@@ -19,4 +12,5 @@ export const navigationItems: NavItem[] = [
   { nameKey: 'calendar', href: '/calendar', icon: CalendarDays },
   { nameKey: 'finance', href: '/finance', icon: FileText },
   { nameKey: 'expenses', href: '/expenses', icon: Receipt },
+  { nameKey: 'documents', href: '/documents', icon: FolderOpen },
 ]

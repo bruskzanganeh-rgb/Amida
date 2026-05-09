@@ -354,6 +354,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_documents: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          category: string
+          description: string | null
+          document_date: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          id?: string
+          company_id?: string
+          user_id?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          category?: string
+          description?: string | null
+          document_date?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          category?: string
+          description?: string | null
+          document_date?: string | null
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       company_members: {
         Row: {
           id: string
