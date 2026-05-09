@@ -30,7 +30,7 @@ export function ExpensesPageContent() {
     <PageTransition>
       <div className="lg:h-[calc(100vh-7rem)] lg:flex lg:flex-col space-y-6">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl font-bold">{tExpense('title')}</h1>
+          <h1 className="text-2xl font-bold">{tExpense('expenses')}</h1>
           <Button size="sm" onClick={() => window.dispatchEvent(new Event('upload-receipt'))}>
             <Upload className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{tExpense('uploadReceipt')}</span>
