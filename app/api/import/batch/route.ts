@@ -142,9 +142,16 @@ export async function POST(request: NextRequest) {
 
     const { data: existingExpenses } = await supabase
       .from('expenses')
-      .select('id, date, supplier, amount, category')
+      .select('id, date, supplier, amount, category, file_size')
       .eq('user_id', user.id)
       .in('date', expenseDates.length > 0 ? expenseDates : ['1900-01-01'])
+
+    // Hämta alla expense file_sizes för filnamn+storlek kontroll
+    const { data: allExpenseFiles } = await supabase
+      .from('expenses')
+      .select('id, file_size')
+      .eq('user_id', user.id)
+      .not('attachment_url', 'is', null)
 
     // Hämta befintliga fakturor för dublettkontroll
     const { data: existingInvoices } = await supabase
@@ -154,6 +161,10 @@ export async function POST(request: NextRequest) {
 
     // Hämta befintliga dokument för dublettkontroll (filename + file_size)
     const { data: existingDocuments } = await supabase.from('company_documents').select('id, file_name, file_size')
+
+    // Build a set of known file sizes for quick duplicate-by-file check
+    const knownFileSizes = new Set<number>()
+    for (const e of allExpenseFiles || []) if (e.file_size) knownFileSizes.add(e.file_size)
 
     // Hämta högsta fakturanumret för att generera nya nummer
     const { data: maxInvoice } = await supabase
@@ -268,6 +279,21 @@ export async function POST(request: NextRequest) {
         const { data: urlData } = serviceSupabase.storage.from('expenses').getPublicUrl(storagePath)
         const attachmentUrl = urlData?.publicUrl || null
 
+        // File-level duplicate check (same file size = likely same file)
+        if (knownFileSizes.has(file.size)) {
+          // Possible file duplicate — check if we should skip
+          if (skipDuplicates) {
+            results.push({
+              fileId: fileMeta.id,
+              success: false,
+              type: fileMeta.type as 'expense' | 'invoice',
+              filename: fileMeta.suggestedFilename,
+              skippedAsDuplicate: true,
+            })
+            continue
+          }
+        }
+
         if (fileMeta.type === 'expense') {
           // Importera som utgift
           const expenseData = fileMeta.data as ExpenseData
@@ -317,6 +343,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Track newly inserted expense for intra-batch duplicate detection
+          knownFileSizes.add(file.size)
           if (expense) {
             existingExpenses?.push({
               id: expense.id,
@@ -324,6 +351,7 @@ export async function POST(request: NextRequest) {
               supplier: expenseData.supplier,
               amount: expenseData.total,
               category: expenseData.category || 'other',
+              file_size: file.size,
             })
           }
 
@@ -449,7 +477,8 @@ export async function POST(request: NextRequest) {
             throw insertError
           }
 
-          // Invoice imported
+          // Track for intra-batch duplicate detection
+          knownFileSizes.add(file.size)
 
           results.push({
             fileId: fileMeta.id,
