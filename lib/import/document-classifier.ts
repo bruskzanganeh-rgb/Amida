@@ -87,19 +87,22 @@ Exempel: affärsplaner, budgetar, registreringsbevis, kontoutdrag, bolagsordning
 **UTGIFT** (expense) - Fakturor och kvitton som "${companyName}" har MOTTAGIT och ska/har BETALAT:
 
 STARKASTE LEDTRÅDAR (om dessa finns = ALLTID expense):
-- "${companyName}" står som MOTTAGARE / "Faktureras till" / "Bill to" / "Attention"
+- "${companyName}" står som MOTTAGARE / "Faktureras till" / "Bill to" / "Attention" / "Mottagare" / "Kund"
 - Avsändaren är ett ANNAT företag/person (inte "${companyName}")
 - Titel säger "Receipt", "Kvitto", "Betalningsbekräftelse"
 - Innehåller "paid", "betald", "betalat" (förfluten tid = redan betalt)
+- Ordet "Kundfaktura" i filnamn eller titel = ALLTID expense (det är avsändarens kundfaktura till dig)
 
-**VIKTIGT:** Om fakturan är STÄLLD TILL "${companyName}" (dvs "${companyName}" är kund/mottagare) = det är en UTGIFT!
-Ett "Invoice number" på en faktura ställd till "${companyName}" betyder INTE att det är en faktura "${companyName}" skickat.
+**VIKTIGASTE REGELN:** Om "${companyName}" nämns som kund, mottagare, eller i adressfältet = det är en UTGIFT (expense), ALDRIG en invoice!
+En faktura med "Kundfaktura" i titeln som är ställd till "${companyName}" = UTGIFT.
+En faktura med fakturanummer som är ställd till "${companyName}" = UTGIFT.
+Det spelar ingen roll om det står "Faktura" — om "${companyName}" är mottagaren är det en kostnad, inte en intäkt.
 
-**INKOMST** (invoice) - Fakturor som "${companyName}" själv har SKICKAT till sina kunder:
-- "${companyName}" står som AVSÄNDARE (inte mottagare)
-- Innehåller "${companyName}":s bankgiro/kontonummer för inbetalning
-- Kunden/mottagaren är ett annat företag som ska betala "${companyName}"
-- "${companyName}":s org.nr står som utställare
+**INKOMST** (invoice) - BARA fakturor som "${companyName}" själv har SKICKAT:
+- "${companyName}" står tydligt som AVSÄNDARE/UTSTÄLLARE (inte mottagare!)
+- "${companyName}":s bankgiro/kontonummer anges för inbetalning
+- En ANNAN organisation/person är mottagare som ska betala
+- "${companyName}":s org.nr och adress står i avsändarfältet
 
 **DOKUMENT** (document) - Administrativa dokument som INTE är fakturor/kvitton:
 - Registreringsbevis, bolagsordning, organisationsbevis

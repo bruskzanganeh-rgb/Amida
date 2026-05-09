@@ -27,12 +27,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch existing invoices for comparison
-    const { data: existing } = await supabase
+    const { data: existingInvoices } = await supabase
       .from('invoices')
       .select('id, invoice_number, invoice_date, total, client:clients(name)')
 
+    // Also fetch existing expenses for cross-type duplicate check
+    const { data: existingExpenses } = await supabase
+      .from('expenses')
+      .select('id, date, supplier, amount')
+      .eq('user_id', user.id)
+
     const results = invoices.map((inv) => {
-      const duplicate = existing?.find((ex) => {
+      // Check against existing invoices
+      const invoiceDup = existingInvoices?.find((ex) => {
         const client = ex.client as unknown as { name: string } | null
         const numberMatch = ex.invoice_number === inv.invoiceNumber && inv.invoiceNumber > 0
         const dateAmountMatch = ex.invoice_date === inv.invoiceDate && Math.abs(Number(ex.total) - inv.total) < 0.01
@@ -41,10 +48,23 @@ export async function POST(request: NextRequest) {
         return numberMatch || dateAmountMatch || nameAmountMatch
       })
 
+      // Cross-check against existing expenses (same date+amount or supplier+amount)
+      const expenseDup = !invoiceDup
+        ? existingExpenses?.find((ex) => {
+            const dateAmountMatch = ex.date === inv.invoiceDate && Math.abs(Number(ex.amount) - inv.total) < 0.01
+            const supplierAmountMatch =
+              ex.supplier?.toLowerCase() === inv.clientName?.toLowerCase() &&
+              Math.abs(Number(ex.amount) - inv.total) < 0.01
+            return dateAmountMatch || supplierAmountMatch
+          })
+        : null
+
       return {
         id: inv.id,
-        isDuplicate: !!duplicate,
-        existingInvoiceId: duplicate?.id || null,
+        isDuplicate: !!(invoiceDup || expenseDup),
+        existingInvoiceId: invoiceDup?.id || null,
+        existingExpenseId: expenseDup?.id || null,
+        crossType: !!expenseDup,
       }
     })
 
