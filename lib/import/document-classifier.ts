@@ -42,16 +42,35 @@ const InvoiceDataSchema = z.object({
   total: z.number().nonnegative(),
 })
 
+// Schema för administrativa dokument
+const DOCUMENT_CATEGORIES = [
+  'annual_report',
+  'bank_statement',
+  'tax_authority',
+  'registration',
+  'contract',
+  'other',
+] as const
+const DocumentDataSchema = z.object({
+  category: z.enum(DOCUMENT_CATEGORIES),
+  description: z.string(),
+  documentDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+})
+
 // Kombinerat schema för klassificerat dokument
 const ClassifiedDocumentSchema = z.object({
-  type: z.enum(['expense', 'invoice']),
+  type: z.enum(['expense', 'invoice', 'document']),
   confidence: z.number().min(0).max(1),
-  data: z.union([ExpenseDataSchema, InvoiceDataSchema]),
+  data: z.union([ExpenseDataSchema, InvoiceDataSchema, DocumentDataSchema]),
   suggestedFilename: z.string(),
 })
 
 export type ExpenseData = z.infer<typeof ExpenseDataSchema>
 export type InvoiceData = z.infer<typeof InvoiceDataSchema>
+export type DocumentData = z.infer<typeof DocumentDataSchema>
 export type ClassifiedDocument = z.infer<typeof ClassifiedDocumentSchema>
 
 const CLASSIFIER_PROMPT = `Du är en dokumentklassificerare för ett svenskt bokföringssystem för frilansmusiker (Babalisk AB).
@@ -85,6 +104,14 @@ Skillnaden: Kvitto/Receipt = du har BETALAT. Faktura = kunden SKA betala dig.
 - Bankgiro/kontonummer för inbetalning TILL DIG
 - Kunden är mottagare som ska betala
 
+**DOKUMENT** (document) - Administrativa dokument som INTE är fakturor/kvitton:
+- Registreringsbevis, bolagsordning, organisationsbevis
+- Kontoutdrag, årsbesked från bank
+- Skattebesked, inkomstdeklaration, Skatteverket-handlingar
+- Affärsplaner, budgetar, likviditetsbudgetar, resultatbudgetar
+- Avtal, stadgar, protokoll
+- Allt som inte har ett specifikt belopp att betala/få betalt
+
 ## EXTRAHERA DATA
 
 **VIKTIGT:** Om ett värde inte kan extraheras från dokumentet, använd null. Gör alltid ditt bästa försök.
@@ -115,21 +142,28 @@ TIPS för moms på kvitton:
 - vatAmount: Momsbelopp (0 om okänt)
 - total: Totalbelopp, null om ej synligt
 
+**För DOKUMENT:**
+- category: EN AV: annual_report, bank_statement, tax_authority, registration, contract, other
+- description: Kort beskrivning av dokumentet
+- documentDate: Datum (YYYY-MM-DD) om det framgår, annars null
+
 ## FILNAMN
 
 Skapa ett föreslaget filnamn efter mönster:
 - Utgift: {datum}_{leverantör}_{beskrivning}
 - Inkomst: {datum}_{kund}_Faktura{nummer}
+- Dokument: {datum}_{typ}_{beskrivning}
 
 Exempel:
 - "2024-03-15_SJ_Tagresa-Stockholm"
 - "2024-03-20_Konserthuset_Faktura127"
+- "2022-01-31_Registreringsbevis"
 
 ## SVAR
 
 Returnera ENDAST JSON (ingen markdown):
 {
-  "type": "expense" | "invoice",
+  "type": "expense" | "invoice" | "document",
   "confidence": 0-1,
   "data": { ... },
   "suggestedFilename": "..."
@@ -378,6 +412,11 @@ function parseAIResponse(message: Anthropic.Message): ClassifiedDocument {
 
       // Ta bort gamla amount fältet om det finns
       delete parsed.data.amount
+    } else if (parsed.type === 'document') {
+      const validCategories = DOCUMENT_CATEGORIES as readonly string[]
+      parsed.data.category = validCategories.includes(parsed.data.category) ? parsed.data.category : 'other'
+      parsed.data.description = parsed.data.description || 'Dokument'
+      parsed.data.documentDate = normalizeDate(parsed.data.documentDate)
     } else if (parsed.type === 'invoice') {
       // Konvertera invoiceNumber till heltal
       if (typeof parsed.data.invoiceNumber === 'string') {

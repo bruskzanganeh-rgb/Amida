@@ -38,13 +38,19 @@ type SupplierData = {
 
 type SupplierMapping = Record<string, SupplierData>
 
+type DocumentData = {
+  category: string
+  description: string
+  documentDate: string | null
+}
+
 type AnalyzedFile = {
   id: string
   file: File
-  type: 'expense' | 'invoice'
+  type: 'expense' | 'invoice' | 'document'
   confidence: number
   selected: boolean
-  data: ExpenseData | InvoiceData
+  data: ExpenseData | InvoiceData | DocumentData
   suggestedFilename: string
   status: 'pending' | 'analyzing' | 'done' | 'error'
   error?: string
@@ -99,7 +105,7 @@ type InvoiceData = {
 type ImportResult = {
   fileId: string
   success: boolean
-  type: 'expense' | 'invoice'
+  type: 'expense' | 'invoice' | 'document'
   id?: string
   filename: string
   error?: string
@@ -193,6 +199,7 @@ export default function ImportPage() {
   const selectedFiles = files.filter((f) => f.selected && f.status === 'done')
   const expenses = selectedFiles.filter((f) => f.type === 'expense')
   const invoices = selectedFiles.filter((f) => f.type === 'invoice')
+  const documents = selectedFiles.filter((f) => f.type === 'document')
   const duplicates = selectedFiles.filter((f) => f.isDuplicate)
   const analyzeProgress = files.length > 0 ? Math.round((analyzedFiles.length / files.length) * 100) : 0
 

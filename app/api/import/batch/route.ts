@@ -18,10 +18,16 @@ async function toBaseSEK(amount: number, currency: string, date: string | null):
   }
 }
 
+type DocumentData = {
+  category: string
+  description: string
+  documentDate: string | null
+}
+
 type FileMetadata = {
   id: string
-  type: 'expense' | 'invoice'
-  data: ExpenseData | InvoiceData
+  type: 'expense' | 'invoice' | 'document'
+  data: ExpenseData | InvoiceData | DocumentData
   suggestedFilename: string
 }
 
@@ -52,7 +58,7 @@ type InvoiceData = {
 type ImportResult = {
   fileId: string
   success: boolean
-  type: 'expense' | 'invoice'
+  type: 'expense' | 'invoice' | 'document'
   id?: string
   filename: string
   error?: string
@@ -157,7 +163,51 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Ladda upp fil till Supabase Storage
+        if (fileMeta.type === 'document') {
+          // Importera som företagsdokument
+          const docData = fileMeta.data as DocumentData
+          const fileExt = file.name.split('.').pop() || 'pdf'
+          const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+          const docStoragePath = `${user.id}/${Date.now()}-${sanitizedName}`
+
+          const docBuffer = Buffer.from(await file.arrayBuffer())
+          const { error: docUploadError } = await serviceSupabase.storage
+            .from('company-documents')
+            .upload(docStoragePath, docBuffer, { contentType: file.type, upsert: true })
+
+          if (docUploadError) {
+            throw new Error(`Upload failed: ${docUploadError.message}`)
+          }
+
+          const { data: doc, error: docInsertError } = await supabase
+            .from('company_documents')
+            .insert({
+              file_name: file.name,
+              file_path: docStoragePath,
+              file_size: file.size,
+              file_type: file.type,
+              category: docData.category || 'other',
+              description: docData.description || null,
+              document_date: docData.documentDate || null,
+            })
+            .select()
+            .single()
+
+          if (docInsertError) {
+            throw docInsertError
+          }
+
+          results.push({
+            fileId: fileMeta.id,
+            success: true,
+            type: 'document',
+            id: doc.id,
+            filename: fileMeta.suggestedFilename,
+          })
+          continue
+        }
+
+        // Ladda upp fil till Supabase Storage (expenses bucket)
         const fileExt = file.name.split('.').pop() || 'pdf'
         const year =
           fileMeta.type === 'expense'
@@ -181,9 +231,7 @@ export async function POST(request: NextRequest) {
           console.error('Upload error:', uploadError)
         }
 
-        // Hämta public URL
         const { data: urlData } = serviceSupabase.storage.from('expenses').getPublicUrl(storagePath)
-
         const attachmentUrl = urlData?.publicUrl || null
 
         if (fileMeta.type === 'expense') {
