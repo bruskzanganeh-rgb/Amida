@@ -73,7 +73,8 @@ export type InvoiceData = z.infer<typeof InvoiceDataSchema>
 export type DocumentData = z.infer<typeof DocumentDataSchema>
 export type ClassifiedDocument = z.infer<typeof ClassifiedDocumentSchema>
 
-const CLASSIFIER_PROMPT = `Du är en dokumentklassificerare för ett svenskt bokföringssystem för frilansmusiker (Babalisk AB).
+function getClassifierPrompt(companyName: string) {
+  return `Du är en dokumentklassificerare för ett svenskt bokföringssystem. Användaren tillhör företaget "${companyName}".
 
 UPPGIFT: Analysera dokumentet och bestäm om det är en UTGIFT, INKOMST, eller DOKUMENT, och extrahera relevant data.
 
@@ -83,30 +84,22 @@ UPPGIFT: Analysera dokumentet och bestäm om det är en UTGIFT, INKOMST, eller D
 Om dokumentet INTE är ett kvitto eller faktura med ett belopp att betala/få betalt, klassificera det som **document**.
 Exempel: affärsplaner, budgetar, registreringsbevis, kontoutdrag, bolagsordning, stadgar, skattebesked, bankansökningar, avtal utan specifika betalningsdetaljer.
 
-**UTGIFT** (expense) - Kvitton och mottagna fakturor som du har BETALAT:
+**UTGIFT** (expense) - Fakturor och kvitton som "${companyName}" har MOTTAGIT och ska/har BETALAT:
 
 STARKASTE LEDTRÅDAR (om dessa finns = ALLTID expense):
-- Titel säger "Receipt", "Kvitto", "Betalningsbekräftelse", "Orderbekräftelse"
-- Innehåller "paid", "betald", "betalat", "betalt" (förfluten tid = redan betalt)
-- "Amount paid" / "Belopp betalt" (inte "Amount due" / "Att betala")
-- "Date paid" / "Betalningsdatum" (inte "Due date" / "Förfallodatum")
+- "${companyName}" står som MOTTAGARE / "Faktureras till" / "Bill to" / "Attention"
+- Avsändaren är ett ANNAT företag/person (inte "${companyName}")
+- Titel säger "Receipt", "Kvitto", "Betalningsbekräftelse"
+- Innehåller "paid", "betald", "betalat" (förfluten tid = redan betalt)
 
-Andra ledtrådar:
-- Du (användaren) står som "Bill to" / "Faktureras till" / "Ship to"
-- Leverantören är ett välkänt företag (Anthropic, SJ, Spotify, Netflix, etc.)
-- "Tack för ditt köp", "Thank you for your purchase"
-- Kvitton från butiker (ICA, Coop, etc), tågbiljetter, flygbiljetter, hotell
+**VIKTIGT:** Om fakturan är STÄLLD TILL "${companyName}" (dvs "${companyName}" är kund/mottagare) = det är en UTGIFT!
+Ett "Invoice number" på en faktura ställd till "${companyName}" betyder INTE att det är en faktura "${companyName}" skickat.
 
-**VIKTIGT:** Ett dokument som säger "Receipt" eller "Kvitto" är ALLTID en utgift!
-Ett "Invoice number" på ett receipt betyder INTE att det är en faktura du skickat.
-Skillnaden: Kvitto/Receipt = du har BETALAT. Faktura = kunden SKA betala dig.
-
-**INKOMST** (invoice) - Fakturor du själv har SKICKAT till kunder:
-- Ditt företagsnamn (Babalisk AB) står som AVSÄNDARE (inte mottagare)
-- Innehåller "Att betala", "To pay", "Amount due"
-- Har "Förfallodatum" / "Due date" (framtida datum)
-- Bankgiro/kontonummer för inbetalning TILL DIG
-- Kunden är mottagare som ska betala
+**INKOMST** (invoice) - Fakturor som "${companyName}" själv har SKICKAT till sina kunder:
+- "${companyName}" står som AVSÄNDARE (inte mottagare)
+- Innehåller "${companyName}":s bankgiro/kontonummer för inbetalning
+- Kunden/mottagaren är ett annat företag som ska betala "${companyName}"
+- "${companyName}":s org.nr står som utställare
 
 **DOKUMENT** (document) - Administrativa dokument som INTE är fakturor/kvitton:
 - Registreringsbevis, bolagsordning, organisationsbevis
@@ -172,6 +165,7 @@ Returnera ENDAST JSON (ingen markdown):
   "data": { ... },
   "suggestedFilename": "..."
 }`
+}
 
 // Sanitera filnamn
 function sanitizeFilename(name: string): string {
@@ -191,14 +185,18 @@ async function extractPdfText(buffer: ArrayBuffer): Promise<string> {
 }
 
 // Klassificera PDF direkt via Claude API (stöder PDF nativt)
-async function classifyPdfWithVision(buffer: ArrayBuffer, originalFilename: string): Promise<ClassifiedDocument> {
+async function classifyPdfWithVision(
+  buffer: ArrayBuffer,
+  originalFilename: string,
+  companyName: string = 'Mitt företag',
+): Promise<ClassifiedDocument> {
   const base64 = Buffer.from(buffer).toString('base64')
   const model = 'claude-haiku-4-5-20251001'
   const message = await anthropic.messages.create({
     model,
     max_tokens: 1024,
     temperature: 0,
-    system: CLASSIFIER_PROMPT,
+    system: getClassifierPrompt(companyName),
     messages: [
       {
         role: 'user',
@@ -232,13 +230,17 @@ async function classifyPdfWithVision(buffer: ArrayBuffer, originalFilename: stri
 }
 
 // Klassificera med text (snabbare, använder Haiku utan vision)
-async function classifyWithText(text: string, originalFilename: string): Promise<ClassifiedDocument> {
+async function classifyWithText(
+  text: string,
+  originalFilename: string,
+  companyName: string = 'Mitt företag',
+): Promise<ClassifiedDocument> {
   const model = 'claude-haiku-4-5-20251001'
   const message = await anthropic.messages.create({
     model,
     max_tokens: 1024,
     temperature: 0,
-    system: CLASSIFIER_PROMPT,
+    system: getClassifierPrompt(companyName),
     messages: [
       {
         role: 'user',
@@ -260,14 +262,18 @@ async function classifyWithText(text: string, originalFilename: string): Promise
 }
 
 // Klassificera PDF-dokument (med automatisk Vision-fallback)
-export async function classifyPdfDocument(buffer: ArrayBuffer, originalFilename: string): Promise<ClassifiedDocument> {
+export async function classifyPdfDocument(
+  buffer: ArrayBuffer,
+  originalFilename: string,
+  companyName: string = 'Mitt företag',
+): Promise<ClassifiedDocument> {
   // 1. Försök extrahera text först (snabbast, billigast)
   try {
     const bufferCopy = buffer.slice(0)
     const text = await extractPdfText(bufferCopy)
     if (text && text.trim().length >= 50) {
       try {
-        return await classifyWithText(text, originalFilename)
+        return await classifyWithText(text, originalFilename, companyName)
       } catch {
         // Text classification failed — fall through to PDF vision
       }
@@ -278,7 +284,7 @@ export async function classifyPdfDocument(buffer: ArrayBuffer, originalFilename:
 
   // 2. Fallback: Skicka PDF direkt till Claude API (ingen canvas behövs)
   try {
-    return await classifyPdfWithVision(buffer, originalFilename)
+    return await classifyPdfWithVision(buffer, originalFilename, companyName)
   } catch (error) {
     throw new Error(`Kunde inte analysera PDF: ${error instanceof Error ? error.message : 'Okänt fel'}`)
   }
@@ -289,6 +295,7 @@ export async function classifyImageDocument(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
   originalFilename: string,
+  companyName: string = 'Mitt företag',
 ): Promise<ClassifiedDocument> {
   try {
     const model = 'claude-haiku-4-5-20251001'
@@ -296,7 +303,7 @@ export async function classifyImageDocument(
       model,
       max_tokens: 1024,
       temperature: 0,
-      system: CLASSIFIER_PROMPT,
+      system: getClassifierPrompt(companyName),
       messages: [
         {
           role: 'user',
@@ -468,18 +475,18 @@ export function getImageMimeType(file: File): 'image/jpeg' | 'image/png' | 'imag
 }
 
 // Huvudfunktion för att klassificera fil
-export async function classifyDocument(file: File): Promise<ClassifiedDocument> {
+export async function classifyDocument(file: File, companyName: string = 'Mitt företag'): Promise<ClassifiedDocument> {
   const mimeType = file.type
 
   if (mimeType === 'application/pdf') {
     const buffer = await file.arrayBuffer()
-    return classifyPdfDocument(buffer, file.name)
+    return classifyPdfDocument(buffer, file.name, companyName)
   }
 
   const imageMime = getImageMimeType(file)
   if (imageMime) {
     const base64 = await fileToBase64(file)
-    return classifyImageDocument(base64, imageMime, file.name)
+    return classifyImageDocument(base64, imageMime, file.name, companyName)
   }
 
   throw new Error(`Filtypen ${mimeType} stöds inte. Använd PDF eller bild (JPEG/PNG/WebP).`)

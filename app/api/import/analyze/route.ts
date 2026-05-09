@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { classifyDocument, type ClassifiedDocument } from '@/lib/import/document-classifier'
 import { matchClient } from '@/lib/import/client-matcher'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -9,6 +10,23 @@ export async function POST(request: NextRequest) {
   if (!success) return rateLimitResponse()
 
   try {
+    // Get user's company name for context-aware classification
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    let companyName = 'Mitt företag'
+    if (user) {
+      const { data: member } = await supabase
+        .from('company_members')
+        .select('company:companies(company_name)')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+      const company = member?.company as unknown as { company_name: string } | null
+      if (company?.company_name) companyName = company.company_name
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File | null
 
@@ -28,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Klassificera dokumentet med AI
-    const result: ClassifiedDocument = await classifyDocument(file)
+    const result: ClassifiedDocument = await classifyDocument(file, companyName)
 
     // Om det är en faktura, kör kundmatchning
     let clientMatch = null
