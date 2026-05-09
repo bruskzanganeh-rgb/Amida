@@ -130,7 +130,7 @@ export default function ExportTab() {
   }
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="max-w-xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
