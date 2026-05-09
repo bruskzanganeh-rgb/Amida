@@ -435,42 +435,48 @@ export default function ImportPage() {
   }
 
   // Uppdatera fildata
-  const updateFileData = (id: string, dataUpdates: Partial<ExpenseData | InvoiceData>) => {
+  const updateFileData = (id: string, dataUpdates: Partial<ExpenseData | InvoiceData | DocumentData>) => {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, data: { ...f.data, ...dataUpdates } } : f)))
   }
 
   // Ändra dokumenttyp
-  const changeFileType = (id: string, newType: 'expense' | 'invoice') => {
+  const changeFileType = (id: string, newType: 'expense' | 'invoice' | 'document') => {
     setFiles((prev) =>
       prev.map((f) => {
         if (f.id !== id || f.type === newType) return f
 
-        let newData: ExpenseData | InvoiceData
+        let newData: ExpenseData | InvoiceData | DocumentData
 
-        if (newType === 'expense') {
-          const invoiceData = f.data as InvoiceData
+        if (newType === 'document') {
           newData = {
-            date: invoiceData.invoiceDate || null,
-            supplier: invoiceData.clientName || t('unknownSupplier'),
-            subtotal: invoiceData.subtotal || 0,
-            vatRate: invoiceData.vatRate || 25,
-            vatAmount: invoiceData.vatAmount || 0,
-            total: invoiceData.total || 0,
+            category: 'other',
+            description: f.file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' '),
+            documentDate: null,
+          }
+        } else if (newType === 'expense') {
+          const prev = f.data as InvoiceData & ExpenseData
+          newData = {
+            date: prev.invoiceDate || prev.date || null,
+            supplier: prev.clientName || prev.supplier || t('unknownSupplier'),
+            subtotal: prev.subtotal || 0,
+            vatRate: prev.vatRate || 25,
+            vatAmount: prev.vatAmount || 0,
+            total: prev.total || 0,
             currency: 'SEK',
             category: 'other',
-            notes: t('convertedFromInvoice', { number: invoiceData.invoiceNumber }),
+            notes: '',
           }
         } else {
-          const expenseData = f.data as ExpenseData
+          const prev = f.data as ExpenseData & InvoiceData
           newData = {
-            invoiceNumber: 0,
-            clientName: expenseData.supplier || t('unknownClient'),
-            invoiceDate: expenseData.date || new Date().toISOString().split('T')[0],
-            dueDate: expenseData.date || new Date().toISOString().split('T')[0],
-            subtotal: expenseData.subtotal || 0,
-            vatRate: expenseData.vatRate || 25,
-            vatAmount: expenseData.vatAmount || 0,
-            total: expenseData.total || 0,
+            invoiceNumber: prev.invoiceNumber || 0,
+            clientName: prev.supplier || prev.clientName || t('unknownClient'),
+            invoiceDate: prev.date || prev.invoiceDate || new Date().toISOString().split('T')[0],
+            dueDate: prev.dueDate || new Date().toISOString().split('T')[0],
+            subtotal: prev.subtotal || 0,
+            vatRate: prev.vatRate || 25,
+            vatAmount: prev.vatAmount || 0,
+            total: prev.total || 0,
           }
         }
 
@@ -779,7 +785,9 @@ export default function ImportPage() {
                         ${
                           file.type === 'expense'
                             ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400'
-                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
+                            : file.type === 'document'
+                              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400'
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
                         }
                       `}
                         >
@@ -788,6 +796,7 @@ export default function ImportPage() {
                         <SelectContent>
                           <SelectItem value="expense">{t('expenseType')}</SelectItem>
                           <SelectItem value="invoice">{t('invoiceType')}</SelectItem>
+                          <SelectItem value="document">{t('documentType')}</SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -1035,6 +1044,41 @@ export default function ImportPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    ) : file.type === 'document' ? (
+                      <div className="grid grid-cols-[200px_1fr] gap-3 ml-8">
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                            {t('category')}
+                          </label>
+                          <Select
+                            value={(file.data as DocumentData).category || 'other'}
+                            onValueChange={(v) => updateFileData(file.id, { category: v })}
+                          >
+                            <SelectTrigger className="h-9 mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="annual_report">{t('docCatAnnualReport')}</SelectItem>
+                              <SelectItem value="bank_statement">{t('docCatBankStatement')}</SelectItem>
+                              <SelectItem value="tax_authority">{t('docCatTaxAuthority')}</SelectItem>
+                              <SelectItem value="registration">{t('docCatRegistration')}</SelectItem>
+                              <SelectItem value="contract">{t('docCatContract')}</SelectItem>
+                              <SelectItem value="other">{t('docCatOther')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                            {t('description')}
+                          </label>
+                          <Input
+                            value={(file.data as DocumentData).description || ''}
+                            onChange={(e) => updateFileData(file.id, { description: e.target.value })}
+                            placeholder={t('description')}
+                            className="h-9 mt-1"
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-6 gap-3 ml-8">

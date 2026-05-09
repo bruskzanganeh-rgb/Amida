@@ -75,9 +75,13 @@ export type ClassifiedDocument = z.infer<typeof ClassifiedDocumentSchema>
 
 const CLASSIFIER_PROMPT = `Du är en dokumentklassificerare för ett svenskt bokföringssystem för frilansmusiker (Babalisk AB).
 
-UPPGIFT: Analysera dokumentet och bestäm om det är en UTGIFT eller INKOMST, och extrahera relevant data.
+UPPGIFT: Analysera dokumentet och bestäm om det är en UTGIFT, INKOMST, eller DOKUMENT, och extrahera relevant data.
 
 ## KLASSIFICERINGSREGLER - LÄS NOGA!
+
+**VIKTIGAST — Kontrollera detta FÖRST:**
+Om dokumentet INTE är ett kvitto eller faktura med ett belopp att betala/få betalt, klassificera det som **document**.
+Exempel: affärsplaner, budgetar, registreringsbevis, kontoutdrag, bolagsordning, stadgar, skattebesked, bankansökningar, avtal utan specifika betalningsdetaljer.
 
 **UTGIFT** (expense) - Kvitton och mottagna fakturor som du har BETALAT:
 
