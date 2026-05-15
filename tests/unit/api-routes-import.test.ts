@@ -67,7 +67,7 @@ function chainMock(data: unknown = null, error: unknown = null) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = {}
   const thenFn = (resolve: (v: unknown) => void) => resolve(result)
-  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'in', 'order', 'limit']
+  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'in', 'order', 'limit', 'not']
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain)
   }
@@ -84,6 +84,10 @@ describe('POST /api/import/analyze', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(rateLimit).mockReturnValue({ success: true, remaining: 10 })
+    // Route looks up company name for AI context; provide a no-op stub by default.
+    const client = mockAuthClient()
+    client.from.mockReturnValue(chainMock(null, null))
+    vi.mocked(createClient).mockResolvedValue(client as never)
   })
 
   it('returns 429 when rate limited', async () => {
@@ -248,20 +252,19 @@ describe('POST /api/import/batch', () => {
 
   it('imports expense on happy path', async () => {
     const client = mockAuthClient()
-    // clients query
-    let clientCallCount = 0
-    client.from.mockImplementation(() => {
-      clientCallCount++
-      if (clientCallCount === 1) {
-        // clients list
-        return chainMock([], null)
+    // Route makes several prefetch queries (clients, duplicate checks across
+    // tables) before the insert. Return empty results for all prefetches and
+    // the inserted row for the final expense insert — table-name aware so
+    // this test doesn't break when new prefetch queries are added.
+    let expenseCalls = 0
+    client.from.mockImplementation((table: string) => {
+      if (table === 'expenses') {
+        expenseCalls++
+        // First two expense calls are prefetches (duplicate + file_size check),
+        // any later call is the insert.
+        if (expenseCalls > 2) return chainMock({ id: 'exp-1' }, null)
       }
-      if (clientCallCount === 2) {
-        // existing expenses for duplicate check
-        return chainMock([], null)
-      }
-      // expense insert
-      return chainMock({ id: 'exp-1' }, null)
+      return chainMock([], null)
     })
     vi.mocked(createClient).mockResolvedValue(client as never)
 

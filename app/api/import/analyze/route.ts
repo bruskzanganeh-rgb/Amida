@@ -10,23 +10,7 @@ export async function POST(request: NextRequest) {
   if (!success) return rateLimitResponse()
 
   try {
-    // Get user's company name for context-aware classification
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    let companyName = 'Mitt företag'
-    if (user) {
-      const { data: member } = await supabase
-        .from('company_members')
-        .select('company:companies(company_name)')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single()
-      const company = member?.company as unknown as { company_name: string } | null
-      if (company?.company_name) companyName = company.company_name
-    }
-
+    // Validate input first — cheap, fail fast before any I/O
     const formData = await request.formData()
     const file = formData.get('file') as File | null
 
@@ -43,6 +27,23 @@ export async function POST(request: NextRequest) {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({ error: `File type ${file.type} not supported. Use PDF or image.` }, { status: 400 })
+    }
+
+    // Get user's company name for context-aware classification
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    let companyName = 'Mitt företag'
+    if (user) {
+      const { data: member } = await supabase
+        .from('company_members')
+        .select('company:companies(company_name)')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+      const company = member?.company as unknown as { company_name: string } | null
+      if (company?.company_name) companyName = company.company_name
     }
 
     // Klassificera dokumentet med AI
