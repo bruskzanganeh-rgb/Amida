@@ -84,7 +84,11 @@ export function SubscriptionSettings() {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) {
+        // Surface backend's friendly message when present (e.g. block on
+        // team→pro downgrade with extra members).
+        throw new Error(data.message || data.error || 'change_plan_failed')
+      }
 
       if (data.scheduled) {
         toast.success(t('downgradeScheduled'))

@@ -134,22 +134,20 @@ export default function CalendarPage() {
   const [gigToDelete, setGigToDelete] = useState<string | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [preselectedDate, setPreselectedDate] = useState<Date | undefined>(undefined)
-  const [memberFilter, setMemberFilter] = useState<string>(gigFilter.shouldFilter ? gigFilter.currentUserId : 'all')
+  const [memberFilter, setMemberFilter] = useState<string>('all')
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [panelCanScrollUp, setPanelCanScrollUp] = useState(false)
   const [panelCanScrollDown, setPanelCanScrollDown] = useState(false)
   const panelScrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
-  // Sync memberFilter with global filter toggle
+  // When the global "Mine" toggle goes on, the per-page member filter is
+  // both hidden in UI (line ~395: gated on !shouldFilter) and redundant
+  // (server query already restricts to current user). Reset it so an old
+  // value can't silently filter when Mine flips off again.
   useEffect(() => {
-    if (gigFilter.shouldFilter && gigFilter.currentUserId) {
-      setMemberFilter(gigFilter.currentUserId)
-    } else if (!gigFilter.shouldFilter && memberFilter === gigFilter.currentUserId) {
-      setMemberFilter('all')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gigFilter.shouldFilter, gigFilter.currentUserId])
+    if (gigFilter.shouldFilter && memberFilter !== 'all') setMemberFilter('all')
+  }, [gigFilter.shouldFilter, memberFilter])
 
   const updatePanelScroll = useCallback(() => {
     const el = panelScrollRef.current

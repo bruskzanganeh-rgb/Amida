@@ -155,6 +155,18 @@ export function GigDialog({
     }
   }, [])
 
+  // Clean up draft if the user closes the tab/browser while the dialog is
+  // open. `keepalive: true` lets the request survive the unload event.
+  useEffect(() => {
+    if (!draftGigId) return
+    const handler = () => {
+      // Best-effort. Errors here can't be reported and there's nothing to do.
+      fetch(`/api/gigs/draft?id=${draftGigId}`, { method: 'DELETE', keepalive: true }).catch(() => {})
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [draftGigId])
+
   // Load clients, gig types and positions when dialog opens
   useEffect(() => {
     if (open) {

@@ -16,6 +16,13 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Best-effort cleanup of orphan drafts older than 1 hour for this user.
+    // Catches cases where the browser closed before beforeunload fired
+    // (mobile Safari, network failure). 1h is short enough to not affect a
+    // live multi-tab session but long enough to clean stale ones.
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    await supabase.from('gigs').delete().eq('user_id', user.id).eq('status', 'draft').lt('created_at', oneHourAgo)
+
     // Get first available gig type for the placeholder
     const { data: gigTypes } = await supabase.from('gig_types').select('id').limit(1).single()
 

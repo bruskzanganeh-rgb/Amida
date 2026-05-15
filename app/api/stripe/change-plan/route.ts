@@ -67,6 +67,28 @@ export async function POST(request: Request) {
   const currentPlan = currentSub?.plan || 'free'
   const isDowngrade = currentPlan === 'team' && targetPlan === 'pro'
 
+  // Block team→pro downgrade while extra members exist. Pro is single-user,
+  // so silently letting the schedule activate would either revoke other
+  // members or lock them in a paid feature with no plan — both surprising.
+  // Force the owner to remove members explicitly first.
+  if (isDowngrade) {
+    const { data: members } = await supabase
+      .from('company_members')
+      .select('user_id, role')
+      .order('role', { ascending: true }) // owners first if any tie
+    const memberCount = members?.length || 0
+    if (memberCount > 1) {
+      return NextResponse.json(
+        {
+          error: 'remove_members_first',
+          message: `Pro is a single-user plan. Remove ${memberCount - 1} member(s) before downgrading.`,
+          memberCount,
+        },
+        { status: 409 },
+      )
+    }
+  }
+
   try {
     const stripe = getStripe()
     const stripeSub = await stripe.subscriptions.retrieve(sub.stripe_subscription_id)
