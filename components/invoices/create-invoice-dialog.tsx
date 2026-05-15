@@ -436,10 +436,18 @@ export function CreateInvoiceDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canCreateInvoice) return
-    setLoading(true)
 
     // Save reference_person_override if different from client default
     const client = clients.find((c) => c.id === formData.client_id)
+
+    // Reverse charge requires the customer's VAT number — without it, the
+    // invoice is non-compliant (EU rules require the VAT number on the PDF).
+    if (isReverseCharge && !client?.vat_number) {
+      toast.error(t('reverseChargeRequiresVatNumber'))
+      return
+    }
+
+    setLoading(true)
     const referencePersonOverride =
       formData.reference_person !== (client?.reference_person || '') ? formData.reference_person || null : null
 

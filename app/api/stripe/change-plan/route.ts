@@ -38,7 +38,12 @@ export async function POST(request: Request) {
 
   // For team plan, verify the user is a company owner
   if (targetPlan === 'team') {
-    const { data: membership } = await supabase.from('company_members').select('role').eq('user_id', user.id).single()
+    const { data: membership } = await supabase
+      .from('company_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .limit(1)
+      .single()
 
     if (!membership || membership.role !== 'owner') {
       return NextResponse.json({ error: 'Only company owners can subscribe to team plan' }, { status: 403 })

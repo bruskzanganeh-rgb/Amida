@@ -40,6 +40,7 @@ type Gig = {
 type Invoice = {
   invoice_date: string
   subtotal: number
+  total_base: number | null
   exchange_rate: number | null
   client: { id: string; name: string } | null
 }
@@ -93,7 +94,7 @@ export function AnalyticsContent() {
 
       let invoiceQuery = supabase
         .from('invoices')
-        .select('invoice_date, subtotal, exchange_rate, client:clients(id, name)')
+        .select('invoice_date, subtotal, total_base, exchange_rate, client:clients(id, name)')
         .in('status', ['sent', 'paid'])
       if (shouldFilter && currentUserId) invoiceQuery = invoiceQuery.eq('user_id', currentUserId)
 
@@ -215,7 +216,13 @@ export function AnalyticsContent() {
     if (inv.client) {
       const id = inv.client.id
       if (!clientRevenue[id]) clientRevenue[id] = { name: inv.client.name, revenue: 0 }
-      clientRevenue[id].revenue += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
+      // Prefer total_base (canonical converted value); fall back to subtotal*rate
+      // for legacy rows that pre-date the multi-currency migration.
+      const value =
+        typeof inv.total_base === 'number' && inv.total_base !== null
+          ? inv.total_base
+          : (inv.subtotal || 0) * (inv.exchange_rate || 1)
+      clientRevenue[id].revenue += Math.round(value)
     }
   })
   const topClients = Object.values(clientRevenue)

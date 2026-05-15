@@ -166,15 +166,17 @@ export async function POST(request: NextRequest) {
     const knownFileSizes = new Set<number>()
     for (const e of allExpenseFiles || []) if (e.file_size) knownFileSizes.add(e.file_size)
 
-    // Hämta högsta fakturanumret för att generera nya nummer
-    const { data: maxInvoice } = await supabase
-      .from('invoices')
-      .select('invoice_number')
-      .order('invoice_number', { ascending: false })
+    // Hämta company_id för atomisk faktura-numreringen (rpc behöver cid).
+    // Vi kallar get_next_invoice_number per faktura i loopen — det är en
+    // SQL-call och garanterar att vi aldrig krockar med parallella inserts
+    // (t.ex. annan teammedlem som skapar faktura samtidigt).
+    const { data: membership } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
       .limit(1)
       .single()
-
-    let nextInvoiceNumber = (maxInvoice?.invoice_number || 0) + 1
+    const companyId = membership?.company_id as string | undefined
 
     const results: ImportResult[] = []
 
@@ -452,8 +454,27 @@ export async function POST(request: NextRequest) {
             dueDate = dueDateObj.toISOString().split('T')[0]
           }
 
-          // Använd nästa lediga fakturanummer (inte AI:ns parsade nummer)
-          const invoiceNumber = nextInvoiceNumber++
+          // Använd atomisk RPC för faktura-numreringen — race-condition-säker
+          // även när flera teammedlemmar importerar parallellt. Fallback till
+          // max+1 om company_id saknas (gamla soloanvändare utan membership).
+          let invoiceNumber: number
+          if (companyId) {
+            const { data: nextNum, error: rpcError } = await supabase.rpc('get_next_invoice_number', {
+              cid: companyId,
+            })
+            if (rpcError || nextNum == null) {
+              throw new Error(`Failed to get next invoice number: ${rpcError?.message || 'null result'}`)
+            }
+            invoiceNumber = nextNum as number
+          } else {
+            const { data: maxInv } = await supabase
+              .from('invoices')
+              .select('invoice_number')
+              .order('invoice_number', { ascending: false })
+              .limit(1)
+              .single()
+            invoiceNumber = (maxInv?.invoice_number || 0) + 1
+          }
 
           const { data: invoice, error: insertError } = await supabase
             .from('invoices')

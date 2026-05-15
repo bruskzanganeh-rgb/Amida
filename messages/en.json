@@ -295,6 +295,7 @@
     "prefilledFromNotes": "Pre-filled from event invoice notes",
     "addReceiptsAsLines": "Add receipts as invoice lines",
     "reverseChargeNotice": "Reverse charge applies — VAT set to 0%",
+    "reverseChargeRequiresVatNumber": "Reverse charge requires the customer's VAT number. Add the customer's VAT number first.",
     "reverseChargeText": "Reverse charge — VAT to be accounted for by the recipient pursuant to Article 196, Council Directive 2006/112/EC",
     "couldNotCreateInvoice": "Could not create invoice",
     "couldNotCreateLines": "Could not create invoice lines",

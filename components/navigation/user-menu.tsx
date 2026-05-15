@@ -41,7 +41,12 @@ export function UserMenu() {
       setUserEmail(session.user.email || '')
 
       const [{ data: membership }, { data: admin }, { data: sub }] = await Promise.all([
-        supabase.from('company_members').select('company_id, full_name').eq('user_id', session.user.id).single(),
+        supabase
+          .from('company_members')
+          .select('company_id, full_name')
+          .eq('user_id', session.user.id)
+          .limit(1)
+          .single(),
         supabase.rpc('is_admin', { uid: session.user.id }),
         supabase.from('subscriptions').select('plan').limit(1).single(),
       ])

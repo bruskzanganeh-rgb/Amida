@@ -295,6 +295,7 @@
     "prefilledFromNotes": "Förfylls från uppdragets faktura-anteckningar",
     "addReceiptsAsLines": "Lägg till kvitton som fakturarader",
     "reverseChargeNotice": "Omvänd skattskyldighet (reverse charge) tillämpas — moms sätts till 0%",
+    "reverseChargeRequiresVatNumber": "Reverse charge kräver att kunden har ett momsnummer. Lägg till kundens momsnummer först.",
     "reverseChargeText": "Omvänd skattskyldighet — Reverse charge pursuant to Article 196, Council Directive 2006/112/EC",
     "couldNotCreateInvoice": "Kunde inte skapa faktura",
     "couldNotCreateLines": "Kunde inte skapa fakturarader",

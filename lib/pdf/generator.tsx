@@ -343,9 +343,12 @@ const styles = StyleSheet.create({
   },
 
   // Bottom section - anchored to bottom of page
+  // Was bottom: 185 but the footer below (company/bank info in 3 columns +
+  // payment ref + late payment text) could easily grow to ~155pt tall and
+  // bleed into this area. Moved up + footer content slimmed down.
   bottomSection: {
     position: 'absolute',
-    bottom: 185,
+    bottom: 220,
     left: 50,
     right: 50,
   },
@@ -680,6 +683,13 @@ function InvoicePDF({
               <Text style={styles.grandTotalValue}>{fmt(invoice.total)}</Text>
             </View>
           </View>
+
+          {/* Payment reference + late payment — logically tied to totals,
+              kept here so the footer is just company/bank info. */}
+          <Text style={styles.paymentReferenceText}>{l.paymentRef.replace('#{n}', `#${invoice.invoice_number}`)}</Text>
+          {company.late_payment_interest_text && (
+            <Text style={styles.latePaymentText}>{company.late_payment_interest_text}</Text>
+          )}
         </View>
 
         {/* Reverse charge notice */}
@@ -694,16 +704,9 @@ function InvoicePDF({
           </View>
         )}
 
-        {/* Footer - 3 column layout */}
+        {/* Footer - 3 column layout (company / bank info only;
+            payment ref + late payment text moved up to bottomSection) */}
         <View style={styles.footer}>
-          {/* Payment reference text */}
-          <Text style={styles.paymentReferenceText}>{l.paymentRef.replace('#{n}', `#${invoice.invoice_number}`)}</Text>
-
-          {/* Late payment interest text */}
-          {company.late_payment_interest_text && (
-            <Text style={styles.latePaymentText}>{company.late_payment_interest_text}</Text>
-          )}
-
           <View style={styles.footerRow}>
             {/* Column 1: Company name and address */}
             <View style={styles.footerColumn}>

@@ -75,7 +75,12 @@ export async function proxy(request: NextRequest) {
 
     if (!settings || settings.onboarding_completed === false) {
       // Check if user is an invited member (has company_members with role='member')
-      const { data: membership } = await supabase.from('company_members').select('role').eq('user_id', user.id).single()
+      const { data: membership } = await supabase
+        .from('company_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
 
       const url = request.nextUrl.clone()
       url.pathname = membership?.role === 'member' ? '/setup-member' : '/onboarding'

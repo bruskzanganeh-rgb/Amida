@@ -44,22 +44,39 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `https://api.frankfurter.dev/v1/${date}?from=${from}&to=${to}`
-    const response = await fetch(url, {
-      // Cache at the edge — exchange rates for past dates never change
-      next: { revalidate: 60 * 60 * 24 }, // 24h
-    })
+    // Clamp future dates to today (Frankfurter only has historical rates).
+    const today = new Date().toISOString().split('T')[0]
+    let queryDate = date > today ? today : date
 
-    if (!response.ok) {
-      return NextResponse.json({ error: `Frankfurter API error: ${response.statusText}` }, { status: 502 })
+    // Frankfurter returns the latest published rate for non-business days,
+    // BUT can still 404 on edge cases (very recent dates not yet published,
+    // some holidays). Retry walking backward up to 7 days to survive those.
+    let rate: number | null = null
+    let lastError = ''
+    for (let i = 0; i < 7 && rate === null; i++) {
+      const url = `https://api.frankfurter.dev/v1/${queryDate}?from=${from}&to=${to}`
+      const response = await fetch(url, {
+        next: { revalidate: 60 * 60 * 24 }, // 24h edge cache
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (typeof data.rates?.[to] === 'number') {
+          rate = data.rates[to]
+          break
+        }
+        lastError = 'Rate not found in response'
+      } else {
+        lastError = `Frankfurter API ${response.status}: ${response.statusText}`
+      }
+      // Step back one day and try again
+      const d = new Date(queryDate)
+      d.setUTCDate(d.getUTCDate() - 1)
+      queryDate = d.toISOString().split('T')[0]
     }
 
-    const data = await response.json()
-    const rate = data.rates?.[to]
-    if (typeof rate !== 'number') {
-      return NextResponse.json({ error: 'Rate not found in response' }, { status: 502 })
+    if (rate === null) {
+      return NextResponse.json({ error: lastError || 'Could not find rate' }, { status: 502 })
     }
-
     return NextResponse.json({ rate })
   } catch (error) {
     console.error('Exchange rate fetch error:', error)
