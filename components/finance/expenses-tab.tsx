@@ -14,9 +14,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Receipt, BarChart3, Upload, Image as ImageIcon, Download, Loader2, X, Search } from 'lucide-react'
+import {
+  Receipt,
+  BarChart3,
+  Upload,
+  Image as ImageIcon,
+  Download,
+  Loader2,
+  X,
+  Search,
+  Trash2,
+  FileArchive,
+  FileText,
+  Files,
+} from 'lucide-react'
 import NextImage from 'next/image'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { UploadReceiptDialog } from '@/components/expenses/upload-receipt-dialog'
 import { EditExpenseDialog } from '@/components/expenses/edit-expense-dialog'
@@ -90,6 +106,11 @@ export default function ExpensesTab() {
   const [previewIsPdf, setPreviewIsPdf] = useState(false)
   const tableScrollRef = useRef<HTMLDivElement>(null)
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkExporting, setBulkExporting] = useState<string | null>(null)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -160,6 +181,87 @@ export default function ExpensesTab() {
     }
   }
 
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function handleBulkExport(format: 'zip' | 'pdf' | 'individual') {
+    if (selectedIds.size === 0) return
+    setBulkExporting(format)
+    try {
+      const ids = Array.from(selectedIds).join(',')
+      const params = new URLSearchParams({ ids, format, locale: formatLocale })
+      const response = await fetch(`/api/expenses/export?${params}`)
+
+      if (format === 'individual') {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || t('exportFailed'))
+        const withReceipts = result.expenses.filter((e: { attachment_url: string | null }) => e.attachment_url)
+        if (withReceipts.length === 0) {
+          toast.error(t('noReceiptsForMonth'))
+          return
+        }
+        for (const expense of withReceipts) {
+          window.open(expense.attachment_url, '_blank')
+        }
+        toast.success(t('openedReceipts', { count: withReceipts.length }))
+        return
+      }
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: t('exportFailed') }))
+        throw new Error(err.error || t('exportFailed'))
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const today = new Date().toISOString().split('T')[0]
+      a.download = `${today}-Kvitton-${selectedIds.size}st.${format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success(t('downloadedFile', { format: format.toUpperCase() }))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('exportFailed'))
+    } finally {
+      setBulkExporting(null)
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    setBulkDeleting(true)
+    try {
+      const response = await fetch('/api/expenses/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || tt('genericError'))
+      toast.success(t('bulkDeleted', { count: result.deleted }))
+      clearSelection()
+      mutateExpenses()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : tt('genericError'))
+    } finally {
+      setBulkDeleting(false)
+      setBulkDeleteOpen(false)
+    }
+  }
+
   const years = [...new Set(expenses.map((e) => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
   const categories = ([...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]).sort((a, b) =>
     categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
@@ -186,6 +288,24 @@ export default function ExpensesTab() {
   })
 
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
+
+  // Selection scoped to currently visible (filtered) rows
+  const filteredIds = filteredExpenses.map((e) => e.id)
+  const visibleSelectedCount = filteredIds.reduce((n, id) => (selectedIds.has(id) ? n + 1 : n), 0)
+  const allVisibleSelected = filteredIds.length > 0 && visibleSelectedCount === filteredIds.length
+  const someVisibleSelected = visibleSelectedCount > 0 && !allVisibleSelected
+
+  function toggleSelectAllVisible() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        filteredIds.forEach((id) => next.delete(id))
+      } else {
+        filteredIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
 
   const yearlyData = years
     .map((year) => {
@@ -386,6 +506,60 @@ export default function ExpensesTab() {
                 />
               </div>
             </div>
+            {selectedIds.size > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                <span className="text-sm font-medium">{t('selectedCount', { count: selectedIds.size })}</span>
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" disabled={!!bulkExporting || !!bulkDeleting}>
+                        {bulkExporting ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-1" />
+                        )}
+                        {t('exportSelected')}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkExport('zip')}>
+                        <FileArchive className="h-4 w-4 mr-2 text-amber-600" />
+                        {t('downloadAsZip')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkExport('pdf')}>
+                        <FileText className="h-4 w-4 mr-2 text-red-600" />
+                        {t('downloadAsPdf')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkExport('individual')}>
+                        <Files className="h-4 w-4 mr-2 text-blue-600" />
+                        {t('openIndividualFiles')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setBulkDeleteOpen(true)}
+                    disabled={!!bulkExporting || !!bulkDeleting}
+                  >
+                    {bulkDeleting ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-1" />
+                    )}
+                    {tc('delete')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={clearSelection}
+                    disabled={!!bulkExporting || !!bulkDeleting}
+                  >
+                    {t('clearSelection')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:overflow-hidden">
             {loading ? (
@@ -413,10 +587,19 @@ export default function ExpensesTab() {
                   {filteredExpenses.slice(0, mobileExpenseLimit).map((expense) => (
                     <div
                       key={expense.id}
-                      className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedIds.has(expense.id) ? 'bg-primary/5 border-primary/40' : 'bg-card hover:bg-muted/50'
+                      }`}
                       onClick={() => setSelectedExpense(expense)}
                     >
                       <div className="flex items-start justify-between gap-2">
+                        <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(expense.id)}
+                            onCheckedChange={() => toggleSelected(expense.id)}
+                            aria-label={t('selectRow')}
+                          />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{expense.supplier}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
@@ -494,6 +677,13 @@ export default function ExpensesTab() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allVisibleSelected ? true : someVisibleSelected ? 'indeterminate' : false}
+                            onCheckedChange={toggleSelectAllVisible}
+                            aria-label={t('selectAll')}
+                          />
+                        </TableHead>
                         <TableHead>{t('date')}</TableHead>
                         <TableHead>{t('supplier')}</TableHead>
                         <TableHead>{t('category')}</TableHead>
@@ -508,9 +698,17 @@ export default function ExpensesTab() {
                       {filteredExpenses.map((expense) => (
                         <TableRow
                           key={expense.id}
-                          className="cursor-pointer hover:bg-muted/50"
+                          data-state={selectedIds.has(expense.id) ? 'selected' : undefined}
+                          className="cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-primary/5"
                           onClick={() => setSelectedExpense(expense)}
                         >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(expense.id)}
+                              onCheckedChange={() => toggleSelected(expense.id)}
+                              aria-label={t('selectRow')}
+                            />
+                          </TableCell>
                           <TableCell>{format(new Date(expense.date), 'PPP', { locale: dateLocale })}</TableCell>
                           <TableCell className="font-medium">{expense.supplier}</TableCell>
                           <TableCell>
@@ -584,6 +782,16 @@ export default function ExpensesTab() {
         />
 
         <ExportDialog open={showExportDialog} onOpenChange={setShowExportDialog} />
+
+        <ConfirmDialog
+          open={bulkDeleteOpen}
+          onOpenChange={setBulkDeleteOpen}
+          title={t('bulkDeleteTitle')}
+          description={t('bulkDeleteConfirm', { count: selectedIds.size })}
+          confirmLabel={bulkDeleting ? t('deleting') : tc('delete')}
+          variant="destructive"
+          onConfirm={handleBulkDelete}
+        />
 
         <EditExpenseDialog
           expense={selectedExpense}

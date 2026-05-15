@@ -104,11 +104,21 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format') || 'zip'
     const locale = searchParams.get('locale') || 'sv-SE'
 
-    // Support both old (year+month) and new (from+to) params
+    // Support three modes:
+    //   1. ids=a,b,c       — explicit selection (overrides date filters)
+    //   2. from=&to=       — date range
+    //   3. year=&month=    — legacy single month
     let year: number
     let month: number
     const fromParam = searchParams.get('from')
     const toParam = searchParams.get('to')
+    const idsParam = searchParams.get('ids')
+    const selectedIds = idsParam
+      ? idsParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : null
 
     if (fromParam && toParam) {
       // New date range mode
@@ -166,8 +176,8 @@ export async function GET(request: NextRequest) {
       endDate = new Date(year, month, 0).toISOString().split('T')[0]
     }
 
-    // Hämta utgifter för månaden
-    const { data: expenses, error } = await supabase
+    // Hämta utgifter — antingen baserat på ids eller datumintervall
+    let query = supabase
       .from('expenses')
       .select(
         `
@@ -184,9 +194,15 @@ export async function GET(request: NextRequest) {
       `,
       )
       .eq('user_id', user.id)
-      .gte('date', startDate)
-      .lte('date', endDate)
       .order('date', { ascending: true })
+
+    if (selectedIds && selectedIds.length > 0) {
+      query = query.in('id', selectedIds)
+    } else {
+      query = query.gte('date', startDate).lte('date', endDate)
+    }
+
+    const { data: expenses, error } = await query
 
     if (error) {
       console.error('Error fetching expenses:', error)
@@ -202,16 +218,23 @@ export async function GET(request: NextRequest) {
     // Filtrera ut utgifter med bilagor
     const expensesWithAttachments = typedExpenses.filter((e) => e.attachment_url)
 
-    // Build file name based on date range
+    // Build file name based on mode
     let fileBaseName: string
-    if (fromParam && toParam) {
+    let monthName: string
+    if (selectedIds && selectedIds.length > 0) {
+      const today = new Date().toISOString().split('T')[0]
+      fileBaseName = `${today}-Kvitton-${typedExpenses.length}st`
+      monthName =
+        exportLocale === 'en'
+          ? `${typedExpenses.length} selected receipts`
+          : `${typedExpenses.length} markerade kvitton`
+    } else if (fromParam && toParam) {
       fileBaseName = `${fromParam}_${toParam}-Kvitton`
+      monthName = `${fromParam} – ${toParam}`
     } else {
       fileBaseName = `${year}-${month.toString().padStart(2, '0')}-Kvitton`
+      monthName = new Date(year, month - 1).toLocaleDateString(locale, { month: 'long' })
     }
-    const monthName = fromParam
-      ? `${fromParam} – ${toParam}`
-      : new Date(year, month - 1).toLocaleDateString(locale, { month: 'long' })
 
     // Format: individual - returnera bara URLer
     if (format === 'individual') {
@@ -223,7 +246,7 @@ export async function GET(request: NextRequest) {
       })
       return NextResponse.json({
         success: true,
-        month: `${monthName} ${year}`,
+        month: selectedIds && selectedIds.length > 0 ? monthName : `${monthName} ${year}`,
         totalExpenses: typedExpenses.length,
         totalWithReceipts: expensesWithAttachments.length,
         totalAmount: typedExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0),
@@ -257,7 +280,7 @@ export async function GET(request: NextRequest) {
       let summaryPage = summaryPdf.addPage([595, 842])
       const pageHeight = 842
 
-      summaryPage.drawText(`Kvitton - ${monthName} ${year}`, {
+      summaryPage.drawText(`Kvitton - ${selectedIds && selectedIds.length > 0 ? monthName : `${monthName} ${year}`}`, {
         x: 50,
         y: pageHeight - 60,
         size: 20,
@@ -379,7 +402,7 @@ export async function GET(request: NextRequest) {
       const summaryPage = pdfDoc.addPage([595, 842]) // A4
       const { height } = summaryPage.getSize()
 
-      summaryPage.drawText(`Kvitton - ${monthName} ${year}`, {
+      summaryPage.drawText(`Kvitton - ${selectedIds && selectedIds.length > 0 ? monthName : `${monthName} ${year}`}`, {
         x: 50,
         y: height - 60,
         size: 20,

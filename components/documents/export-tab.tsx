@@ -45,7 +45,7 @@ export default function ExportTab() {
   const { data: allInvoices, isLoading: loadingInvoices } = useSWR('export-invoices-summary', async () => {
     const { data } = await supabase
       .from('invoices')
-      .select('id, invoice_number, invoice_date, total, status, currency')
+      .select('id, invoice_number, invoice_date, total, status, currency, original_pdf_url')
       .order('invoice_date', { ascending: false })
     return data || []
   })
@@ -132,35 +132,173 @@ export default function ExportTab() {
 
     setExporting(format)
     try {
-      // For expenses, use the existing export API
-      if (selectedTypes.has('expenses') && expensesInRange.length > 0) {
-        const actualFormat = format === 'pdf-summary' ? 'pdf' : format
-        const params = new URLSearchParams({
-          from: fromDate,
-          to: toDate,
-          format: actualFormat,
-          locale: formatLocale,
-        })
-        if (format === 'pdf-summary') {
-          params.set('skipAttachments', 'true')
-        }
+      const onlyExpenses =
+        selectedTypes.has('expenses') && !selectedTypes.has('invoices') && !selectedTypes.has('documents')
 
-        // If only expenses selected, use the direct expense export
-        if (!selectedTypes.has('invoices') && !selectedTypes.has('documents')) {
+      // --- PDF exports ---
+      if (format === 'pdf' || format === 'pdf-summary') {
+        if (onlyExpenses) {
+          // Direct expense PDF export (existing API)
+          const params = new URLSearchParams({
+            from: fromDate,
+            to: toDate,
+            format: 'pdf',
+            locale: formatLocale,
+          })
+          if (format === 'pdf-summary') {
+            params.set('skipAttachments', 'true')
+          }
           const response = await fetch(`/api/expenses/export?${params}`)
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Export failed' }))
             throw new Error(errorData.error || t('exportFailed'))
           }
           const blob = await response.blob()
-          const ext = format === 'zip' ? 'zip' : 'pdf'
-          downloadBlob(blob, `Utgifter_${fromDate}_${toDate}.${ext}`)
-          toast.success(t('downloadedFile', { format: ext.toUpperCase() }))
+          downloadBlob(blob, `Dokument_${fromDate}_${toDate}.pdf`)
+          toast.success(t('downloadedFile', { format: 'PDF' }))
           return
         }
+
+        // Combined PDF — merge multiple sources with pdf-lib
+        const { PDFDocument } = await import('pdf-lib')
+        const mergedPdf = await PDFDocument.create()
+
+        // 1. Add expense PDF
+        if (selectedTypes.has('expenses') && expensesInRange.length > 0) {
+          const params = new URLSearchParams({
+            from: fromDate,
+            to: toDate,
+            format: 'pdf',
+            locale: formatLocale,
+          })
+          if (format === 'pdf-summary') {
+            params.set('skipAttachments', 'true')
+          }
+          const response = await fetch(`/api/expenses/export?${params}`)
+          if (response.ok) {
+            const pdfBytes = await response.arrayBuffer()
+            try {
+              const expensePdf = await PDFDocument.load(pdfBytes)
+              const pages = await mergedPdf.copyPages(expensePdf, expensePdf.getPageIndices())
+              pages.forEach((page) => mergedPdf.addPage(page))
+            } catch (e) {
+              console.error('Failed to merge expense PDF:', e)
+            }
+          }
+        }
+
+        // 2. Add invoice PDFs (generated + original)
+        if (selectedTypes.has('invoices') && invoicesInRange.length > 0) {
+          for (const invoice of invoicesInRange) {
+            // Generated invoice PDF
+            try {
+              const response = await fetch(`/api/invoices/${invoice.id}/pdf`)
+              if (response.ok) {
+                const pdfBytes = await response.arrayBuffer()
+                const invoicePdf = await PDFDocument.load(pdfBytes)
+                const pages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
+                pages.forEach((page) => mergedPdf.addPage(page))
+              }
+            } catch {
+              console.error(`Failed to fetch invoice PDF: ${invoice.invoice_number}`)
+            }
+            // Original uploaded PDF (if exists)
+            if (invoice.original_pdf_url) {
+              try {
+                const response = await fetch(`/api/invoices/${invoice.id}/original-pdf`)
+                if (response.ok) {
+                  const pdfBytes = await response.arrayBuffer()
+                  try {
+                    const originalPdf = await PDFDocument.load(pdfBytes)
+                    const pages = await mergedPdf.copyPages(originalPdf, originalPdf.getPageIndices())
+                    pages.forEach((page) => mergedPdf.addPage(page))
+                  } catch (e) {
+                    console.error(`Failed to merge original PDF for invoice ${invoice.invoice_number}:`, e)
+                  }
+                }
+              } catch {
+                console.error(`Failed to fetch original PDF: ${invoice.invoice_number}`)
+              }
+            }
+          }
+        }
+
+        // 3. Add company documents
+        if (selectedTypes.has('documents') && documentsInRange.length > 0) {
+          for (const doc of documentsInRange) {
+            try {
+              const signedUrl = await getDocumentSignedUrl(doc.file_path)
+              if (!signedUrl) continue
+              const response = await fetch(signedUrl)
+              if (!response.ok) continue
+
+              const fileBytes = await response.arrayBuffer()
+              const ext = doc.file_name.split('.').pop()?.toLowerCase() || ''
+
+              if (ext === 'pdf') {
+                try {
+                  const docPdf = await PDFDocument.load(fileBytes)
+                  const pages = await mergedPdf.copyPages(docPdf, docPdf.getPageIndices())
+                  pages.forEach((page) => mergedPdf.addPage(page))
+                } catch (e) {
+                  console.error(`Failed to merge document PDF: ${doc.file_name}`, e)
+                }
+              } else if (['jpg', 'jpeg', 'png'].includes(ext)) {
+                // Embed image as a PDF page
+                try {
+                  const image =
+                    ext === 'png' ? await mergedPdf.embedPng(fileBytes) : await mergedPdf.embedJpg(fileBytes)
+                  const imgPage = mergedPdf.addPage([595, 842])
+                  const { width: imgWidth, height: imgHeight } = image.scale(1)
+                  const maxWidth = 515
+                  const maxHeight = 760
+                  const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1)
+                  imgPage.drawImage(image, {
+                    x: 40 + (maxWidth - imgWidth * scale) / 2,
+                    y: 40 + (maxHeight - imgHeight * scale) / 2,
+                    width: imgWidth * scale,
+                    height: imgHeight * scale,
+                  })
+                } catch (e) {
+                  console.error(`Failed to embed image: ${doc.file_name}`, e)
+                }
+              }
+            } catch {
+              console.error(`Failed to fetch document: ${doc.file_name}`)
+            }
+          }
+        }
+
+        const finalPdfBytes = await mergedPdf.save()
+        downloadBlob(
+          new Blob([finalPdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }),
+          `Dokument_${fromDate}_${toDate}.pdf`,
+        )
+        toast.success(t('downloadedFile', { format: 'PDF' }))
+        return
       }
 
-      // Combined export — always ZIP when multiple types
+      // --- ZIP export ---
+      if (onlyExpenses) {
+        // Direct expense ZIP
+        const params = new URLSearchParams({
+          from: fromDate,
+          to: toDate,
+          format: 'zip',
+          locale: formatLocale,
+        })
+        const response = await fetch(`/api/expenses/export?${params}`)
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Export failed' }))
+          throw new Error(errorData.error || t('exportFailed'))
+        }
+        const blob = await response.blob()
+        downloadBlob(blob, `Utgifter_${fromDate}_${toDate}.zip`)
+        toast.success(t('downloadedFile', { format: 'ZIP' }))
+        return
+      }
+
+      // Combined ZIP
       const JSZip = (await import('jszip')).default
       const zip = new JSZip()
 
@@ -186,7 +324,7 @@ export default function ExportTab() {
         }
       }
 
-      // Add invoices as PDFs
+      // Add invoices as PDFs (generated + original)
       if (selectedTypes.has('invoices') && invoicesInRange.length > 0) {
         const folder = zip.folder(td('invoicesFolder'))!
         for (const invoice of invoicesInRange) {
@@ -199,6 +337,19 @@ export default function ExportTab() {
             }
           } catch {
             console.error(`Failed to fetch invoice PDF: ${invoice.invoice_number}`)
+          }
+          // Original uploaded PDF
+          if (invoice.original_pdf_url) {
+            try {
+              const response = await fetch(`/api/invoices/${invoice.id}/original-pdf`)
+              if (response.ok) {
+                const pdfBlob = await response.arrayBuffer()
+                const fileName = `Faktura_${invoice.invoice_number}_${invoice.invoice_date}_original.pdf`
+                folder.file(fileName, pdfBlob)
+              }
+            } catch {
+              console.error(`Failed to fetch original PDF: ${invoice.invoice_number}`)
+            }
           }
         }
       }
@@ -399,44 +550,39 @@ export default function ExportTab() {
           <div className="space-y-2">
             <Label>{t('exportFormat')}</Label>
             <div className="grid grid-cols-1 gap-2">
-              {/* Only show PDF options when single type (expenses) selected */}
-              {selectedTypes.size === 1 && selectedTypes.has('expenses') && (
-                <>
-                  <Button
-                    variant="outline"
-                    className="justify-start h-auto py-3"
-                    onClick={() => handleExport('pdf-summary')}
-                    disabled={!!exporting || expensesInRange.length === 0}
-                  >
-                    {exporting === 'pdf-summary' ? (
-                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                    ) : (
-                      <FileText className="mr-3 h-5 w-5 text-blue-600" />
-                    )}
-                    <div className="text-left">
-                      <div className="font-medium">{td('pdfSummaryOnly')}</div>
-                      <div className="text-xs text-muted-foreground">{td('pdfSummaryDesc')}</div>
-                    </div>
-                  </Button>
+              <Button
+                variant="outline"
+                className="justify-start h-auto py-3"
+                onClick={() => handleExport('pdf-summary')}
+                disabled={!!exporting || !hasSelectedData}
+              >
+                {exporting === 'pdf-summary' ? (
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                ) : (
+                  <FileText className="mr-3 h-5 w-5 text-blue-600" />
+                )}
+                <div className="text-left">
+                  <div className="font-medium">{td('pdfSummaryOnly')}</div>
+                  <div className="text-xs text-muted-foreground">{td('pdfSummaryDesc')}</div>
+                </div>
+              </Button>
 
-                  <Button
-                    variant="outline"
-                    className="justify-start h-auto py-3"
-                    onClick={() => handleExport('pdf')}
-                    disabled={!!exporting || withReceipts === 0}
-                  >
-                    {exporting === 'pdf' ? (
-                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                    ) : (
-                      <FileText className="mr-3 h-5 w-5 text-red-600" />
-                    )}
-                    <div className="text-left">
-                      <div className="font-medium">{td('pdfWithReceipts')}</div>
-                      <div className="text-xs text-muted-foreground">{td('pdfWithReceiptsDesc')}</div>
-                    </div>
-                  </Button>
-                </>
-              )}
+              <Button
+                variant="outline"
+                className="justify-start h-auto py-3"
+                onClick={() => handleExport('pdf')}
+                disabled={!!exporting || !hasAnyAttachments}
+              >
+                {exporting === 'pdf' ? (
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                ) : (
+                  <FileText className="mr-3 h-5 w-5 text-red-600" />
+                )}
+                <div className="text-left">
+                  <div className="font-medium">{td('pdfWithAttachments')}</div>
+                  <div className="text-xs text-muted-foreground">{td('pdfWithAttachmentsDesc')}</div>
+                </div>
+              </Button>
 
               <Button
                 variant="outline"
