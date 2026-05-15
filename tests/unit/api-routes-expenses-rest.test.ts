@@ -313,6 +313,98 @@ describe('DELETE /api/expenses/[id]', () => {
 })
 
 // ---------------------------------------------------------------------------
+// 2b. expenses/bulk-delete POST
+// ---------------------------------------------------------------------------
+
+describe('POST /api/expenses/bulk-delete', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('returns 401 when not authenticated', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null) as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: ['a', 'b'] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 400 when ids is missing', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when ids is empty array', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: [] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when ids contains non-strings', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: ['a', 42] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('deletes expenses on happy path', async () => {
+    const client = mockAuthClient()
+    client.from.mockReturnValue(chainMock([{ id: 'a' }, { id: 'b' }], null))
+    vi.mocked(createClient).mockResolvedValue(client as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: ['a', 'b'] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.deleted).toBe(2)
+  })
+
+  it('returns 500 on DB error', async () => {
+    const client = mockAuthClient()
+    client.from.mockReturnValue(chainMock(null, { message: 'fail' }))
+    vi.mocked(createClient).mockResolvedValue(client as never)
+
+    const { POST } = await import('@/app/api/expenses/bulk-delete/route')
+    const req = makeRequest('http://localhost/api/expenses/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids: ['a'] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(500)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // 3. expenses/[id]/attachment GET
 // ---------------------------------------------------------------------------
 
