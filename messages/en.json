@@ -356,6 +356,8 @@
     "date": "Date",
     "supplier": "Supplier",
     "amount": "Amount",
+    "myExpenses": "My expenses",
+    "myTotalExpenses": "My total expenses",
     "selectAll": "Select all",
     "selectRow": "Select row",
     "selectedCount": "{count} selected",

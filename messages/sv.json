@@ -356,6 +356,8 @@
     "date": "Datum",
     "supplier": "Leverantör",
     "amount": "Belopp",
+    "myExpenses": "Mina utgifter",
+    "myTotalExpenses": "Mina totala utgifter",
     "selectAll": "Markera alla",
     "selectRow": "Markera rad",
     "selectedCount": "{count} markerade",

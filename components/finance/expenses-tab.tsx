@@ -119,6 +119,13 @@ export default function ExpensesTab() {
     })
   }, [supabase.auth])
 
+  // When the global "Mine" toggle turns on, the member filter becomes meaningless
+  // (server-side query already restricts to the current user). Reset it so a stale
+  // value doesn't silently filter out everything when "Mine" is turned off again.
+  useEffect(() => {
+    if (shouldFilter && memberFilter !== 'all') setMemberFilter('all')
+  }, [shouldFilter, memberFilter])
+
   function getMemberLabel(userId: string): string {
     if (userId === currentUserId) return tTeam('me')
     const member = allMembers.find((m) => m.user_id === userId)
@@ -396,7 +403,7 @@ export default function ExpensesTab() {
               </SelectContent>
             </Select>
           </div>
-          {isSharedMode && (
+          {isSharedMode && !shouldFilter && (
             <div>
               <Select value={memberFilter} onValueChange={setMemberFilter}>
                 <SelectTrigger>
@@ -427,7 +434,9 @@ export default function ExpensesTab() {
                 gigFilter !== 'all' ||
                 memberFilter !== 'all'
                   ? `${t('filteredExpenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
-                  : t('totalExpenses')}
+                  : shouldFilter
+                    ? t('myTotalExpenses')
+                    : t('totalExpenses')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -494,7 +503,7 @@ export default function ExpensesTab() {
                 gigFilter !== 'all' ||
                 memberFilter !== 'all'
                   ? `${t('expenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
-                  : `${t('allExpenses')} (${expenses.length})`}
+                  : `${shouldFilter ? t('myExpenses') : t('allExpenses')} (${expenses.length})`}
               </CardTitle>
               <div className="relative w-full max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
