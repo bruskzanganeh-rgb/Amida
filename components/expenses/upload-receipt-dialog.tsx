@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Loader2,
   Upload,
@@ -81,7 +82,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
-  const { symbol: baseCurrencySymbol } = useBaseCurrency()
+  const { code: baseCurrency, symbol: baseCurrencySymbol } = useBaseCurrency()
   const { canScanReceipt, limits, usage, hasHadSubscription } = useSubscription()
   const [step, setStep] = useState<'upload' | 'review' | 'saving'>('upload')
   const [file, setFile] = useState<File | null>(null)
@@ -92,6 +93,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
   const [gigs, setGigs] = useState<Gig[]>([])
   const [selectedGigId, setSelectedGigId] = useState<string>(gigId || 'none')
   const [duplicateWarning, setDuplicateWarning] = useState<DuplicateInfo | null>(null)
+  const [isPrivate, setIsPrivate] = useState(false)
   const supabase = createClient()
 
   const [formData, setFormData] = useState<ParsedData>({
@@ -262,14 +264,14 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
     if (!forceSave) setDuplicateWarning(null)
 
     try {
-      // Convert to SEK if needed
+      // Convert to the company's base currency if needed
       let amountBase = formData.amount
-      if (formData.currency !== 'SEK' && formData.date) {
+      if (formData.currency !== baseCurrency && formData.date) {
         try {
           const { converted } = await convert(
             formData.amount,
             formData.currency as SupportedCurrency,
-            'SEK',
+            baseCurrency,
             formData.date,
           )
           amountBase = converted
@@ -287,6 +289,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
       formDataToSend.append('amount_base', amountBase.toString())
       formDataToSend.append('category', formData.category)
       formDataToSend.append('notes', formData.notes || '')
+      formDataToSend.append('is_private', isPrivate ? 'true' : 'false')
       if (selectedGigId && selectedGigId !== 'none') {
         formDataToSend.append('gig_id', selectedGigId)
       }
@@ -333,6 +336,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
     setPreview(null)
     setError(null)
     setDuplicateWarning(null)
+    setIsPrivate(false)
     setSelectedGigId(gigId || 'none')
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -589,6 +593,11 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                   placeholder={t('optionalDescription')}
                 />
               </div>
+
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <Checkbox checked={isPrivate} onCheckedChange={(checked) => setIsPrivate(checked === true)} />
+                <span className="text-sm">{t('privateHint')}</span>
+              </label>
             </div>
 
             {/* Höger kolumn: Uppdragsväljare */}

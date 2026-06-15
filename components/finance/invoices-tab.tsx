@@ -54,6 +54,7 @@ type Invoice = {
   due_date: string
   paid_date: string | null
   sent_date: string | null
+  sent_to_accountant_at: string | null
   subtotal: number
   vat_rate: number
   vat_amount: number
@@ -452,6 +453,17 @@ export default function InvoicesTab() {
     }
   }
 
+  async function toggleSentToAccountant(invoice: Invoice) {
+    const newValue = invoice.sent_to_accountant_at ? null : new Date().toISOString()
+    const { error } = await supabase.from('invoices').update({ sent_to_accountant_at: newValue }).eq('id', invoice.id)
+    if (error) {
+      toast.error(tToast('statusUpdateError'))
+    } else {
+      toast.success(newValue ? tToast('markedSentToAccountant') : tToast('unmarkedSentToAccountant'))
+      mutateInvoices()
+    }
+  }
+
   function confirmDeleteInvoice(invoice: Invoice) {
     setInvoiceToDelete(invoice)
     setDeleteConfirmOpen(true)
@@ -724,6 +736,11 @@ export default function InvoicesTab() {
                             >
                               {t(`status.${invoice.status}`)}
                             </Badge>
+                            {invoice.sent_to_accountant_at && (
+                              <Badge className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                {t('sentToAccountant')}
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground truncate mt-0.5">{invoice.client.name}</p>
                           {isSharedMode && invoice.user_id !== currentUserId && (
@@ -816,6 +833,12 @@ export default function InvoicesTab() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => toggleSentToAccountant(invoice)}>
+                                <ClipboardList className="mr-2 h-4 w-4" />
+                                {invoice.sent_to_accountant_at
+                                  ? t('unmarkSentToAccountant')
+                                  : t('markSentToAccountant')}
+                              </DropdownMenuItem>
                               {invoice.status !== 'sent' &&
                                 invoice.status !== 'paid' &&
                                 invoice.status !== 'overdue' && (
@@ -927,6 +950,9 @@ export default function InvoicesTab() {
                                   <Badge className={statusConfig[invoice.status as keyof typeof statusConfig]?.color}>
                                     {t(`status.${invoice.status}`)}
                                   </Badge>
+                                  {invoice.sent_to_accountant_at && (
+                                    <span className="text-[10px] text-green-600">{t('sentToAccountant')}</span>
+                                  )}
                                   {invoice.status === 'overdue' ? (
                                     <span className="text-[10px] text-red-600">
                                       {invoice.sent_date &&
@@ -1010,6 +1036,12 @@ export default function InvoicesTab() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => toggleSentToAccountant(invoice)}>
+                                        <ClipboardList className="mr-2 h-4 w-4" />
+                                        {invoice.sent_to_accountant_at
+                                          ? t('unmarkSentToAccountant')
+                                          : t('markSentToAccountant')}
+                                      </DropdownMenuItem>
                                       {invoice.status !== 'sent' &&
                                         invoice.status !== 'paid' &&
                                         invoice.status !== 'overdue' && (

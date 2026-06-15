@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { convert, type SupportedCurrency } from '@/lib/currency/exchange'
 import { Loader2, Trash2, Upload, Image as ImageIcon, X } from 'lucide-react'
 import NextImage from 'next/image'
 import { toast } from 'sonner'
@@ -33,6 +36,8 @@ type Expense = {
   category: string | null
   notes: string | null
   attachment_url: string | null
+  is_private: boolean | null
+  sent_to_accountant_at: string | null
   gig_id: string | null
   gig: {
     id: string
@@ -65,6 +70,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
+  const { code: baseCurrency } = useBaseCurrency()
   const [saving, setSaving] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -84,6 +90,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
     category: 'other',
     notes: '',
     gig_id: 'none',
+    is_private: false,
+    sent_to_accountant_at: null as string | null,
   })
 
   // Uppdatera form och ladda attachment när expense ändras
@@ -97,6 +105,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         category: expense.category || 'other',
         notes: expense.notes || '',
         gig_id: expense.gig_id || 'none',
+        is_private: expense.is_private ?? false,
+        sent_to_accountant_at: expense.sent_to_accountant_at ?? null,
       })
       setHasAttachment(!!expense.attachment_url)
 
@@ -212,6 +222,23 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
     setSaving(true)
 
     try {
+      // Recompute the base-currency amount from the current currency/amount/date so it
+      // stays correct when any of them change (and for non-SEK base currencies).
+      let amountBase = formData.amount
+      if (formData.currency !== baseCurrency && formData.date) {
+        try {
+          const { converted } = await convert(
+            formData.amount,
+            formData.currency as SupportedCurrency,
+            baseCurrency,
+            formData.date,
+          )
+          amountBase = converted
+        } catch {
+          amountBase = expense.amount_base ?? formData.amount
+        }
+      }
+
       const response = await fetch(`/api/expenses/${expense.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -220,10 +247,12 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
           supplier: formData.supplier,
           amount: formData.amount,
           currency: formData.currency,
-          amount_base: formData.currency === 'SEK' ? formData.amount : expense.amount_base,
+          amount_base: amountBase,
           category: formData.category,
           notes: formData.notes || null,
           gig_id: formData.gig_id === 'none' ? null : formData.gig_id,
+          is_private: formData.is_private,
+          sent_to_accountant_at: formData.sent_to_accountant_at,
         }),
       })
 
@@ -469,6 +498,27 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
                   placeholder={t('optionalDescription')}
                 />
               </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={formData.is_private}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_private: checked === true })}
+                />
+                <span className="text-sm">{t('privateHint')}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={!!formData.sent_to_accountant_at}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      sent_to_accountant_at: checked === true ? new Date().toISOString() : null,
+                    })
+                  }
+                />
+                <span className="text-sm">{t('sentToAccountant')}</span>
+              </label>
             </div>
 
             {/* Höger kolumn: Uppdragsväljare */}

@@ -58,6 +58,8 @@ type Expense = {
   notes: string | null
   user_id: string
   attachment_url: string | null
+  is_private: boolean | null
+  sent_to_accountant_at: string | null
   gig_id: string | null
   gig: {
     id: string
@@ -84,7 +86,7 @@ export default function ExpensesTab() {
   const formatLocale = useFormatLocale()
   const tTeam = useTranslations('team')
   const { company, members, allMembers } = useCompany()
-  const { symbol: baseCurrencySymbol } = useBaseCurrency()
+  const { code: baseCurrencyCode, symbol: baseCurrencySymbol } = useBaseCurrency()
   const { shouldFilter, currentUserId: filterUserId, loaded: filterLoaded } = useGigFilter()
   const isSharedMode = company?.gig_visibility === 'shared' && members.length > 1
   const [currentUserId, setCurrentUserId] = useState<string>('')
@@ -620,6 +622,16 @@ export default function ExpensesTab() {
                                 {categoryLabel(expense.category, t)}
                               </Badge>
                             )}
+                            {expense.is_private && (
+                              <Badge variant="outline" className="text-xs border-dashed text-muted-foreground">
+                                {t('private')}
+                              </Badge>
+                            )}
+                            {expense.sent_to_accountant_at && (
+                              <Badge className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                {t('sentToAccountant')}
+                              </Badge>
+                            )}
                           </div>
                           {expense.gig && (
                             <Badge variant="secondary" className="text-xs mt-1">
@@ -640,7 +652,7 @@ export default function ExpensesTab() {
                               formatLocale,
                             )}
                           </span>
-                          {expense.currency && expense.currency !== 'SEK' && expense.amount_base && (
+                          {expense.currency && expense.currency !== baseCurrencyCode && expense.amount_base && (
                             <p className="text-xs text-muted-foreground">
                               {expense.amount_base.toLocaleString(formatLocale)} {baseCurrencySymbol}
                             </p>
@@ -719,7 +731,21 @@ export default function ExpensesTab() {
                             />
                           </TableCell>
                           <TableCell>{format(new Date(expense.date), 'PPP', { locale: dateLocale })}</TableCell>
-                          <TableCell className="font-medium">{expense.supplier}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <span>{expense.supplier}</span>
+                              {expense.is_private && (
+                                <Badge variant="outline" className="text-xs border-dashed text-muted-foreground">
+                                  {t('private')}
+                                </Badge>
+                              )}
+                              {expense.sent_to_accountant_at && (
+                                <Badge className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                  {t('sentToAccountant')}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {expense.category ? (
                               <Badge variant="outline">{categoryLabel(expense.category, t)}</Badge>
@@ -739,7 +765,7 @@ export default function ExpensesTab() {
                             )}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {expense.currency && expense.currency !== 'SEK' ? (
+                            {expense.currency && expense.currency !== baseCurrencyCode ? (
                               <div>
                                 <span>
                                   {formatCurrency(expense.amount, expense.currency as SupportedCurrency, formatLocale)}

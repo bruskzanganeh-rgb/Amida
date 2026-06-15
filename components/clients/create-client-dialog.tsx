@@ -85,6 +85,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess, onCreated }:
       console.error('Error creating client:', error)
       toast.error(tt('createClientError', { error: error.message }))
     } else {
+      toast.success(tt('clientCreated'))
       form.reset()
       onSuccess()
       if (created) onCreated?.(created.id)

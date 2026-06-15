@@ -10,6 +10,8 @@ export const updateExpenseSchema = z.object({
   category: z.enum(EXPENSE_CATEGORIES).optional(),
   notes: z.string().nullable().optional(),
   gig_id: z.string().nullable().optional(),
+  is_private: z.boolean().optional(),
+  sent_to_accountant_at: z.string().nullable().optional(),
 })
 
 export const checkDuplicateSchema = z.object({

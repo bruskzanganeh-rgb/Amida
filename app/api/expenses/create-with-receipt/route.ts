@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const category = (formData.get('category') as string) || 'other'
     const notes = (formData.get('notes') as string) || null
     const gigId = (formData.get('gig_id') as string) || null
+    const isPrivate = formData.get('is_private') === 'true'
     const forceSave = formData.get('forceSave') === 'true'
 
     // Validera obligatoriska fält
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
         attachment_url: attachmentUrl,
         file_size: fileSize,
         gig_id: gigId,
+        is_private: isPrivate,
         user_id: user.id,
       })
       .select()

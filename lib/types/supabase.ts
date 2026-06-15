@@ -757,6 +757,8 @@ export type Database = {
           user_id: string | null
           company_id: string | null
           file_size: number | null
+          is_private: boolean | null
+          sent_to_accountant_at: string | null
         }
         Insert: {
           id?: string
@@ -779,6 +781,8 @@ export type Database = {
           user_id?: string | null
           company_id?: string | null
           file_size?: number | null
+          is_private?: boolean | null
+          sent_to_accountant_at?: string | null
         }
         Update: {
           id?: string
@@ -801,6 +805,8 @@ export type Database = {
           user_id?: string | null
           company_id?: string | null
           file_size?: number | null
+          is_private?: boolean | null
+          sent_to_accountant_at?: string | null
         }
         Relationships: []
       }
@@ -1229,6 +1235,7 @@ export type Database = {
           customer_vat_number: string | null
           reverse_charge: boolean | null
           company_id: string | null
+          sent_to_accountant_at: string | null
         }
         Insert: {
           id?: string
@@ -1258,6 +1265,7 @@ export type Database = {
           customer_vat_number?: string | null
           reverse_charge?: boolean | null
           company_id?: string | null
+          sent_to_accountant_at?: string | null
         }
         Update: {
           id?: string
@@ -1287,6 +1295,7 @@ export type Database = {
           customer_vat_number?: string | null
           reverse_charge?: boolean | null
           company_id?: string | null
+          sent_to_accountant_at?: string | null
         }
         Relationships: []
       }

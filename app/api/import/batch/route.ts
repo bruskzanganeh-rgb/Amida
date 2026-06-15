@@ -3,15 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRateServer, type SupportedCurrency } from '@/lib/currency/exchange'
 
-/** Convert amount to SEK. For future dates, uses today's rate. */
-async function toBaseSEK(amount: number, currency: string, date: string | null): Promise<number> {
-  if (currency === 'SEK') return amount
+/** Convert amount to the company's base currency. For future dates, uses today's rate. */
+async function toBase(amount: number, currency: string, baseCurrency: string, date: string | null): Promise<number> {
+  if (currency === baseCurrency) return amount
   try {
     // Use expense date or today — Frankfurter only has historical rates,
     // so clamp to today if the date is in the future
     const today = new Date().toISOString().split('T')[0]
     const rateDate = !date || date > today ? today : date
-    const rate = await getRateServer(currency as SupportedCurrency, 'SEK', rateDate)
+    const rate = await getRateServer(currency as SupportedCurrency, baseCurrency as SupportedCurrency, rateDate)
     return Math.round(amount * rate * 100) / 100
   } catch {
     return amount
@@ -178,6 +178,13 @@ export async function POST(request: NextRequest) {
       .single()
     const companyId = membership?.company_id as string | undefined
 
+    // Company base currency — expenses store amount_base in this currency.
+    let baseCurrency = 'SEK'
+    if (companyId) {
+      const { data: companyRow } = await supabase.from('companies').select('base_currency').eq('id', companyId).single()
+      if (companyRow?.base_currency) baseCurrency = companyRow.base_currency
+    }
+
     const results: ImportResult[] = []
 
     for (const fileMeta of metadata) {
@@ -331,7 +338,12 @@ export async function POST(request: NextRequest) {
               vat_amount: expenseData.vatAmount,
               amount: expenseData.total,
               currency: expenseData.currency || 'SEK',
-              amount_base: await toBaseSEK(expenseData.total, expenseData.currency || 'SEK', expenseData.date),
+              amount_base: await toBase(
+                expenseData.total,
+                expenseData.currency || baseCurrency,
+                baseCurrency,
+                expenseData.date,
+              ),
               category: expenseData.category || 'other',
               notes: expenseData.notes || null,
               attachment_url: attachmentUrl,

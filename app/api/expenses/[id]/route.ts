@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { updateExpenseSchema } from '@/lib/schemas/expense'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -23,7 +22,18 @@ export async function PATCH(
 
     // Bygg uppdateringsobjekt med endast definierade fält
     const updateData: Record<string, unknown> = {}
-    const { date, supplier, amount, currency, amount_base, category, notes, gig_id } = parsed.data
+    const {
+      date,
+      supplier,
+      amount,
+      currency,
+      amount_base,
+      category,
+      notes,
+      gig_id,
+      is_private,
+      sent_to_accountant_at,
+    } = parsed.data
 
     if (date !== undefined) updateData.date = date
     if (supplier !== undefined) updateData.supplier = supplier
@@ -33,12 +43,11 @@ export async function PATCH(
     if (category !== undefined) updateData.category = category
     if (notes !== undefined) updateData.notes = notes || null
     if (gig_id !== undefined) updateData.gig_id = gig_id || null
+    if (is_private !== undefined) updateData.is_private = is_private
+    if (sent_to_accountant_at !== undefined) updateData.sent_to_accountant_at = sent_to_accountant_at
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: 'No fields to update' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
     }
 
     const { data: expense, error } = await supabase
@@ -51,10 +60,7 @@ export async function PATCH(
 
     if (error) {
       console.error('Update expense error:', error)
-      return NextResponse.json(
-        { error: 'Could not update expense' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Could not update expense' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -63,38 +69,27 @@ export async function PATCH(
     })
   } catch (error) {
     console.error('Expense PATCH error:', error)
-    return NextResponse.json(
-      { error: 'Could not update expense' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Could not update expense' }, { status: 500 })
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
 
-    const { error } = await supabase
-      .from('expenses')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id)
+    const { error } = await supabase.from('expenses').delete().eq('id', id).eq('user_id', user.id)
 
     if (error) {
       console.error('Delete expense error:', error)
-      return NextResponse.json(
-        { error: 'Could not delete expense' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Could not delete expense' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -102,9 +97,6 @@ export async function DELETE(
     })
   } catch (error) {
     console.error('Expense DELETE error:', error)
-    return NextResponse.json(
-      { error: 'Could not delete expense' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Could not delete expense' }, { status: 500 })
   }
 }
