@@ -43,6 +43,7 @@ type InvoiceRow = {
   exchange_rate: number | null
   gig_id?: string | null
   gig?: { position_id: string | null } | null
+  invoice_gigs?: { gig: { position_id: string | null } | null }[] | null
 }
 
 type GigRow = {
@@ -168,7 +169,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       .from('invoices')
       .select(
         needsPositionFilter
-          ? 'invoice_date, subtotal, exchange_rate, gig_id, gig:gigs(position_id)'
+          ? 'invoice_date, subtotal, exchange_rate, gig_id, gig:gigs(position_id), invoice_gigs(gig:gigs(position_id))'
           : 'invoice_date, subtotal, exchange_rate',
       )
       .in('status', ['sent', 'paid'])
@@ -184,15 +185,22 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
     const { data: rawInvoices } = (await query) as unknown as { data: InvoiceRow[] | null }
 
-    // Filter by position client-side (invoices don't have position_id directly)
+    // Filter by position client-side (invoices don't have position_id directly).
+    // Gigs link to an invoice either via the legacy invoice.gig_id or — for
+    // collective invoices — via the invoice_gigs junction table, so check both.
     let invoices = rawInvoices
     if (needsPositionFilter) {
       invoices = (rawInvoices || []).filter((inv) => {
-        if (positionId === 'none') {
-          // No position = invoices without gig OR gig without position
-          return !inv.gig_id || !inv.gig?.position_id
+        const linkedPositions: (string | null)[] = []
+        if (inv.gig) linkedPositions.push(inv.gig.position_id)
+        for (const link of inv.invoice_gigs || []) {
+          if (link.gig) linkedPositions.push(link.gig.position_id)
         }
-        return inv.gig?.position_id === positionId
+        if (positionId === 'none') {
+          // No position = no linked gig, or none of the linked gigs has a position
+          return linkedPositions.length === 0 || linkedPositions.every((p) => !p)
+        }
+        return linkedPositions.includes(positionId)
       })
     }
 
