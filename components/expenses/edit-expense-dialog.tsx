@@ -93,6 +93,9 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
     is_private: false,
     sent_to_accountant_at: null as string | null,
   })
+  // Raw string for the amount field so it can be cleared (empty) and accept
+  // in-progress decimals like "0." without snapping back to 0.
+  const [amountStr, setAmountStr] = useState('')
 
   // Uppdatera form och ladda attachment när expense ändras
   useEffect(() => {
@@ -108,6 +111,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         is_private: expense.is_private ?? false,
         sent_to_accountant_at: expense.sent_to_accountant_at ?? null,
       })
+      setAmountStr(expense.amount != null ? String(expense.amount) : '')
       setHasAttachment(!!expense.attachment_url)
 
       // Ladda signerad URL om det finns attachment
@@ -446,8 +450,13 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                    min="0"
+                    placeholder="0"
+                    value={amountStr}
+                    onChange={(e) => {
+                      setAmountStr(e.target.value)
+                      setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                    }}
                   />
                 </div>
                 <div className="w-24 space-y-1">

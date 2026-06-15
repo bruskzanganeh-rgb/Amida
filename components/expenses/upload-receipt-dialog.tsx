@@ -94,6 +94,9 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
   const [selectedGigId, setSelectedGigId] = useState<string>(gigId || 'none')
   const [duplicateWarning, setDuplicateWarning] = useState<DuplicateInfo | null>(null)
   const [isPrivate, setIsPrivate] = useState(false)
+  // Raw string the user is typing in the amount field, so it can be cleared
+  // (empty) and accept in-progress decimals like "0." without snapping to 0.
+  const [amountStr, setAmountStr] = useState('')
   const supabase = createClient()
 
   const [formData, setFormData] = useState<ParsedData>({
@@ -204,6 +207,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
       notes: '',
       confidence: 0,
     })
+    setAmountStr('')
     setStep('review')
   }
 
@@ -238,6 +242,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
         notes: result.data.notes || '',
         confidence: result.data.confidence,
       })
+      setAmountStr(result.data.amount ? String(result.data.amount) : '')
 
       // Track usage
       fetch('/api/usage/increment', {
@@ -337,6 +342,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
     setError(null)
     setDuplicateWarning(null)
     setIsPrivate(false)
+    setAmountStr('')
     setSelectedGigId(gigId || 'none')
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -540,8 +546,13 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                    min="0"
+                    placeholder="0"
+                    value={amountStr}
+                    onChange={(e) => {
+                      setAmountStr(e.target.value)
+                      setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                    }}
                   />
                 </div>
                 <div className="w-24 space-y-1">
