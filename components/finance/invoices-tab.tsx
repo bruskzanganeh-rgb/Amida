@@ -367,6 +367,21 @@ export default function InvoicesTab() {
     { revalidateOnFocus: true, dedupingInterval: 30_000 },
   )
 
+  // Income cards are event-based (gigs invoiced/paid), consistent with the
+  // dashboard and analytics, so a gig invoiced without an Amida invoice counts.
+  const { data: invoicedPaidGigs = [] } = useSWR<
+    { date: string; status: string; fee: number | null; fee_base: number | null }[]
+  >(
+    filterLoaded ? ['invoiced-paid-gigs', shouldFilter, filterUserId] : null,
+    async () => {
+      let q = supabase.from('gigs').select('date, status, fee, fee_base').in('status', ['invoiced', 'paid'])
+      if (shouldFilter && filterUserId) q = q.eq('user_id', filterUserId)
+      const { data } = await q
+      return (data || []) as { date: string; status: string; fee: number | null; fee_base: number | null }[]
+    },
+    { revalidateOnFocus: true, dedupingInterval: 10_000 },
+  )
+
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const el = e.currentTarget
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50
@@ -503,20 +518,14 @@ export default function InvoicesTab() {
         {/* Stats */}
         {(() => {
           const currentYear = new Date().getFullYear()
-          const yearInvoices = allInvoices.filter(
-            (i) => new Date(i.invoice_date).getFullYear() === currentYear && i.status !== 'draft',
-          )
-          const invoicedThisYear = Math.round(
-            yearInvoices.reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
-          )
-          const invoicedThisYearInkl = Math.round(
-            yearInvoices.reduce((sum, i) => sum + (i.total || 0) * (i.exchange_rate || 1), 0),
-          )
+          // Invoiced/Paid are event-based (gigs by status), matching analytics.
+          const gigAmount = (g: { fee: number | null; fee_base: number | null }) => g.fee_base ?? g.fee ?? 0
+          const yearGigs = invoicedPaidGigs.filter((g) => new Date(g.date).getFullYear() === currentYear)
+          const invoicedThisYear = Math.round(yearGigs.reduce((sum, g) => sum + gigAmount(g), 0))
           const paidThisYear = Math.round(
-            yearInvoices
-              .filter((i) => i.status === 'paid')
-              .reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
+            yearGigs.filter((g) => g.status === 'paid').reduce((sum, g) => sum + gigAmount(g), 0),
           )
+          // Unpaid stays document-based — it's about invoices you've issued (AR).
           const unpaidTotal = Math.round(
             allInvoices
               .filter((i) => i.status === 'sent' || i.status === 'overdue')
@@ -535,10 +544,6 @@ export default function InvoicesTab() {
                   <div className="text-2xl font-bold">
                     {Math.round(invoicedThisYear).toLocaleString(formatLocale)} {baseCurrencySymbol}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {tc('inclVat')}: {Math.round(invoicedThisYearInkl).toLocaleString(formatLocale)}{' '}
-                    {baseCurrencySymbol}
-                  </p>
                 </CardContent>
               </Card>
 
