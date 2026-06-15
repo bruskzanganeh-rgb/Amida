@@ -205,21 +205,15 @@ export function AnalyticsContent() {
 
   const allPositionStats = noPositionGigs.length > 0 ? [...positionStats, noPositionStats] : positionStats
 
-  // Calculate top clients from invoice data (filtered by year and client)
-  const filteredInvoices = invoices.filter((inv) => {
-    const yearMatch = selectedYear === 'all' || new Date(inv.invoice_date).getFullYear().toString() === selectedYear
-    const clientMatch = selectedClient === 'all' || inv.client?.id === selectedClient
-    return yearMatch && clientMatch
-  })
+  // Top clients are computed from gigs (status invoiced/paid), consistent with
+  // every other figure here, so a gig invoiced without an Amida invoice still
+  // counts. completedGigs is already filtered by year/client/position.
   const clientRevenue: { [key: string]: { name: string; revenue: number } } = {}
-  filteredInvoices.forEach((inv) => {
-    if (inv.client) {
-      const id = inv.client.id
-      if (!clientRevenue[id]) clientRevenue[id] = { name: inv.client.name, revenue: 0 }
-      // Revenue is counted net of VAT (subtotal), consistent with the invoices
-      // tab and gig fees. exchange_rate converts the invoice currency to base.
-      const value = (inv.subtotal || 0) * (inv.exchange_rate || 1)
-      clientRevenue[id].revenue += Math.round(value)
+  completedGigs.forEach((g) => {
+    if (g.client) {
+      const id = g.client.id
+      if (!clientRevenue[id]) clientRevenue[id] = { name: g.client.name, revenue: 0 }
+      clientRevenue[id].revenue += Math.round(feeInBase(g))
     }
   })
   const topClients = Object.values(clientRevenue)
