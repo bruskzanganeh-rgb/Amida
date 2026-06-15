@@ -580,6 +580,7 @@ export default function SettingsPage() {
                       <SelectItem value="CHF">CHF — {t('currencyNameCHF')}</SelectItem>
                       <SelectItem value="CZK">CZK — {t('currencyNameCZK')}</SelectItem>
                       <SelectItem value="PLN">PLN — {t('currencyNamePLN')}</SelectItem>
+                      <SelectItem value="BRL">BRL — {t('currencyNameBRL')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">{t('baseCurrencyHint')}</p>

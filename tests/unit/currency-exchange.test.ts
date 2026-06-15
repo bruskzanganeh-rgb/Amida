@@ -54,11 +54,11 @@ import {
 // ---------------------------------------------------------------------------
 describe('SUPPORTED_CURRENCIES', () => {
   it('contains exactly the expected currencies', () => {
-    expect(SUPPORTED_CURRENCIES).toEqual(['SEK', 'EUR', 'USD', 'DKK', 'NOK', 'GBP', 'CHF', 'CZK', 'PLN'])
+    expect(SUPPORTED_CURRENCIES).toEqual(['SEK', 'EUR', 'USD', 'DKK', 'NOK', 'GBP', 'CHF', 'CZK', 'PLN', 'BRL'])
   })
 
-  it('has 9 currencies', () => {
-    expect(SUPPORTED_CURRENCIES).toHaveLength(9)
+  it('has 10 currencies', () => {
+    expect(SUPPORTED_CURRENCIES).toHaveLength(10)
   })
 })
 

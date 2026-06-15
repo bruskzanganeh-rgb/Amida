@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { convert, type SupportedCurrency } from '@/lib/currency/exchange'
+import { convert, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import {
   Dialog,
   DialogContent,
@@ -76,7 +76,7 @@ type DuplicateInfo = {
   inputSupplier?: string
 }
 
-const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
+const currencies = SUPPORTED_CURRENCIES
 
 export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigTitle }: UploadReceiptDialogProps) {
   const t = useTranslations('expense')

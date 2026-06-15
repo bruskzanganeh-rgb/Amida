@@ -633,6 +633,7 @@
     "currencyNameCHF": "Swiss franc",
     "currencyNameCZK": "Czech koruna",
     "currencyNamePLN": "Polish zloty",
+    "currencyNameBRL": "Brazilian real",
     "language": "Language",
     "languageHint": "Changes the language of the entire app",
     "calendarSubscription": "Calendar subscription",

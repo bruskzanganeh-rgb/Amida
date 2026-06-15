@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
-import { convert, type SupportedCurrency } from '@/lib/currency/exchange'
+import { convert, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import { Loader2, Trash2, Upload, Image as ImageIcon, X } from 'lucide-react'
 import NextImage from 'next/image'
 import { toast } from 'sonner'
@@ -64,7 +64,7 @@ type EditExpenseDialogProps = {
   gigs: Gig[]
 }
 
-const currencies = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']
+const currencies = SUPPORTED_CURRENCIES
 
 export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs }: EditExpenseDialogProps) {
   const t = useTranslations('expense')

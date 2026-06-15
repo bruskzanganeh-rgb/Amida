@@ -19,7 +19,7 @@ const ExpenseDataSchema = z.object({
   vatRate: z.number().nonnegative(),
   vatAmount: z.number().nonnegative(),
   total: z.number().nonnegative(),
-  currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK']),
+  currency: z.enum(['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK', 'CHF', 'CZK', 'PLN', 'BRL']),
   category: z.enum(EXPENSE_CATEGORIES),
   notes: z.string().optional(),
 })
@@ -352,12 +352,21 @@ function normalizeDate(d: unknown): string | null {
   return null
 }
 
-function normalizeCurrency(c: unknown): 'SEK' | 'EUR' | 'USD' | 'GBP' | 'DKK' | 'NOK' {
+function normalizeCurrency(c: unknown): 'SEK' | 'EUR' | 'USD' | 'GBP' | 'DKK' | 'NOK' | 'CHF' | 'CZK' | 'PLN' | 'BRL' {
   if (typeof c !== 'string') return 'SEK'
   const upper = c.toUpperCase().trim()
-  const valid = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK'] as const
+  const valid = ['SEK', 'EUR', 'USD', 'GBP', 'DKK', 'NOK', 'CHF', 'CZK', 'PLN', 'BRL'] as const
   for (const v of valid) if (upper === v) return v
-  const map: Record<string, (typeof valid)[number]> = { KR: 'SEK', KRONOR: 'SEK', '€': 'EUR', $: 'USD', '£': 'GBP' }
+  const map: Record<string, (typeof valid)[number]> = {
+    KR: 'SEK',
+    KRONOR: 'SEK',
+    '€': 'EUR',
+    $: 'USD',
+    '£': 'GBP',
+    R$: 'BRL',
+    KČ: 'CZK',
+    ZŁ: 'PLN',
+  }
   return map[upper] || 'SEK'
 }
 
