@@ -37,16 +37,16 @@ type CompareRow = {
 type ViewMode = 'invoice' | 'workday'
 type ChartMode = 'timeline' | 'compare'
 
-type InvoiceRow = {
-  invoice_date: string
-  subtotal: number
-  exchange_rate: number | null
-  gig_id?: string | null
-  gig?: { position_id: string | null } | null
-  invoice_gigs?: { gig: { position_id: string | null } | null }[] | null
+type InvoicedGigRow = {
+  date: string
+  start_date: string | null
+  fee: number | null
+  fee_base: number | null
+  position_id: string | null
 }
 
 type GigRow = {
+  date: string
   fee: number | null
   fee_base: number | null
   total_days: number | null
@@ -164,53 +164,34 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
     setLoading(true)
 
     const isAll = yearStr === 'all'
-    const needsPositionFilter = positionId && positionId !== 'all'
-    let query = supabase
-      .from('invoices')
-      .select(
-        needsPositionFilter
-          ? 'invoice_date, subtotal, exchange_rate, gig_id, gig:gigs(position_id), invoice_gigs(gig:gigs(position_id))'
-          : 'invoice_date, subtotal, exchange_rate',
-      )
-      .in('status', ['sent', 'paid'])
 
-    if (!isAll) {
-      const year = parseInt(yearStr)
-      query = query.gte('invoice_date', `${year}-01-01`).lte('invoice_date', `${year}-12-31`)
-    }
+    // "Invoiced" revenue is counted by gig status (invoiced/paid), so a gig that
+    // was marked invoiced without generating an Amida invoice (e.g. invoiced
+    // externally) still counts. Position lives on the gig, so no junction needed.
+    let query = supabase
+      .from('gigs')
+      .select('date, start_date, fee, fee_base, position_id, client_id')
+      .in('status', ['invoiced', 'paid'])
+
     if (clientId && clientId !== 'all') {
       query = query.eq('client_id', clientId)
     }
+    if (positionId && positionId !== 'all') {
+      query = positionId === 'none' ? query.is('position_id', null) : query.eq('position_id', positionId)
+    }
     if (shouldFilter && currentUserId) query = query.eq('user_id', currentUserId)
 
-    const { data: rawInvoices } = (await query) as unknown as { data: InvoiceRow[] | null }
+    const { data: gigs } = (await query) as unknown as { data: InvoicedGigRow[] | null }
 
-    // Filter by position client-side (invoices don't have position_id directly).
-    // Gigs link to an invoice either via the legacy invoice.gig_id or — for
-    // collective invoices — via the invoice_gigs junction table, so check both.
-    let invoices = rawInvoices
-    if (needsPositionFilter) {
-      invoices = (rawInvoices || []).filter((inv) => {
-        const linkedPositions: (string | null)[] = []
-        if (inv.gig) linkedPositions.push(inv.gig.position_id)
-        for (const link of inv.invoice_gigs || []) {
-          if (link.gig) linkedPositions.push(link.gig.position_id)
-        }
-        if (positionId === 'none') {
-          // No position = no linked gig, or none of the linked gigs has a position
-          return linkedPositions.length === 0 || linkedPositions.every((p) => !p)
-        }
-        return linkedPositions.includes(positionId)
-      })
-    }
+    const amountFor = (g: InvoicedGigRow) => g.fee_base ?? g.fee ?? 0
 
     if (isAll) {
       // Build year-month map for both timeline and compare
       const timelineData: { [key: string]: number } = {}
-      invoices?.forEach((inv) => {
-        const d = new Date(inv.invoice_date)
+      gigs?.forEach((g) => {
+        const d = new Date(g.start_date || g.date)
         const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
-        timelineData[key] = (timelineData[key] || 0) + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
+        timelineData[key] = (timelineData[key] || 0) + Math.round(amountFor(g))
       })
 
       // Build compare data
@@ -249,12 +230,13 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       setData(chartData)
     } else {
       // Single year: 12 months
+      const year = parseInt(yearStr)
       const monthlyData: { [key: number]: number } = {}
       for (let i = 0; i < 12; i++) monthlyData[i] = 0
 
-      invoices?.forEach((inv) => {
-        const month = new Date(inv.invoice_date).getMonth()
-        monthlyData[month] += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
+      gigs?.forEach((g) => {
+        const d = new Date(g.start_date || g.date)
+        if (d.getFullYear() === year) monthlyData[d.getMonth()] += Math.round(amountFor(g))
       })
 
       let cumulative = 0
@@ -284,7 +266,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
     let gigQuery = supabase
       .from('gigs')
-      .select('fee, fee_base, total_days, gig_dates(date)')
+      .select('date, fee, fee_base, total_days, gig_dates(date)')
       .in('status', ['completed', 'invoiced', 'paid'])
 
     if (clientId && clientId !== 'all') {
@@ -310,7 +292,8 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
         if (!fee || !gig.total_days || gig.total_days === 0) return
         const dayRate = fee / gig.total_days
 
-        gig.gig_dates?.forEach((gd) => {
+        const workDates = gig.gig_dates && gig.gig_dates.length > 0 ? gig.gig_dates : [{ date: gig.date }]
+        workDates.forEach((gd) => {
           const d = new Date(gd.date)
           const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
           timelineData[key] = (timelineData[key] || 0) + dayRate
@@ -361,7 +344,8 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
         if (!fee || !gig.total_days || gig.total_days === 0) return
         const dayRate = fee / gig.total_days
 
-        gig.gig_dates?.forEach((gd) => {
+        const workDates = gig.gig_dates && gig.gig_dates.length > 0 ? gig.gig_dates : [{ date: gig.date }]
+        workDates.forEach((gd) => {
           const date = new Date(gd.date)
           if (date.getFullYear() === year) {
             const month = date.getMonth()
