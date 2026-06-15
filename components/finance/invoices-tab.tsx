@@ -509,7 +509,9 @@ export default function InvoicesTab() {
           const invoicedThisYear = Math.round(
             yearInvoices.reduce((sum, i) => sum + (i.subtotal || 0) * (i.exchange_rate || 1), 0),
           )
-          const invoicedThisYearInkl = Math.round(yearInvoices.reduce((sum, i) => sum + (i.total_base || i.total), 0))
+          const invoicedThisYearInkl = Math.round(
+            yearInvoices.reduce((sum, i) => sum + (i.total || 0) * (i.exchange_rate || 1), 0),
+          )
           const paidThisYear = Math.round(
             yearInvoices
               .filter((i) => i.status === 'paid')

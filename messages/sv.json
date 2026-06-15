@@ -261,6 +261,7 @@
     "downloadPdf": "Ladda ner PDF",
     "previewPdf": "Visa PDF",
     "errorLoadingPdf": "Kunde inte ladda PDF",
+    "exchangeRateError": "Kunde inte hämta växelkurs",
     "collectiveInvoice": "Samlingsfaktura",
     "collectiveInvoiceCount": "Samlingsfaktura ({count} event)",
     "allInvoices": "Alla fakturor ({count})",

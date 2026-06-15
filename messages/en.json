@@ -261,6 +261,7 @@
     "downloadPdf": "Download PDF",
     "previewPdf": "Preview PDF",
     "errorLoadingPdf": "Could not load PDF",
+    "exchangeRateError": "Could not fetch exchange rate",
     "collectiveInvoice": "Collective invoice",
     "collectiveInvoiceCount": "Collective invoice ({count} events)",
     "allInvoices": "All invoices ({count})",

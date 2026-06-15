@@ -20,7 +20,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/supabase'
 import { downloadFile } from '@/lib/download'
-import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
+import { getRate, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type Invoice = {
   id: string
@@ -61,6 +62,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
+  const { code: baseCurrency } = useBaseCurrency()
 
   // PDF state
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -158,6 +160,25 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
     setSaving(true)
 
     try {
+      // Recompute the base-currency amount so it stays correct when the total
+      // or currency is edited (otherwise total_base/exchange_rate go stale).
+      let exchangeRate = 1.0
+      let totalBase = formData.total
+      if (formData.currency && formData.currency !== baseCurrency) {
+        try {
+          exchangeRate = await getRate(
+            formData.currency as SupportedCurrency,
+            baseCurrency as SupportedCurrency,
+            formData.invoice_date,
+          )
+          totalBase = Math.round(formData.total * exchangeRate * 100) / 100
+        } catch {
+          toast.error(t('exchangeRateError') || 'Could not fetch exchange rate')
+          setSaving(false)
+          return
+        }
+      }
+
       const { error } = await supabase
         .from('invoices')
         .update({
@@ -169,6 +190,8 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
           vat_rate: formData.vat_rate,
           vat_amount: formData.vat_amount,
           total: formData.total,
+          total_base: totalBase,
+          exchange_rate: exchangeRate,
           status: formData.status as Database['public']['Enums']['invoice_status'],
           paid_date: formData.paid_date || null,
           currency: formData.currency,
