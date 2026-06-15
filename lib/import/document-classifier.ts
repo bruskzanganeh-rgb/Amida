@@ -123,7 +123,7 @@ Det spelar ingen roll om det står "Faktura" — om "${companyName}" är mottaga
 - vatRate: 0, 6, 12, eller 25 (default: 25 för Sverige)
 - vatAmount: Momsbelopp (om bara total finns: total - subtotal)
 - total: Totalbelopp inkl moms
-- currency: SEK/EUR/USD/GBP/DKK/NOK (default: SEK)
+- currency: SEK/EUR/USD/GBP/DKK/NOK/CHF/CZK/PLN/BRL (default: SEK)
 - category: Välj EN engelsk nyckel från: travel, food, hotel, instrument, sheet_music, equipment, office, phone, subscription, accounting, loan, bank, insurance, representation, training, interest, subcontractor, other
 - notes: Kort beskrivning
 
