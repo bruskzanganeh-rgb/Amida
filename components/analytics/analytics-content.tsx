@@ -216,12 +216,9 @@ export function AnalyticsContent() {
     if (inv.client) {
       const id = inv.client.id
       if (!clientRevenue[id]) clientRevenue[id] = { name: inv.client.name, revenue: 0 }
-      // Prefer total_base (canonical converted value); fall back to subtotal*rate
-      // for legacy rows that pre-date the multi-currency migration.
-      const value =
-        typeof inv.total_base === 'number' && inv.total_base !== null
-          ? inv.total_base
-          : (inv.subtotal || 0) * (inv.exchange_rate || 1)
+      // Revenue is counted net of VAT (subtotal), consistent with the invoices
+      // tab and gig fees. exchange_rate converts the invoice currency to base.
+      const value = (inv.subtotal || 0) * (inv.exchange_rate || 1)
       clientRevenue[id].revenue += Math.round(value)
     }
   })
