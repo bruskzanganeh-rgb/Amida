@@ -393,9 +393,9 @@ export default function DashboardPage() {
                         <span className="font-medium truncate flex-1">
                           {gig.project_name || gig.client?.name || gig.gig_type?.name || '—'}
                         </span>
-                        {gig.fee && (
+                        {(gig.fee_base ?? gig.fee) != null && (
                           <span className="text-muted-foreground shrink-0 tabular-nums">
-                            {gig.fee.toLocaleString(formatLocale)} {baseCurrencySymbol}
+                            {(gig.fee_base ?? gig.fee)!.toLocaleString(formatLocale)} {baseCurrencySymbol}
                           </span>
                         )}
                       </Link>

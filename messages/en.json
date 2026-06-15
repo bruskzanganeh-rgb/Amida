@@ -1373,6 +1373,7 @@
   },
   "toast": {
     "settingsSaved": "Settings saved!",
+    "currencyRecomputeError": "Settings saved, but converting existing amounts to the new currency failed. Try saving again.",
     "settingsError": "Could not save settings: {error}",
     "statusUpdateError": "Could not update status",
     "gigCompleted": "Event marked as completed",

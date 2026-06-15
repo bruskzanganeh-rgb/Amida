@@ -1372,6 +1372,7 @@
   },
   "toast": {
     "settingsSaved": "Inställningar sparade!",
+    "currencyRecomputeError": "Inställningarna sparades, men omräkningen av befintliga belopp till den nya valutan misslyckades. Försök spara igen.",
     "settingsError": "Kunde inte spara inställningar: {error}",
     "statusUpdateError": "Kunde inte uppdatera status",
     "gigCompleted": "Event markerat som genomfört",

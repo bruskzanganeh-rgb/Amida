@@ -859,7 +859,12 @@ export function GigDialog({
                       <Label className={fieldLabel}>{t('currency')}</Label>
                       <Select
                         value={formData.currency}
-                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                        onValueChange={(value) => {
+                          // Reset any auto-fetched/typed rate so it can't leak from a
+                          // previous currency; the correct rate is fetched on save.
+                          setManualExchangeRate('')
+                          setFormData({ ...formData, currency: value })
+                        }}
                       >
                         <SelectTrigger className="h-9 w-full">
                           <SelectValue />

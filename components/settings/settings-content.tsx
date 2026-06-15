@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -86,6 +86,8 @@ export default function SettingsPage() {
   const [calendarCopied, setCalendarCopied] = useState(false)
   const [userId, setUserId] = useState<string>('')
   const [companyId, setCompanyId] = useState<string>('')
+  // Base currency at load time, to detect a change on save and trigger a recompute.
+  const initialBaseCurrencyRef = useRef<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
@@ -205,6 +207,7 @@ export default function SettingsPage() {
             timezone: personalSettings.timezone || 'Europe/Stockholm',
           })
           setCompanyId(membership.company_id)
+          initialBaseCurrencyRef.current = company.base_currency
         }
       }
 
@@ -267,14 +270,31 @@ export default function SettingsPage() {
       })
       .eq('id', settings.id)
 
-    setSaving(false)
-
     if (error) {
+      setSaving(false)
       console.error('Error saving settings:', error)
       toast.error(tToast('settingsError', { error: error.message }))
-    } else {
-      toast.success(tToast('settingsSaved'))
+      return
     }
+
+    // If the base currency changed, recompute all stored converted amounts so
+    // dashboard/invoice/expense totals reflect the new base currency.
+    const baseChanged = !!settings.base_currency && settings.base_currency !== initialBaseCurrencyRef.current
+    if (baseChanged) {
+      try {
+        const res = await fetch('/api/settings/recompute-base-amounts', { method: 'POST' })
+        if (res.ok) {
+          initialBaseCurrencyRef.current = settings.base_currency
+        } else {
+          toast.error(tToast('currencyRecomputeError'))
+        }
+      } catch {
+        toast.error(tToast('currencyRecomputeError'))
+      }
+    }
+
+    setSaving(false)
+    toast.success(tToast('settingsSaved'))
   }
 
   if (loading) {
