@@ -128,10 +128,13 @@ export default function PositionsPage() {
       sort_order: i + 1,
     }))
 
+    let failed = false
     for (const update of updates) {
-      await supabase.from('positions').update({ sort_order: update.sort_order }).eq('id', update.id)
+      const { error } = await supabase.from('positions').update({ sort_order: update.sort_order }).eq('id', update.id)
+      if (error) failed = true
     }
 
+    if (failed) toast.error(tPositions('updateError'))
     mutate()
   }
 

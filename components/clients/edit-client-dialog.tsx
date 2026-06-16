@@ -115,6 +115,7 @@ export function EditClientDialog({ client, open, onOpenChange, onSuccess }: Edit
       console.error('Error updating client:', error)
       toast.error(tt('updateClientError', { error: error.message }))
     } else {
+      toast.success(tt('clientUpdated'))
       onSuccess()
       onOpenChange(false)
     }

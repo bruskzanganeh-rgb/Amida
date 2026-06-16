@@ -85,6 +85,13 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
     paid_date: '',
     currency: 'SEK',
   })
+  // Raw display strings for the money fields so they can be cleared and accept
+  // in-progress decimals; the field being typed keeps its raw string while the
+  // coupled siblings are recomputed.
+  const [subtotalStr, setSubtotalStr] = useState('')
+  const [vatAmountStr, setVatAmountStr] = useState('')
+  const [totalStr, setTotalStr] = useState('')
+  const [invoiceNumberStr, setInvoiceNumberStr] = useState('')
 
   const statuses = [
     { value: 'draft', label: t('status.draft') },
@@ -109,6 +116,10 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
         paid_date: invoice.paid_date || '',
         currency: invoice.currency || 'SEK',
       })
+      setSubtotalStr(invoice.subtotal ? String(invoice.subtotal) : '')
+      setVatAmountStr(invoice.vat_amount ? String(invoice.vat_amount) : '')
+      setTotalStr(invoice.total ? String(invoice.total) : '')
+      setInvoiceNumberStr(String(invoice.invoice_number ?? ''))
       const hasSentPdf = !!invoice.pdf_url
       const hasOriginalPdf = !!invoice.original_pdf_url
       setHasPdf(hasSentPdf || hasOriginalPdf)
@@ -304,8 +315,12 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                   <Input
                     id="invoice_number"
                     type="number"
-                    value={formData.invoice_number}
-                    onChange={(e) => setFormData({ ...formData, invoice_number: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    value={invoiceNumberStr}
+                    onChange={(e) => {
+                      setInvoiceNumberStr(e.target.value)
+                      setFormData({ ...formData, invoice_number: parseInt(e.target.value) || 0 })
+                    }}
                   />
                 </div>
 
@@ -355,12 +370,18 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                       id="subtotal"
                       type="number"
                       step="0.01"
+                      min="0"
+                      placeholder="0"
                       className="flex-1"
-                      value={formData.subtotal}
+                      value={subtotalStr}
                       onChange={(e) => {
+                        setSubtotalStr(e.target.value)
                         const subtotal = parseFloat(e.target.value) || 0
                         const vat_amount = round2((subtotal * formData.vat_rate) / 100)
-                        setFormData({ ...formData, subtotal, vat_amount, total: round2(subtotal + vat_amount) })
+                        const total = round2(subtotal + vat_amount)
+                        setVatAmountStr(String(vat_amount))
+                        setTotalStr(String(total))
+                        setFormData({ ...formData, subtotal, vat_amount, total })
                       }}
                     />
                     <Select
@@ -388,7 +409,10 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                     onValueChange={(value) => {
                       const vat_rate = parseInt(value)
                       const vat_amount = round2((formData.subtotal * vat_rate) / 100)
-                      setFormData({ ...formData, vat_rate, vat_amount, total: round2(formData.subtotal + vat_amount) })
+                      const total = round2(formData.subtotal + vat_amount)
+                      setVatAmountStr(String(vat_amount))
+                      setTotalStr(String(total))
+                      setFormData({ ...formData, vat_rate, vat_amount, total })
                     }}
                   >
                     <SelectTrigger>
@@ -408,10 +432,15 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                     id="vat_amount"
                     type="number"
                     step="0.01"
-                    value={formData.vat_amount}
+                    min="0"
+                    placeholder="0"
+                    value={vatAmountStr}
                     onChange={(e) => {
+                      setVatAmountStr(e.target.value)
                       const vat_amount = parseFloat(e.target.value) || 0
-                      setFormData({ ...formData, vat_amount, total: round2(formData.subtotal + vat_amount) })
+                      const total = round2(formData.subtotal + vat_amount)
+                      setTotalStr(String(total))
+                      setFormData({ ...formData, vat_amount, total })
                     }}
                   />
                 </div>
@@ -422,12 +451,18 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                     id="total"
                     type="number"
                     step="0.01"
-                    value={formData.total}
+                    min="0"
+                    placeholder="0"
+                    value={totalStr}
                     onChange={(e) => {
+                      setTotalStr(e.target.value)
                       // Derive net + VAT from the total so they can never diverge.
                       const total = parseFloat(e.target.value) || 0
                       const subtotal = round2(total / (1 + formData.vat_rate / 100))
-                      setFormData({ ...formData, total, subtotal, vat_amount: round2(total - subtotal) })
+                      const vat_amount = round2(total - subtotal)
+                      setSubtotalStr(String(subtotal))
+                      setVatAmountStr(String(vat_amount))
+                      setFormData({ ...formData, total, subtotal, vat_amount })
                     }}
                   />
                 </div>

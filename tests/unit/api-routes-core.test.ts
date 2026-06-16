@@ -1198,10 +1198,6 @@ describe('GET /api/calendar/feed', () => {
           // membership
           return chainMock({ company_id: 'c1' })
         }
-        if (callCount === 3) {
-          // company base_currency
-          return chainMock({ base_currency: 'SEK' })
-        }
         // gigs query - returns empty array
         return chainMock([], null)
       }),
@@ -1225,9 +1221,6 @@ describe('GET /api/calendar/feed', () => {
         }
         if (callCount === 2) {
           return chainMock({ company_id: 'c1' })
-        }
-        if (callCount === 3) {
-          return chainMock({ base_currency: 'SEK' })
         }
         // gigs with dates
         return chainMock(
@@ -1276,9 +1269,6 @@ describe('GET /api/calendar/feed', () => {
         }
         if (callCount === 2) {
           return chainMock({ company_id: 'c1' })
-        }
-        if (callCount === 3) {
-          return chainMock({ base_currency: 'EUR' })
         }
         return chainMock(
           [
@@ -1338,9 +1328,6 @@ describe('GET /api/calendar/feed', () => {
         if (callCount === 2) {
           return chainMock({ company_id: 'c1' })
         }
-        if (callCount === 3) {
-          return chainMock({ base_currency: 'USD' })
-        }
         return chainMock([], null)
       }),
     }
@@ -1387,7 +1374,6 @@ describe('GET /api/calendar/feed', () => {
           return chainMock({ calendar_token: 'tok', locale: 'sv', timezone: 'Europe/Stockholm' })
         }
         if (callCount === 2) return chainMock({ company_id: 'c1' })
-        if (callCount === 3) return chainMock({ base_currency: 'SEK' })
         return chainMock(
           [
             {
@@ -1435,7 +1421,6 @@ describe('GET /api/calendar/feed', () => {
           return chainMock({ calendar_token: 'tok', locale: 'sv', timezone: 'Europe/Stockholm' })
         }
         if (callCount === 2) return chainMock({ company_id: 'c1' })
-        if (callCount === 3) return chainMock({ base_currency: 'SEK' })
         // gigs query error
         return chainMock(null, { message: 'DB fail' })
       }),

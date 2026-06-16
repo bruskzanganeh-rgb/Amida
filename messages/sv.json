@@ -1397,6 +1397,7 @@
     "sponsorDeleted": "Sponsor borttagen",
     "checkoutError": "Kunde inte skapa checkout-session",
     "clientCreated": "Kund skapad",
+    "clientUpdated": "Kund uppdaterad",
     "createClientError": "Kunde inte skapa kund: {error}",
     "markedSentToAccountant": "Markerad som skickad till revisor",
     "unmarkedSentToAccountant": "Tog bort revisormarkering",

@@ -1398,6 +1398,7 @@
     "sponsorDeleted": "Sponsor removed",
     "checkoutError": "Could not create checkout session",
     "clientCreated": "Client created",
+    "clientUpdated": "Client updated",
     "createClientError": "Could not create client: {error}",
     "markedSentToAccountant": "Marked as sent to accountant",
     "unmarkedSentToAccountant": "Removed accountant marking",
