@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       .eq('invoice_id', invoiceId)
       .order('reminder_number', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     const reminderNumber = (maxReminder?.reminder_number || 0) + 1
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { parseLocalDate } from '@/lib/dates'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -319,7 +320,7 @@ export default function CalendarPage() {
           return d.getFullYear() === year && d.getMonth() === month
         })
       }
-      const gigDate = new Date(gig.date)
+      const gigDate = parseLocalDate(gig.date)
       return gigDate.getFullYear() === year && gigDate.getMonth() === month
     })
   }
@@ -819,7 +820,7 @@ export default function CalendarPage() {
                           </>
                         ) : (
                           <p className="text-xs font-semibold">
-                            {format(new Date(selectedGig.date), 'PPP', { locale: dateLocale })}
+                            {format(parseLocalDate(selectedGig.date), 'PPP', { locale: dateLocale })}
                           </p>
                         )}
                       </div>
@@ -1089,7 +1090,7 @@ export default function CalendarPage() {
                             </>
                           ) : (
                             <p className="text-sm font-semibold text-foreground">
-                              {format(new Date(selectedGig.date), 'PPP', { locale: dateLocale })}
+                              {format(parseLocalDate(selectedGig.date), 'PPP', { locale: dateLocale })}
                             </p>
                           )}
                         </div>

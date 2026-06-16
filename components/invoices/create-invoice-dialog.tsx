@@ -347,8 +347,15 @@ export function CreateInvoiceDialog({
   }, [open, initialGig, initialGigs, gigTypes, clients, buildLinesFromGigs])
 
   async function loadClientGigs(clientId: string) {
-    const { data: linkedGigs } = await supabase.from('invoice_gigs').select('gig_id')
-    const linkedGigIds = new Set((linkedGigs || []).map((g: { gig_id: string }) => g.gig_id))
+    // Gigs already invoiced — via the junction table AND the legacy gig_id link.
+    const [{ data: linkedGigs }, { data: legacyLinked }] = await Promise.all([
+      supabase.from('invoice_gigs').select('gig_id'),
+      supabase.from('invoices').select('gig_id').not('gig_id', 'is', null),
+    ])
+    const linkedGigIds = new Set<string>([
+      ...(linkedGigs || []).map((g: { gig_id: string }) => g.gig_id),
+      ...(legacyLinked || []).map((i: { gig_id: string | null }) => i.gig_id).filter((id): id is string => !!id),
+    ])
 
     const { data } = await supabase
       .from('gigs')

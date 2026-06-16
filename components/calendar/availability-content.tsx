@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { parseLocalDate } from '@/lib/dates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -144,7 +145,7 @@ export default function AvailabilityPage() {
       const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd })
 
       const weekGigs = gigDates.filter((gd) => {
-        const gigDate = new Date(gd.date)
+        const gigDate = parseLocalDate(gd.date)
         return weekDays.some((d) => isSameDay(d, gigDate))
       })
 
@@ -186,7 +187,7 @@ export default function AvailabilityPage() {
       const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd })
 
       const weekGigs = gigDates.filter((gd) => {
-        const gigDate = new Date(gd.date)
+        const gigDate = parseLocalDate(gd.date)
         return weekDays.some((d) => isSameDay(d, gigDate))
       })
 

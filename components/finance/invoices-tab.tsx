@@ -246,9 +246,15 @@ export default function InvoicesTab() {
   const { data: pendingGigs = [], mutate: mutatePendingGigs } = useSWR<PendingGig[]>(
     'pending-gigs-for-invoicing',
     async () => {
-      // Get gigs already linked to invoices via junction table
-      const { data: linkedGigs } = await supabase.from('invoice_gigs').select('gig_id')
-      const linkedGigIds = new Set((linkedGigs || []).map((g: { gig_id: string }) => g.gig_id))
+      // Get gigs already linked to invoices — junction table AND legacy gig_id
+      const [{ data: linkedGigs }, { data: legacyLinked }] = await Promise.all([
+        supabase.from('invoice_gigs').select('gig_id'),
+        supabase.from('invoices').select('gig_id').not('gig_id', 'is', null),
+      ])
+      const linkedGigIds = new Set<string>([
+        ...(linkedGigs || []).map((g: { gig_id: string }) => g.gig_id),
+        ...(legacyLinked || []).map((i: { gig_id: string | null }) => i.gig_id).filter((id): id is string => !!id),
+      ])
 
       // Get completed gigs with fee that don't have invoices
       const { data, error } = await supabase

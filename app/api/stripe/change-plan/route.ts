@@ -62,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   // Determine current plan
-  const { data: currentSub } = await supabase.from('subscriptions').select('plan').eq('user_id', user.id).single()
+  const { data: currentSub } = await supabase.from('subscriptions').select('plan').eq('user_id', user.id).maybeSingle()
 
   const currentPlan = currentSub?.plan || 'free'
   const isDowngrade = currentPlan === 'team' && targetPlan === 'pro'

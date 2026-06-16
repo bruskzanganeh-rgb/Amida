@@ -165,7 +165,7 @@ export async function POST(request: Request) {
   }
 
   // Ensure subscription exists (free plan) — linked to user's company
-  const { data: existingSub } = await admin.from('subscriptions').select('id').eq('user_id', user.id).single()
+  const { data: existingSub } = await admin.from('subscriptions').select('id').eq('user_id', user.id).maybeSingle()
 
   if (!existingSub) {
     await admin.from('subscriptions').insert({

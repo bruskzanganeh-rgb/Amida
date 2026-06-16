@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         .from('subscriptions')
         .select('user_id')
         .eq('apple_transaction_id', originalTransactionId)
-        .single()
+        .maybeSingle()
 
       userId = sub?.user_id || null
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { parseLocalDate } from '@/lib/dates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -73,7 +74,7 @@ export function AvailableWeeks() {
         const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd })
 
         const weekGigs = filtered.filter((gd) => {
-          const gigDate = new Date(gd.date)
+          const gigDate = parseLocalDate(gd.date)
           return weekDays.some((d) => isSameDay(d, gigDate))
         })
 

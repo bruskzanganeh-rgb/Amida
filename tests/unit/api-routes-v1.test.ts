@@ -81,6 +81,7 @@ function chainMock(data: unknown = null, error: unknown = null, count = 0) {
     chain[m] = vi.fn().mockReturnValue(chain)
   }
   chain.single = vi.fn().mockResolvedValue(result)
+  chain.maybeSingle = vi.fn().mockResolvedValue(result)
   chain.then = thenFn
   return chain
 }

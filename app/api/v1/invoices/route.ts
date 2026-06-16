@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', auth.userId)
       .order('invoice_number', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     const nextNumber = (lastInvoice?.invoice_number || 0) + 1
 
