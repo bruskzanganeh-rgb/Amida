@@ -190,10 +190,12 @@ export function CreateInvoiceDialog({
       }
     })
 
-    const subtotal = linesWithVat.reduce((sum, l) => sum + l.amount, 0)
+    const subtotal = Math.round(linesWithVat.reduce((sum, l) => sum + l.amount, 0) * 100) / 100
     // If reverse charge, VAT is 0
-    const vatAmount = isReverseCharge ? 0 : linesWithVat.reduce((sum, l) => sum + (l.amount * l.vat_rate) / 100, 0)
-    const total = subtotal + vatAmount
+    const vatAmount = isReverseCharge
+      ? 0
+      : Math.round(linesWithVat.reduce((sum, l) => sum + (l.amount * l.vat_rate) / 100, 0) * 100) / 100
+    const total = Math.round((subtotal + vatAmount) * 100) / 100
     const primaryVatRate = isReverseCharge ? 0 : linesWithVat.find((l) => l.vat_rate > 0)?.vat_rate || 25
 
     return { previewLines: linesWithVat, subtotal, vatAmount, total, primaryVatRate }

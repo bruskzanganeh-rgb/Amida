@@ -25,16 +25,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-      await handleCheckoutComplete(stripe, supabase, event.data.object as Stripe.Checkout.Session)
-      break
-    case 'customer.subscription.updated':
-      await handleSubscriptionUpdate(stripe, supabase, event.data.object as Stripe.Subscription)
-      break
-    case 'customer.subscription.deleted':
-      await handleSubscriptionDeleted(supabase, event.data.object as Stripe.Subscription)
-      break
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutComplete(stripe, supabase, event.data.object as Stripe.Checkout.Session)
+        break
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdate(stripe, supabase, event.data.object as Stripe.Subscription)
+        break
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(supabase, event.data.object as Stripe.Subscription)
+        break
+    }
+  } catch (err) {
+    // Return 500 so Stripe retries — otherwise a failed DB write would leave
+    // the subscription permanently out of sync with billing.
+    console.error('Stripe webhook handler failed:', err)
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
@@ -51,7 +58,7 @@ async function handleCheckoutComplete(stripe: Stripe, supabase: SupabaseClient, 
   // Fetch the Stripe subscription for period details
   const stripeSub = await stripe.subscriptions.retrieve(subscriptionId)
 
-  await supabase
+  const { error } = await supabase
     .from('subscriptions')
     .update({
       plan,
@@ -64,6 +71,7 @@ async function handleCheckoutComplete(stripe: Stripe, supabase: SupabaseClient, 
       ...(companyId ? { company_id: companyId } : {}),
     })
     .eq('user_id', userId)
+  if (error) throw error
 }
 
 async function handleSubscriptionUpdate(stripe: Stripe, supabase: SupabaseClient, subscription: Stripe.Subscription) {
@@ -90,7 +98,7 @@ async function handleSubscriptionUpdate(stripe: Stripe, supabase: SupabaseClient
 
   const pendingPlan = currentSub?.pending_plan === plan ? null : currentSub?.pending_plan
 
-  await supabase
+  const { error } = await supabase
     .from('subscriptions')
     .update({
       plan,
@@ -103,6 +111,7 @@ async function handleSubscriptionUpdate(stripe: Stripe, supabase: SupabaseClient
       admin_override: false,
     })
     .eq('user_id', sub.user_id)
+  if (error) throw error
 }
 
 async function handleSubscriptionDeleted(supabase: SupabaseClient, subscription: Stripe.Subscription) {
@@ -116,7 +125,7 @@ async function handleSubscriptionDeleted(supabase: SupabaseClient, subscription:
 
   if (!sub) return
 
-  await supabase
+  const { error } = await supabase
     .from('subscriptions')
     .update({
       plan: 'free',
@@ -127,4 +136,5 @@ async function handleSubscriptionDeleted(supabase: SupabaseClient, subscription:
       admin_override: false,
     })
     .eq('user_id', sub.user_id)
+  if (error) throw error
 }

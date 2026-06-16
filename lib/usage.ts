@@ -101,13 +101,20 @@ export async function checkUsageLimit(
   }
 
   const now = new Date()
-  const { data: usage } = await supabaseAdmin
+  const { data: usage, error } = await supabaseAdmin
     .from('usage_tracking')
     .select('invoice_count, receipt_scan_count, email_send_count')
     .eq('user_id', userId)
     .eq('year', now.getFullYear())
     .eq('month', now.getMonth() + 1)
-    .single()
+    .maybeSingle()
+
+  // No row yet (first use this month) is fine → count 0. But a real read error
+  // must fail closed, otherwise a DB hiccup would grant unlimited usage.
+  if (error) {
+    console.error('Usage read failed — failing closed:', error)
+    return { allowed: false, current: limit, limit }
+  }
 
   const currentMap = {
     invoice: usage?.invoice_count || 0,

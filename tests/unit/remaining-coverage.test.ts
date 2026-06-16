@@ -375,7 +375,7 @@ describe('lib/usage.ts', () => {
                 eq: vi.fn().mockReturnValue({
                   eq: vi.fn().mockReturnValue({
                     eq: vi.fn().mockReturnValue({
-                      single: vi.fn().mockResolvedValue({
+                      maybeSingle: vi.fn().mockResolvedValue({
                         data: { invoice_count: invoiceCount, receipt_scan_count: receiptScanCount },
                       }),
                     }),

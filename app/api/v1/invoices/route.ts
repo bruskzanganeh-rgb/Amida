@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals from lines
     const lines = parsed.data.lines
-    const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+    const subtotal = Math.round(lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0) * 100) / 100
     const vatAmount = Math.round(subtotal * (parsed.data.vat_rate / 100) * 100) / 100
-    const total = subtotal + vatAmount
+    const total = Math.round((subtotal + vatAmount) * 100) / 100
 
     const invoiceDate = new Date().toISOString().split('T')[0]
     const dueDate = new Date(Date.now() + parsed.data.payment_terms * 24 * 60 * 60 * 1000).toISOString().split('T')[0]

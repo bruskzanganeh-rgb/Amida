@@ -162,6 +162,17 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { id } = await params
     const supabase = createAdminClient()
 
+    // Verify ownership BEFORE deleting child rows — the admin client bypasses
+    // RLS, so without this a key could delete another tenant's gig_dates.
+    const { data: owned, error: ownErr } = await supabase
+      .from('gigs')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', auth.userId)
+      .maybeSingle()
+    if (ownErr) throw ownErr
+    if (!owned) return apiError('Gig not found', 404)
+
     // Delete gig_dates first
     await supabase.from('gig_dates').delete().eq('gig_id', id)
 

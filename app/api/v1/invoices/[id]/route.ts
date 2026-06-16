@@ -112,6 +112,17 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { id } = await params
     const supabase = createAdminClient()
 
+    // Verify ownership BEFORE touching child rows — the admin client bypasses
+    // RLS, so without this a key could delete another tenant's invoice lines.
+    const { data: owned, error: ownErr } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', auth.userId)
+      .maybeSingle()
+    if (ownErr) throw ownErr
+    if (!owned) return apiError('Invoice not found', 404)
+
     // Get linked gigs before deleting
     const { data: linkedGigs } = await supabase.from('invoice_gigs').select('gig_id').eq('invoice_id', id)
     const gigIds = (linkedGigs || []).map((g: { gig_id: string }) => g.gig_id)
@@ -123,9 +134,9 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     if (error) throw error
 
-    // Revert linked gigs to completed
+    // Revert linked gigs to completed (scoped to the owner)
     if (gigIds.length > 0) {
-      await supabase.from('gigs').update({ status: 'completed' }).in('id', gigIds)
+      await supabase.from('gigs').update({ status: 'completed' }).in('id', gigIds).eq('user_id', auth.userId)
     }
 
     return apiSuccess({ deleted: true })

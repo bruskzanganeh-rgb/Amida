@@ -111,6 +111,7 @@ function chainMock(data: unknown = null, error: unknown = null, count = 0) {
     chain[m] = vi.fn().mockReturnValue(chain)
   }
   chain.single = vi.fn().mockResolvedValue(result)
+  chain.maybeSingle = vi.fn().mockResolvedValue(result)
   chain.then = thenFn
   return chain
 }
@@ -384,8 +385,13 @@ describe('DELETE /api/v1/gigs/[id]', () => {
     vi.mocked(rateLimit).mockReturnValue({ success: true, remaining: 10 })
     mockAuthSuccess()
 
+    let callCount = 0
     vi.mocked(createAdminClient).mockReturnValue({
-      from: vi.fn().mockReturnValue(chainMock(null, null)),
+      from: vi.fn().mockImplementation(() => {
+        callCount++
+        if (callCount === 1) return chainMock({ id: 'g1' }, null) // ownership check
+        return chainMock(null, null)
+      }),
     } as never)
 
     const { DELETE } = await import('@/app/api/v1/gigs/[id]/route')
@@ -407,7 +413,8 @@ describe('DELETE /api/v1/gigs/[id]', () => {
     vi.mocked(createAdminClient).mockReturnValue({
       from: vi.fn().mockImplementation(() => {
         callCount++
-        if (callCount === 1) return chainMock(null, null) // gig_dates delete
+        if (callCount === 1) return chainMock({ id: 'g1' }, null) // ownership check
+        if (callCount === 2) return chainMock(null, null) // gig_dates delete
         // gigs delete throws
         const ch = chainMock()
         ch.then = (_resolve: unknown, reject: (e: Error) => void) => reject(new Error('DB fail'))
@@ -1340,10 +1347,8 @@ describe('DELETE /api/v1/invoices/[id]', () => {
     vi.mocked(createAdminClient).mockReturnValue({
       from: vi.fn().mockImplementation(() => {
         callCount++
-        if (callCount === 1) {
-          // Get linked gigs
-          return chainMock([{ gig_id: 'g1' }], null)
-        }
+        if (callCount === 1) return chainMock({ id: 'inv1' }, null) // ownership check
+        if (callCount === 2) return chainMock([{ gig_id: 'g1' }], null) // linked gigs
         // invoice_lines delete, invoices delete, gigs update
         return chainMock(null, null)
       }),
@@ -1368,8 +1373,9 @@ describe('DELETE /api/v1/invoices/[id]', () => {
     vi.mocked(createAdminClient).mockReturnValue({
       from: vi.fn().mockImplementation(() => {
         callCount++
-        if (callCount === 1) return chainMock([], null) // linked gigs
-        if (callCount === 2) return chainMock(null, null) // invoice_lines delete
+        if (callCount === 1) return chainMock({ id: 'inv1' }, null) // ownership check
+        if (callCount === 2) return chainMock([], null) // linked gigs
+        if (callCount === 3) return chainMock(null, null) // invoice_lines delete
         // invoices delete throws
         const ch = chainMock()
         ch.then = (_resolve: unknown, reject: (e: Error) => void) => reject(new Error('DB fail'))

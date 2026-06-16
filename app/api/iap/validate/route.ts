@@ -89,8 +89,13 @@ async function verifyWithApple(transactionId: string): Promise<TransactionInfo |
   const issuerId = process.env.APPLE_IAP_ISSUER_ID
   const privateKey = process.env.APPLE_IAP_PRIVATE_KEY
 
-  // If Apple credentials aren't configured yet, allow in dev mode
+  // If Apple credentials aren't configured, allow ONLY in non-production (dev).
+  // In production this must fail closed, or anyone could claim a paid plan.
   if (!keyId || !issuerId || !privateKey) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Apple IAP credentials not configured in production — rejecting verification')
+      return null
+    }
     console.warn('Apple IAP credentials not configured — skipping verification (dev mode)')
     return {}
   }
