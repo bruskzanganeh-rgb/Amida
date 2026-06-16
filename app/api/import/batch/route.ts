@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
               vat_rate: expenseData.vatRate,
               vat_amount: expenseData.vatAmount,
               amount: expenseData.total,
-              currency: expenseData.currency || 'SEK',
+              currency: expenseData.currency || baseCurrency,
               amount_base: await toBase(
                 expenseData.total,
                 expenseData.currency || baseCurrency,

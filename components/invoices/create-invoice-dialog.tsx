@@ -19,7 +19,8 @@ import { useSubscription } from '@/lib/hooks/use-subscription'
 import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { getRate, formatCurrency, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
-import { shouldReverseCharge, COUNTRY_CONFIGS } from '@/lib/country-config'
+import { shouldReverseCharge } from '@/lib/country-config'
+import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 type GigExpense = {
   id: string
@@ -154,12 +155,9 @@ export function CreateInvoiceDialog({
     return clients.find((c) => c.id === formData.client_id) || null
   }, [clients, formData.client_id])
 
-  // Derive currency from company's country as fallback
-  const companyCurrency = useMemo(() => {
-    const cc = companySettings?.country_code
-    if (!cc) return 'SEK'
-    return COUNTRY_CONFIGS[cc]?.currency || 'SEK'
-  }, [companySettings])
+  // The company's base currency is the accounting currency (fee_base/total_base
+  // are denominated in it). Use it — not the country's default currency.
+  const { code: companyCurrency } = useBaseCurrency()
 
   // Use gig currency if all selected gigs share the same currency, otherwise company default
   const invoiceCurrency = useMemo(() => {

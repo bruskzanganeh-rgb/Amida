@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { CURRENCY_SYMBOLS, type SupportedCurrency } from '@/lib/currency/exchange'
 
 function formatDateOnly(dateStr: string): string {
   // Input: "2026-02-17" → Output: "20260217"
@@ -78,30 +79,6 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .single()
 
-    // Get base currency for fee display
-    let baseCurrencySymbol = 'SEK'
-    if (membership?.company_id) {
-      const { data: companyRow } = await supabase
-        .from('companies')
-        .select('base_currency')
-        .eq('id', membership.company_id)
-        .single()
-      if (companyRow?.base_currency) {
-        const map: Record<string, string> = {
-          SEK: 'SEK',
-          EUR: '€',
-          USD: '$',
-          DKK: 'DKK',
-          NOK: 'NOK',
-          GBP: '£',
-          CHF: 'CHF',
-          CZK: 'Kč',
-          PLN: 'zł',
-        }
-        baseCurrencySymbol = map[companyRow.base_currency] || companyRow.base_currency
-      }
-    }
-
     let gigQuery = supabase
       .from('gigs')
       .select(
@@ -110,6 +87,7 @@ export async function GET(request: NextRequest) {
         project_name,
         venue,
         fee,
+        currency,
         status,
         notes,
         user_id,
@@ -152,10 +130,11 @@ export async function GET(request: NextRequest) {
         const descParts: string[] = []
         descParts.push(`${labels.client}: ${clientName}`)
         descParts.push(`${labels.type}: ${gig.gig_type?.name || '-'}`)
-        if (gig.fee)
-          descParts.push(
-            `${labels.fee}: ${gig.fee.toLocaleString(locale === 'sv' ? 'sv-SE' : 'en-US')} ${baseCurrencySymbol}`,
-          )
+        if (gig.fee) {
+          // Show the fee in the gig's own currency, not the base symbol.
+          const gigSymbol = CURRENCY_SYMBOLS[(gig.currency || 'SEK') as SupportedCurrency] || gig.currency || ''
+          descParts.push(`${labels.fee}: ${gig.fee.toLocaleString(locale === 'sv' ? 'sv-SE' : 'en-US')} ${gigSymbol}`)
+        }
         descParts.push(`${labels.statusLabel}: ${getStatusLabel(gig.status, locale)}`)
         if (gig.notes) descParts.push(`\n${gig.notes}`)
 

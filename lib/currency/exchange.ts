@@ -77,7 +77,11 @@ async function fetchRateFromFrankfurter(from: SupportedCurrency, to: SupportedCu
   }
 
   const data = await response.json()
-  return data.rates[to]
+  const rate = data?.rates?.[to]
+  if (typeof rate !== 'number' || !isFinite(rate)) {
+    throw new Error(`Invalid exchange rate response for ${from}→${to}`)
+  }
+  return rate
 }
 
 /**
