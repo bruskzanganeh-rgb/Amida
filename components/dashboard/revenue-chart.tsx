@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate } from '@/lib/dates'
 
 type MonthlyRevenue = {
   month: string
@@ -119,9 +120,9 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
     const gigDates =
       shouldFilter && currentUserId ? typedGigDates.filter((gd) => gd.gig?.user_id === currentUserId) : typedGigDates
 
-    const invoiceYears = invoices?.map((inv) => new Date(inv.invoice_date).getFullYear().toString()) || []
+    const invoiceYears = invoices?.map((inv) => parseLocalDate(inv.invoice_date).getFullYear().toString()) || []
 
-    const gigYears = gigDates?.map((gd) => new Date(gd.date).getFullYear().toString()) || []
+    const gigYears = gigDates?.map((gd) => parseLocalDate(gd.date).getFullYear().toString()) || []
 
     const currentYearStr = new Date().getFullYear().toString()
     const years = [...new Set([...invoiceYears, ...gigYears, currentYearStr])].sort()
@@ -189,7 +190,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       // Build year-month map for both timeline and compare
       const timelineData: { [key: string]: number } = {}
       gigs?.forEach((g) => {
-        const d = new Date(g.start_date || g.date)
+        const d = parseLocalDate(g.start_date || g.date)
         const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
         timelineData[key] = (timelineData[key] || 0) + Math.round(amountFor(g))
       })
@@ -235,7 +236,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
       for (let i = 0; i < 12; i++) monthlyData[i] = 0
 
       gigs?.forEach((g) => {
-        const d = new Date(g.start_date || g.date)
+        const d = parseLocalDate(g.start_date || g.date)
         if (d.getFullYear() === year) monthlyData[d.getMonth()] += Math.round(amountFor(g))
       })
 
@@ -294,7 +295,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
         const workDates = gig.gig_dates && gig.gig_dates.length > 0 ? gig.gig_dates : [{ date: gig.date }]
         workDates.forEach((gd) => {
-          const d = new Date(gd.date)
+          const d = parseLocalDate(gd.date)
           const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`
           timelineData[key] = (timelineData[key] || 0) + dayRate
         })
@@ -346,7 +347,7 @@ export function RevenueChart({ year: yearProp, clientId, positionId }: RevenueCh
 
         const workDates = gig.gig_dates && gig.gig_dates.length > 0 ? gig.gig_dates : [{ date: gig.date }]
         workDates.forEach((gd) => {
-          const date = new Date(gd.date)
+          const date = parseLocalDate(gd.date)
           if (date.getFullYear() === year) {
             const month = date.getMonth()
             monthlyData[month] += dayRate

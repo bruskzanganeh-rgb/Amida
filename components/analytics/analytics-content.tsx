@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BarChart3, TrendingUp, XCircle, Calendar, Music, CalendarClock, Wallet, HelpCircle } from 'lucide-react'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate } from '@/lib/dates'
 import dynamic from 'next/dynamic'
 
 const RevenueChart = dynamic(
@@ -116,13 +117,13 @@ export function AnalyticsContent() {
   }, [shouldFilter, currentUserId])
 
   // Get unique years from gigs and invoices
-  const gigYears = gigs.map((g) => new Date(g.date).getFullYear())
-  const invoiceYears = invoices.map((inv) => new Date(inv.invoice_date).getFullYear())
+  const gigYears = gigs.map((g) => parseLocalDate(g.date).getFullYear())
+  const invoiceYears = invoices.map((inv) => parseLocalDate(inv.invoice_date).getFullYear())
   const years = [...new Set([...gigYears, ...invoiceYears])].sort((a, b) => b - a)
 
   // Filter gigs based on selected year, client and position
   const filteredGigs = gigs.filter((g) => {
-    const yearMatch = selectedYear === 'all' || new Date(g.date).getFullYear().toString() === selectedYear
+    const yearMatch = selectedYear === 'all' || parseLocalDate(g.date).getFullYear().toString() === selectedYear
     const clientMatch = selectedClient === 'all' || g.client?.id === selectedClient
     const positionMatch =
       selectedPosition === 'all' ||
@@ -138,9 +139,9 @@ export function AnalyticsContent() {
   const completedGigs = filteredGigs.filter((g) => ['completed', 'invoiced', 'paid'].includes(g.status))
   const declinedGigs = filteredGigs.filter((g) => g.status === 'declined')
 
-  const upcomingGigs = filteredGigs.filter((g) => g.status === 'accepted' && new Date(g.date) >= today)
+  const upcomingGigs = filteredGigs.filter((g) => g.status === 'accepted' && parseLocalDate(g.date) >= today)
 
-  const tentativeGigs = filteredGigs.filter((g) => g.status === 'tentative' && new Date(g.date) >= today)
+  const tentativeGigs = filteredGigs.filter((g) => g.status === 'tentative' && parseLocalDate(g.date) >= today)
 
   const feeInBase = (g: Gig) => g.fee_base ?? g.fee ?? 0
   const totalRevenue = completedGigs.reduce((sum, g) => sum + feeInBase(g), 0)
@@ -152,7 +153,7 @@ export function AnalyticsContent() {
   const upcomingDays = upcomingGigs.reduce((sum, g) => sum + g.total_days, 0)
   const nextGig =
     upcomingGigs.length > 0
-      ? upcomingGigs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+      ? upcomingGigs.sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime())[0]
       : null
 
   const tentativeRevenue = tentativeGigs.reduce((sum, g) => sum + feeInBase(g), 0)
@@ -313,7 +314,7 @@ export function AnalyticsContent() {
                 </div>
                 <p className="text-xs text-blue-700 dark:text-blue-400">
                   {nextGig
-                    ? t('nextGig', { date: new Date(nextGig.date).toLocaleDateString(formatLocale) })
+                    ? t('nextGig', { date: parseLocalDate(nextGig.date).toLocaleDateString(formatLocale) })
                     : t('noUpcomingGigs')}
                 </p>
               </CardContent>
@@ -423,7 +424,7 @@ export function AnalyticsContent() {
                     {gigsWithDayRate.map((gig) => (
                       <TableRow key={gig.id}>
                         <TableCell className="font-medium">
-                          {gig.project_name || new Date(gig.date).toLocaleDateString(formatLocale)}
+                          {gig.project_name || parseLocalDate(gig.date).toLocaleDateString(formatLocale)}
                         </TableCell>
                         <TableCell>
                           {gig.client?.name || (

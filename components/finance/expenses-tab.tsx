@@ -8,6 +8,7 @@ import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { categoryLabel } from '@/lib/expenses/categories'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate } from '@/lib/dates'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,6 +28,7 @@ import {
   FileArchive,
   FileText,
   Files,
+  CheckCircle2,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Input } from '@/components/ui/input'
@@ -249,6 +251,21 @@ export default function ExpensesTab() {
     }
   }
 
+  async function markSelectedSentToAccountant(sent: boolean) {
+    if (selectedIds.size === 0) return
+    const { error } = await supabase
+      .from('expenses')
+      .update({ sent_to_accountant_at: sent ? new Date().toISOString() : null })
+      .in('id', Array.from(selectedIds))
+    if (error) {
+      toast.error(tt('genericError'))
+    } else {
+      toast.success(sent ? tt('markedSentToAccountant') : tt('unmarkedSentToAccountant'))
+      clearSelection()
+      mutateExpenses()
+    }
+  }
+
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return
     setBulkDeleting(true)
@@ -271,14 +288,14 @@ export default function ExpensesTab() {
     }
   }
 
-  const years = [...new Set(expenses.map((e) => new Date(e.date).getFullYear()))].sort((a, b) => b - a)
+  const years = [...new Set(expenses.map((e) => parseLocalDate(e.date).getFullYear()))].sort((a, b) => b - a)
   const categories = ([...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]).sort((a, b) =>
     categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
   )
   const suppliers = [...new Set(expenses.map((e) => e.supplier))].sort()
 
   const filteredExpenses = expenses.filter((e) => {
-    if (yearFilter !== 'all' && new Date(e.date).getFullYear().toString() !== yearFilter) return false
+    if (yearFilter !== 'all' && parseLocalDate(e.date).getFullYear().toString() !== yearFilter) return false
     if (categoryFilter !== 'all' && e.category !== categoryFilter) return false
     if (supplierFilter !== 'all' && e.supplier !== supplierFilter) return false
     if (gigFilter === 'linked' && !e.gig_id) return false
@@ -318,7 +335,7 @@ export default function ExpensesTab() {
 
   const yearlyData = years
     .map((year) => {
-      const yearExpenses = expenses.filter((e) => new Date(e.date).getFullYear() === year)
+      const yearExpenses = expenses.filter((e) => parseLocalDate(e.date).getFullYear() === year)
       const total = yearExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
       return {
         year: year.toString(),
@@ -547,6 +564,24 @@ export default function ExpensesTab() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" disabled={!!bulkExporting || !!bulkDeleting}>
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        {t('sentToAccountant')}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => markSelectedSentToAccountant(true)}>
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                        {t('markSentToAccountant')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => markSelectedSentToAccountant(false)}>
+                        <X className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {t('unmarkSentToAccountant')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button
                     size="sm"
                     variant="destructive"
@@ -615,7 +650,7 @@ export default function ExpensesTab() {
                           <p className="font-medium text-sm truncate">{expense.supplier}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(expense.date), 'd MMM yyyy', { locale: dateLocale })}
+                              {format(parseLocalDate(expense.date), 'd MMM yyyy', { locale: dateLocale })}
                             </span>
                             {expense.category && (
                               <Badge variant="outline" className="text-xs">
@@ -637,7 +672,7 @@ export default function ExpensesTab() {
                             <Badge variant="secondary" className="text-xs mt-1">
                               {expense.gig.client?.name ||
                                 expense.gig.project_name ||
-                                format(new Date(expense.gig.date), 'd MMM', { locale: dateLocale })}
+                                format(parseLocalDate(expense.gig.date), 'd MMM', { locale: dateLocale })}
                             </Badge>
                           )}
                           {isSharedMode && (
@@ -730,7 +765,7 @@ export default function ExpensesTab() {
                               aria-label={t('selectRow')}
                             />
                           </TableCell>
-                          <TableCell>{format(new Date(expense.date), 'PPP', { locale: dateLocale })}</TableCell>
+                          <TableCell>{format(parseLocalDate(expense.date), 'PPP', { locale: dateLocale })}</TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5">
                               <span>{expense.supplier}</span>
@@ -758,7 +793,7 @@ export default function ExpensesTab() {
                               <Badge variant="secondary" className="text-xs">
                                 {expense.gig.client?.name ||
                                   expense.gig.project_name ||
-                                  format(new Date(expense.gig.date), 'd MMM', { locale: dateLocale })}
+                                  format(parseLocalDate(expense.gig.date), 'd MMM', { locale: dateLocale })}
                               </Badge>
                             ) : (
                               <span className="text-sm text-muted-foreground">-</span>

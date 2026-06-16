@@ -23,6 +23,7 @@ import { UsageSummary } from '@/components/dashboard/usage-summary'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { localToday } from '@/lib/dates'
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -141,7 +142,7 @@ export default function DashboardPage() {
   async function loadDashboardData() {
     setLoading(true)
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = localToday()
 
     const [upcomingRes, pendingRes, needsActionRes] = await Promise.all([
       userFilter(

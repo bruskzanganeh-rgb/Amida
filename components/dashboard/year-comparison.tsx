@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TrendingUp, TrendingDown, Minus, BarChart3, ArrowUpRight } from 'lucide-react'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate } from '@/lib/dates'
 import Link from 'next/link'
 
 type YearData = {
@@ -114,14 +115,14 @@ export function YearComparison() {
             .reduce((sum, g) => sum + Math.round(g.fee_base ?? g.fee ?? 0), 0)
 
         const currentYearGigs = gigs.filter(
-          (g) => g.start_date && new Date(g.start_date).getFullYear() === currentYearNum,
+          (g) => g.start_date && parseLocalDate(g.start_date).getFullYear() === currentYearNum,
         )
         const currentYearNewClients = (clients || []).filter(
-          (c) => c.created_at && new Date(c.created_at).getFullYear() === currentYearNum,
+          (c) => c.created_at && parseLocalDate(c.created_at).getFullYear() === currentYearNum,
         )
 
         const previousYearGigs = gigs.filter(
-          (g) => g.start_date && new Date(g.start_date).getFullYear() === previousYearNum,
+          (g) => g.start_date && parseLocalDate(g.start_date).getFullYear() === previousYearNum,
         )
         const previousYearYTDGigs = previousYearGigs.filter((g) => g.start_date! <= ytdEndDatePrev)
 

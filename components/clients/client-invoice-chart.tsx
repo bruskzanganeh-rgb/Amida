@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate } from '@/lib/dates'
 
 type Invoice = {
   id: string
@@ -29,7 +30,9 @@ export function ClientInvoiceChart({ invoices }: Props) {
 
   // Get available years from invoices
   const availableYears = useMemo(() => {
-    const years = [...new Set(invoices.map((inv) => new Date(inv.invoice_date).getFullYear()))].sort((a, b) => b - a) // Descending order
+    const years = [...new Set(invoices.map((inv) => parseLocalDate(inv.invoice_date).getFullYear()))].sort(
+      (a, b) => b - a,
+    ) // Descending order
     return years.map((y) => y.toString())
   }, [invoices])
 
@@ -48,11 +51,11 @@ export function ClientInvoiceChart({ invoices }: Props) {
     // Sum invoices by month
     invoices
       .filter((inv) => {
-        const invYear = new Date(inv.invoice_date).getFullYear()
+        const invYear = parseLocalDate(inv.invoice_date).getFullYear()
         return invYear === year && (inv.status === 'paid' || inv.status === 'sent')
       })
       .forEach((inv) => {
-        const month = new Date(inv.invoice_date).getMonth()
+        const month = parseLocalDate(inv.invoice_date).getMonth()
         monthlyData[month] += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
       })
 

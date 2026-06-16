@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { parseLocalDate, localToday } from '@/lib/dates'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import useSWR from 'swr'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -180,7 +181,7 @@ export default function InvoicesTab() {
     filterLoaded ? ['invoices-with-reminders', shouldFilter, filterUserId] : null,
     async () => {
       // Mark overdue invoices
-      const today = new Date().toISOString().split('T')[0]
+      const today = localToday()
       let overdueQuery = supabase
         .from('invoices')
         .update({ status: 'overdue' })
@@ -353,7 +354,7 @@ export default function InvoicesTab() {
   const { data: upcomingRevenue = 0 } = useSWR(
     'upcoming-revenue',
     async () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = localToday()
       const { data: upcoming } = await supabase
         .from('gigs')
         .select('fee, fee_base')
@@ -456,7 +457,7 @@ export default function InvoicesTab() {
       .from('invoices')
       .update({
         status: 'paid',
-        paid_date: new Date().toISOString().split('T')[0],
+        paid_date: localToday(),
       })
       .eq('id', id)
 
@@ -533,7 +534,7 @@ export default function InvoicesTab() {
           const currentYear = new Date().getFullYear()
           // Invoiced/Paid are event-based (gigs by status), matching analytics.
           const gigAmount = (g: { fee: number | null; fee_base: number | null }) => g.fee_base ?? g.fee ?? 0
-          const yearGigs = invoicedPaidGigs.filter((g) => new Date(g.date).getFullYear() === currentYear)
+          const yearGigs = invoicedPaidGigs.filter((g) => parseLocalDate(g.date).getFullYear() === currentYear)
           const invoicedThisYear = Math.round(yearGigs.reduce((sum, g) => sum + gigAmount(g), 0))
           const paidThisYear = Math.round(
             yearGigs.filter((g) => g.status === 'paid').reduce((sum, g) => sum + gigAmount(g), 0),
@@ -660,8 +661,8 @@ export default function InvoicesTab() {
                           </TableCell>
                           <TableCell>
                             {gig.total_days > 1 && gig.start_date && gig.end_date
-                              ? `${format(new Date(gig.start_date), 'd MMM', { locale: dateLocale })} - ${format(new Date(gig.end_date), 'd MMM yyyy', { locale: dateLocale })}`
-                              : format(new Date(gig.date), 'PPP', { locale: dateLocale })}
+                              ? `${format(parseLocalDate(gig.start_date), 'd MMM', { locale: dateLocale })} - ${format(parseLocalDate(gig.end_date), 'd MMM yyyy', { locale: dateLocale })}`
+                              : format(parseLocalDate(gig.date), 'PPP', { locale: dateLocale })}
                           </TableCell>
                           <TableCell className="font-medium truncate" title={gig.client_name}>
                             {gig.client_name}
@@ -775,20 +776,20 @@ export default function InvoicesTab() {
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(invoice.due_date), 'd MMM yyyy', { locale: dateLocale })}
+                          {format(parseLocalDate(invoice.due_date), 'd MMM yyyy', { locale: dateLocale })}
                           {invoice.sent_date && (invoice.status === 'sent' || invoice.status === 'paid') && (
                             <span className="text-muted-foreground ml-1">
                               ·{' '}
                               {t('sentOn', {
-                                date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }),
+                                date: format(parseLocalDate(invoice.sent_date), 'd MMM', { locale: dateLocale }),
                               })}
                             </span>
                           )}
                           {invoice.status === 'overdue' && (
                             <span className="text-red-600 ml-1">
                               {invoice.sent_date &&
-                                `· ${t('sentOn', { date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} `}
-                              · {differenceInDays(new Date(), new Date(invoice.due_date))}d
+                                `· ${t('sentOn', { date: format(parseLocalDate(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} `}
+                              · {differenceInDays(new Date(), parseLocalDate(invoice.due_date))}d
                             </span>
                           )}
                         </div>
@@ -957,11 +958,13 @@ export default function InvoicesTab() {
                                 </div>
                               </TableCell>
                               <TableCell>
-                                {format(new Date(invoice.invoice_date), 'PPP', {
+                                {format(parseLocalDate(invoice.invoice_date), 'PPP', {
                                   locale: dateLocale,
                                 })}
                               </TableCell>
-                              <TableCell>{format(new Date(invoice.due_date), 'PPP', { locale: dateLocale })}</TableCell>
+                              <TableCell>
+                                {format(parseLocalDate(invoice.due_date), 'PPP', { locale: dateLocale })}
+                              </TableCell>
                               <TableCell className="font-medium">
                                 {formatCurrency(invoice.total, (invoice.currency || 'SEK') as SupportedCurrency)}
                               </TableCell>
@@ -976,8 +979,8 @@ export default function InvoicesTab() {
                                   {invoice.status === 'overdue' ? (
                                     <span className="text-[10px] text-red-600">
                                       {invoice.sent_date &&
-                                        `${t('sentOn', { date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} · `}
-                                      {differenceInDays(new Date(), new Date(invoice.due_date))}d
+                                        `${t('sentOn', { date: format(parseLocalDate(invoice.sent_date), 'd MMM', { locale: dateLocale }) })} · `}
+                                      {differenceInDays(new Date(), parseLocalDate(invoice.due_date))}d
                                       {reminderCounts[invoice.id]
                                         ? ` · ${
                                             reminderCounts[invoice.id] === 1
@@ -989,7 +992,9 @@ export default function InvoicesTab() {
                                   ) : (invoice.status === 'sent' || invoice.status === 'paid') && invoice.sent_date ? (
                                     <span className="text-[10px] text-muted-foreground">
                                       {t('sentOn', {
-                                        date: format(new Date(invoice.sent_date), 'd MMM', { locale: dateLocale }),
+                                        date: format(parseLocalDate(invoice.sent_date), 'd MMM', {
+                                          locale: dateLocale,
+                                        }),
                                       })}
                                     </span>
                                   ) : null}
