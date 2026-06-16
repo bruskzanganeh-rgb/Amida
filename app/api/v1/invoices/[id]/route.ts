@@ -116,16 +116,21 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     // RLS, so without this a key could delete another tenant's invoice lines.
     const { data: owned, error: ownErr } = await supabase
       .from('invoices')
-      .select('id')
+      .select('id, gig_id')
       .eq('id', id)
       .eq('user_id', auth.userId)
       .maybeSingle()
     if (ownErr) throw ownErr
     if (!owned) return apiError('Invoice not found', 404)
 
-    // Get linked gigs before deleting
+    // Get linked gigs before deleting — junction rows AND the legacy gig_id.
     const { data: linkedGigs } = await supabase.from('invoice_gigs').select('gig_id').eq('invoice_id', id)
-    const gigIds = (linkedGigs || []).map((g: { gig_id: string }) => g.gig_id)
+    const gigIds = [
+      ...new Set([
+        ...(linkedGigs || []).map((g: { gig_id: string }) => g.gig_id),
+        ...(owned.gig_id ? [owned.gig_id as string] : []),
+      ]),
+    ]
 
     // Delete invoice lines first
     await supabase.from('invoice_lines').delete().eq('invoice_id', id)

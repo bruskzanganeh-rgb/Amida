@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { formatYMD } from '@/lib/dates'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -66,7 +67,7 @@ export default function ExportTab() {
   const toDate = (() => {
     const y = parseInt(toYear)
     const m = parseInt(toMonth)
-    return new Date(y, m, 0).toISOString().split('T')[0]
+    return formatYMD(new Date(y, m, 0))
   })()
 
   // Filter data by date range

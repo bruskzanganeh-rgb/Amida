@@ -20,12 +20,17 @@ export function useActionCount() {
         return shouldFilter && currentUserId ? query.eq('user_id', currentUserId) : query
       }
 
-      const [completedRes, invoicedRes] = await Promise.all([
+      const [completedRes, invoicedRes, legacyRes] = await Promise.all([
         applyFilter(supabase.from('gigs').select('id').eq('status', 'completed')),
         supabase.from('invoice_gigs').select('gig_id'),
+        // Gigs invoiced via the legacy invoices.gig_id link (junction absent)
+        supabase.from('invoices').select('gig_id').not('gig_id', 'is', null),
       ])
 
-      const invoicedSet = new Set((invoicedRes.data || []).map((g: { gig_id: string }) => g.gig_id))
+      const invoicedSet = new Set([
+        ...(invoicedRes.data || []).map((g: { gig_id: string }) => g.gig_id),
+        ...(legacyRes.data || []).map((i: { gig_id: string | null }) => i.gig_id),
+      ])
       const uninvoiced = (completedRes.data || []).filter((g) => !invoicedSet.has(g.id))
       setCount(uninvoiced.length)
     }

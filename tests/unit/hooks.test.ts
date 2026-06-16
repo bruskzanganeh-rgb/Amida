@@ -768,6 +768,13 @@ describe('useActionCount', () => {
           }),
         }
       }
+      if (table === 'invoices') {
+        return {
+          select: vi.fn().mockReturnValue({
+            not: vi.fn().mockResolvedValue({ data: [] }),
+          }),
+        }
+      }
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: [] }),

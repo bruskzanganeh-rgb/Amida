@@ -19,6 +19,13 @@ const PRODUCT_TO_PLAN: Record<string, 'pro' | 'team'> = {
   amida_team_yearly: 'team',
 }
 
+/** Update the subscription and throw on a write error, so the POST handler
+ * returns 500 and Apple retries instead of silently diverging from billing. */
+async function updateSub(admin: ReturnType<typeof createAdminClient>, userId: string, patch: Record<string, unknown>) {
+  const { error } = await admin.from('subscriptions').update(patch).eq('user_id', userId)
+  if (error) throw error
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -94,7 +101,7 @@ export async function POST(request: Request) {
         if (renewalInfo?.autoRenewProductId) {
           const newPlan = PRODUCT_TO_PLAN[renewalInfo.autoRenewProductId as string]
           if (newPlan) {
-            await admin.from('subscriptions').update({ pending_plan: newPlan }).eq('user_id', userId)
+            await updateSub(admin, userId, { pending_plan: newPlan })
           }
         }
         break
@@ -117,7 +124,7 @@ export async function POST(request: Request) {
 
       case 'DID_FAIL_TO_RENEW':
         // Payment failed — mark as past_due but keep access during grace period
-        await admin.from('subscriptions').update({ status: 'past_due' }).eq('user_id', userId)
+        await updateSub(admin, userId, { status: 'past_due' })
         break
 
       case 'REFUND':
@@ -159,20 +166,17 @@ async function handleRenewal(
     update.current_period_end = new Date(expiresDate).toISOString()
   }
 
-  await admin.from('subscriptions').update(update).eq('user_id', userId)
+  await updateSub(admin, userId, update)
 }
 
 async function handleExpired(admin: ReturnType<typeof createAdminClient>, userId: string) {
-  await admin
-    .from('subscriptions')
-    .update({
-      plan: 'free',
-      status: 'canceled',
-      cancel_at_period_end: false,
-      pending_plan: null,
-      admin_override: false,
-    })
-    .eq('user_id', userId)
+  await updateSub(admin, userId, {
+    plan: 'free',
+    status: 'canceled',
+    cancel_at_period_end: false,
+    pending_plan: null,
+    admin_override: false,
+  })
 }
 
 async function handleRenewalStatusChange(
@@ -183,7 +187,7 @@ async function handleRenewalStatusChange(
 ) {
   if (subtype === 'AUTO_RENEW_DISABLED') {
     // User turned off auto-renew (will expire at period end)
-    await admin.from('subscriptions').update({ cancel_at_period_end: true }).eq('user_id', userId)
+    await updateSub(admin, userId, { cancel_at_period_end: true })
   } else if (subtype === 'AUTO_RENEW_ENABLED') {
     // User re-enabled auto-renew
     const update: Record<string, unknown> = {
@@ -199,7 +203,7 @@ async function handleRenewalStatusChange(
       }
     }
 
-    await admin.from('subscriptions').update(update).eq('user_id', userId)
+    await updateSub(admin, userId, update)
   }
 }
 

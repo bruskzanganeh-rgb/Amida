@@ -64,7 +64,7 @@ async function getSignedUrl(
 function createReceiptFilename(expense: Expense, ext: string): string {
   const date = expense.date.replace(/-/g, '-')
   const supplier = sanitizeFilename(expense.supplier)
-  const amount = Math.round(expense.amount_base || expense.amount)
+  const amount = (expense.amount_base || expense.amount).toFixed(2)
   return `${date}_${supplier}_${amount}kr.${ext}`
 }
 
@@ -334,7 +334,7 @@ export async function GET(request: NextRequest) {
         summaryPage.drawText(expense.date, { x: 50, y, size: 9, font })
         summaryPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
         summaryPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
-        summaryPage.drawText(`${Math.round(expense.amount_base || expense.amount)} ${baseCurrencySymbol}`, {
+        summaryPage.drawText(`${(expense.amount_base || expense.amount).toFixed(2)} ${baseCurrencySymbol}`, {
           x: 420,
           y,
           size: 9,
@@ -457,7 +457,7 @@ export async function GET(request: NextRequest) {
         currentPage.drawText(expense.date, { x: 50, y, size: 9, font })
         currentPage.drawText(expense.supplier.substring(0, 25), { x: 120, y, size: 9, font })
         currentPage.drawText(categoryLabelStatic(expense.category, 'sv').substring(0, 15), { x: 300, y, size: 9, font })
-        currentPage.drawText(`${Math.round(expense.amount_base || expense.amount)} ${baseCurrencySymbol}`, {
+        currentPage.drawText(`${(expense.amount_base || expense.amount).toFixed(2)} ${baseCurrencySymbol}`, {
           x: 420,
           y,
           size: 9,
@@ -490,7 +490,7 @@ export async function GET(request: NextRequest) {
 
           // Header text för kvittot
           const categoryText = categoryLabelStatic(expense.category, 'sv')
-          const headerText = `${expense.date} - ${expense.supplier} - ${Math.round(expense.amount_base || expense.amount)} ${expense.currency}${categoryText ? ` - ${categoryText}` : ''}`
+          const headerText = `${expense.date} - ${expense.supplier} - ${(expense.amount_base || expense.amount).toFixed(2)} ${expense.currency}${categoryText ? ` - ${categoryText}` : ''}`
 
           if (ext === 'pdf') {
             // Merga PDF-kvitto

@@ -11,11 +11,16 @@ export function parseLocalDate(value: string): Date {
   return new Date(`${value.slice(0, 10)}T12:00:00`)
 }
 
-/** Today's date as 'YYYY-MM-DD' in the local timezone (not UTC). */
-export function localToday(): string {
-  const d = new Date()
+/** Format a Date as 'YYYY-MM-DD' using its LOCAL calendar fields (not UTC), so
+ * e.g. the last day of a month isn't shifted a day by toISOString(). */
+export function formatYMD(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+/** Today's date as 'YYYY-MM-DD' in the local timezone (not UTC). */
+export function localToday(): string {
+  return formatYMD(new Date())
 }
