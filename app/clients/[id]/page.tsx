@@ -54,10 +54,11 @@ export default function ClientDetailPage() {
   const tis = useTranslations('invoice.status')
   const dateLocale = useDateLocale()
   const formatLocale = useFormatLocale()
-  const { symbol: baseCurrencySymbol } = useBaseCurrency()
+  const { code: baseCurrencyCode, symbol: baseCurrencySymbol } = useBaseCurrency()
 
   const [client, setClient] = useState<Client | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [gigs, setGigs] = useState<{ fee: number | null; fee_base: number | null }[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -78,20 +79,25 @@ export default function ClientDetailPage() {
           .eq('client_id', clientId)
           .order('invoice_date', { ascending: false })
 
+        // Revenue is counted from gigs by status (base currency), consistent
+        // with the dashboard/analytics — not from invoice documents.
+        const { data: gigsData } = await supabase
+          .from('gigs')
+          .select('fee, fee_base')
+          .eq('client_id', clientId)
+          .in('status', ['completed', 'invoiced', 'paid'])
+
         setClient(clientData)
         setInvoices(invoicesData || [])
+        setGigs(gigsData || [])
         setLoading(false)
       }
       loadClientData()
     }
   }, [clientId, supabase])
 
-  // Calculate statistics
-  const totalRevenue = Math.round(
-    invoices
-      .filter((inv) => inv.status === 'paid' || inv.status === 'sent')
-      .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
-  )
+  // Calculate statistics — revenue from gigs (earned), unpaid from invoices (AR)
+  const totalRevenue = Math.round(gigs.reduce((sum, g) => sum + (g.fee_base ?? g.fee ?? 0), 0))
 
   const unpaidAmount = Math.round(
     invoices
@@ -99,7 +105,7 @@ export default function ClientDetailPage() {
       .reduce((sum, inv) => sum + (inv.subtotal || 0) * (inv.exchange_rate || 1), 0),
   )
 
-  const hasConverted = invoices.some((inv) => inv.currency && inv.currency !== 'SEK')
+  const hasConverted = invoices.some((inv) => inv.currency && inv.currency !== baseCurrencyCode)
   const approx = hasConverted ? '≈ ' : ''
 
   const invoiceCount = invoices.length

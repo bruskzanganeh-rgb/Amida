@@ -39,24 +39,26 @@ export function TopClients() {
     async function loadTopClients() {
       setLoading(true)
 
-      const { data: invoices } = (await supabase
-        .from('invoices')
-        .select('subtotal, exchange_rate, client:clients(id, name)')
-        .in('status', ['sent', 'paid'])) as unknown as {
-        data: { subtotal: number; exchange_rate: number | null; client: { id: string; name: string } | null }[] | null
+      // Revenue is counted from gigs by status (invoiced/paid/completed), in the
+      // base currency, consistent with analytics — so gigs invoiced without an
+      // Amida invoice still count.
+      const { data: gigs } = (await supabase
+        .from('gigs')
+        .select('fee, fee_base, client:clients(id, name)')
+        .in('status', ['completed', 'invoiced', 'paid'])) as unknown as {
+        data: { fee: number | null; fee_base: number | null; client: { id: string; name: string } | null }[] | null
       }
 
-      if (invoices) {
+      if (gigs) {
         const clientTotals: { [key: string]: { name: string; revenue: number } } = {}
 
-        invoices.forEach((inv) => {
-          if (inv.client) {
-            const clientId = inv.client.id
-            const clientName = inv.client.name
+        gigs.forEach((g) => {
+          if (g.client) {
+            const clientId = g.client.id
             if (!clientTotals[clientId]) {
-              clientTotals[clientId] = { name: clientName, revenue: 0 }
+              clientTotals[clientId] = { name: g.client.name, revenue: 0 }
             }
-            clientTotals[clientId].revenue += Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1))
+            clientTotals[clientId].revenue += Math.round(g.fee_base ?? g.fee ?? 0)
           }
         })
 

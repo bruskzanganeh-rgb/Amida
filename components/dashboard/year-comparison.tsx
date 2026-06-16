@@ -90,18 +90,11 @@ export function YearComparison() {
       const currentDay = now.getDate()
       const ytdEndDatePrev = `${previousYearNum}-${currentMonth.toString().padStart(2, '0')}-${currentDay.toString().padStart(2, '0')}`
 
-      // Fetch invoices
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('invoice_date, subtotal, exchange_rate')
-        .in('status', ['sent', 'paid'])
-        .gte('invoice_date', `${previousYearNum}-01-01`)
-        .lte('invoice_date', `${currentYearNum}-12-31`)
-
-      // Fetch gigs with status completed/invoiced/paid
+      // Fetch gigs. Revenue counts only earned statuses (completed/invoiced/paid)
+      // in the base currency; gig/work-day counts include the accepted pipeline.
       const { data: gigs } = await supabase
         .from('gigs')
-        .select('id, start_date, total_days, client_id')
+        .select('id, start_date, total_days, client_id, fee, fee_base, status')
         .in('status', ['accepted', 'completed', 'invoiced', 'paid'])
         .gte('start_date', `${previousYearNum}-01-01`)
         .lte('start_date', `${currentYearNum}-12-31`)
@@ -113,11 +106,13 @@ export function YearComparison() {
         .gte('created_at', `${previousYearNum}-01-01`)
         .lte('created_at', `${currentYearNum}-12-31T23:59:59`)
 
-      if (invoices && gigs) {
-        // Current year calculations
-        const currentYearInvoices = invoices.filter(
-          (inv) => inv.invoice_date && new Date(inv.invoice_date).getFullYear() === currentYearNum,
-        )
+      if (gigs) {
+        const EARNED = ['completed', 'invoiced', 'paid']
+        const sumRevenue = (arr: { status: string | null; fee: number | null; fee_base: number | null }[]) =>
+          arr
+            .filter((g) => EARNED.includes(g.status ?? ''))
+            .reduce((sum, g) => sum + Math.round(g.fee_base ?? g.fee ?? 0), 0)
+
         const currentYearGigs = gigs.filter(
           (g) => g.start_date && new Date(g.start_date).getFullYear() === currentYearNum,
         )
@@ -125,28 +120,15 @@ export function YearComparison() {
           (c) => c.created_at && new Date(c.created_at).getFullYear() === currentYearNum,
         )
 
-        // Previous year calculations
-        const previousYearInvoices = invoices.filter(
-          (inv) => inv.invoice_date && new Date(inv.invoice_date).getFullYear() === previousYearNum,
-        )
         const previousYearGigs = gigs.filter(
           (g) => g.start_date && new Date(g.start_date).getFullYear() === previousYearNum,
         )
-
-        // YTD calculations for previous year (same period)
-        const previousYearYTDInvoices = previousYearInvoices.filter((inv) => inv.invoice_date <= ytdEndDatePrev)
         const previousYearYTDGigs = previousYearGigs.filter((g) => g.start_date! <= ytdEndDatePrev)
 
         setCurrentYear({
           year: currentYearNum,
-          revenue: currentYearInvoices.reduce(
-            (sum, inv) => sum + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1)),
-            0,
-          ),
-          ytdRevenue: currentYearInvoices.reduce(
-            (sum, inv) => sum + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1)),
-            0,
-          ),
+          revenue: sumRevenue(currentYearGigs),
+          ytdRevenue: sumRevenue(currentYearGigs),
           gigCount: currentYearGigs.length,
           ytdGigCount: currentYearGigs.length,
           workDays: currentYearGigs.reduce((sum, g) => sum + (g.total_days || 1), 0),
@@ -156,14 +138,8 @@ export function YearComparison() {
 
         setPreviousYear({
           year: previousYearNum,
-          revenue: previousYearInvoices.reduce(
-            (sum, inv) => sum + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1)),
-            0,
-          ),
-          ytdRevenue: previousYearYTDInvoices.reduce(
-            (sum, inv) => sum + Math.round((inv.subtotal || 0) * (inv.exchange_rate || 1)),
-            0,
-          ),
+          revenue: sumRevenue(previousYearGigs),
+          ytdRevenue: sumRevenue(previousYearYTDGigs),
           gigCount: previousYearGigs.length,
           ytdGigCount: previousYearYTDGigs.length,
           workDays: previousYearGigs.reduce((sum, g) => sum + (g.total_days || 1), 0),

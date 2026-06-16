@@ -463,9 +463,22 @@ export default function InvoicesTab() {
     if (error) {
       console.error('Error marking as paid:', error)
       toast.error(tToast('statusUpdateError'))
-    } else {
-      mutateInvoices()
+      return
     }
+
+    // Mirror onto the linked gigs (junction + legacy gig_id) so the gig-based
+    // "Paid this year" income figure reflects it.
+    const { data: junction } = await supabase.from('invoice_gigs').select('gig_id').eq('invoice_id', id)
+    const legacyGigId = allInvoices.find((i) => i.id === id)?.gig_id
+    const gigIds = [
+      ...new Set([...(junction || []).map((g: { gig_id: string }) => g.gig_id), ...(legacyGigId ? [legacyGigId] : [])]),
+    ]
+    if (gigIds.length > 0) {
+      await supabase.from('gigs').update({ status: 'paid' }).in('id', gigIds)
+      document.dispatchEvent(new Event('gig-status-changed'))
+    }
+
+    mutateInvoices()
   }
 
   async function toggleSentToAccountant(invoice: Invoice) {
