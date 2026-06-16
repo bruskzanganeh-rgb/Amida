@@ -888,7 +888,7 @@ export function GigDialog({
                         className="h-9"
                         type="number"
                         min="0"
-                        step="0.0001"
+                        step="any"
                         placeholder={t('exchangeRateAuto')}
                         value={manualExchangeRate}
                         onChange={(e) => setManualExchangeRate(e.target.value)}
