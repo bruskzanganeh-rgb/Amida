@@ -443,6 +443,10 @@ export function CreateInvoiceDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canCreateInvoice) return
+    if (!formData.client_id) {
+      toast.error(t('clientRequired'))
+      return
+    }
 
     // Save reference_person_override if different from client default
     const client = clients.find((c) => c.id === formData.client_id)
@@ -928,7 +932,7 @@ export function CreateInvoiceDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
                 {tc('cancel')}
               </Button>
-              <Button type="submit" disabled={loading || !formData.client_id || !canCreateInvoice}>
+              <Button type="submit" disabled={loading || !canCreateInvoice}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('createInvoice')}
               </Button>

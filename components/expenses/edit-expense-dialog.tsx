@@ -222,6 +222,10 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
 
   const handleSave = async () => {
     if (!expense) return
+    if (!formData.supplier.trim()) {
+      toast.error(t('supplierRequired'))
+      return
+    }
 
     setSaving(true)
 
@@ -567,7 +571,7 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
                 {tc('cancel')}
               </Button>
-              <Button onClick={handleSave} disabled={saving || !formData.supplier}>
+              <Button onClick={handleSave} disabled={saving}>
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

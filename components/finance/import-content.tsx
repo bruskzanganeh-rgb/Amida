@@ -179,6 +179,19 @@ export default function ImportPage() {
 
   // Kontrollera dubletter när vi går till review-steget
   const [duplicatesChecked, setDuplicatesChecked] = useState(false)
+  // Raw input strings for the editable amount fields, so they can be cleared and
+  // accept in-progress decimals; keyed by `${fileId}:${field}`. The field being
+  // typed keeps its draft; recomputed siblings have theirs cleared.
+  const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({})
+  const draftVal = (fileId: string, field: string, num: number) =>
+    amountDrafts[`${fileId}:${field}`] ?? (num ? String(num) : '')
+  const setDrafts = (fileId: string, set: Record<string, string>, clear: string[] = []) =>
+    setAmountDrafts((d) => {
+      const n = { ...d }
+      for (const f of clear) delete n[`${fileId}:${f}`]
+      for (const [k, v] of Object.entries(set)) n[`${fileId}:${k}`] = v
+      return n
+    })
   useEffect(() => {
     if (currentStep === 'review' && !duplicatesChecked) {
       const analyzedFiles = files.filter((f) => f.status === 'done' && (f.type === 'expense' || f.type === 'invoice'))
@@ -949,9 +962,11 @@ export default function ImportPage() {
                             <div className="flex items-center gap-2 mt-1">
                               <Input
                                 type="number"
-                                step="0.01"
-                                value={(file.data as ExpenseData).total}
+                                step="any"
+                                placeholder="0"
+                                value={draftVal(file.id, 'total', (file.data as ExpenseData).total)}
                                 onChange={(e) => {
+                                  setDrafts(file.id, { total: e.target.value }, ['subtotal'])
                                   const total = parseFloat(e.target.value) || 0
                                   const vatRate = (file.data as ExpenseData).vatRate
                                   const subtotal = Math.round((total / (1 + vatRate / 100)) * 100) / 100
@@ -1035,9 +1050,11 @@ export default function ImportPage() {
                               </label>
                               <Input
                                 type="number"
-                                step="0.01"
-                                value={(file.data as ExpenseData).subtotal}
+                                step="any"
+                                placeholder="0"
+                                value={draftVal(file.id, 'subtotal', (file.data as ExpenseData).subtotal)}
                                 onChange={(e) => {
+                                  setDrafts(file.id, { subtotal: e.target.value }, ['total'])
                                   const subtotal = parseFloat(e.target.value) || 0
                                   const vatRate = (file.data as ExpenseData).vatRate
                                   const vatAmount = Math.round(subtotal * (vatRate / 100) * 100) / 100
@@ -1053,6 +1070,7 @@ export default function ImportPage() {
                               <Select
                                 value={(file.data as ExpenseData).vatRate.toString()}
                                 onValueChange={(value) => {
+                                  setDrafts(file.id, {}, ['total'])
                                   const vatRate = parseInt(value)
                                   const subtotal = (file.data as ExpenseData).subtotal
                                   const vatAmount = Math.round(subtotal * (vatRate / 100) * 100) / 100
@@ -1128,7 +1146,8 @@ export default function ImportPage() {
                           </label>
                           <Input
                             type="number"
-                            value={(file.data as InvoiceData).invoiceNumber}
+                            placeholder="0"
+                            value={(file.data as InvoiceData).invoiceNumber || ''}
                             onChange={(e) => updateFileData(file.id, { invoiceNumber: parseInt(e.target.value) || 0 })}
                             className="h-9 mt-1 font-mono"
                           />
@@ -1172,9 +1191,13 @@ export default function ImportPage() {
                           </label>
                           <Input
                             type="number"
-                            step="0.01"
-                            value={(file.data as InvoiceData).total}
-                            onChange={(e) => updateFileData(file.id, { total: parseFloat(e.target.value) || 0 })}
+                            step="any"
+                            placeholder="0"
+                            value={draftVal(file.id, 'total', (file.data as InvoiceData).total)}
+                            onChange={(e) => {
+                              setDrafts(file.id, { total: e.target.value })
+                              updateFileData(file.id, { total: parseFloat(e.target.value) || 0 })
+                            }}
                             className="h-9 mt-1 font-mono"
                           />
                         </div>

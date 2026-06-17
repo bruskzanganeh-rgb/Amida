@@ -263,6 +263,10 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
 
   const handleSave = async (forceSave = false) => {
     if (!file) return
+    if (!formData.supplier.trim()) {
+      toast.error(t('supplierRequired'))
+      return
+    }
 
     setSaving(true)
     setError(null)
@@ -673,7 +677,7 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
               <Button variant="outline" onClick={() => setStep('upload')}>
                 {tc('back')}
               </Button>
-              <Button onClick={() => handleSave()} disabled={saving || !formData.supplier}>
+              <Button onClick={() => handleSave()} disabled={saving}>
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
