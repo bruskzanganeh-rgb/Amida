@@ -849,7 +849,7 @@ export function GigDialog({
                         className="h-9"
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="any"
                         placeholder="0"
                         value={formData.fee}
                         onChange={(e) => setFormData({ ...formData, fee: e.target.value })}

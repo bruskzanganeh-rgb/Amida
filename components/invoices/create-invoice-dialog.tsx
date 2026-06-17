@@ -793,7 +793,7 @@ export function CreateInvoiceDialog({
                         <Input
                           className="w-24"
                           type="number"
-                          step="0.01"
+                          step="any"
                           placeholder={t('amount')}
                           value={line.amount}
                           onChange={(e) => updateLine(index, 'amount', e.target.value)}
