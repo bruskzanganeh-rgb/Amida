@@ -543,6 +543,62 @@ export function CreateInvoiceDialog({
       }
 
       await supabase.from('gigs').update({ status: 'invoiced' }).in('id', gigIdsArray)
+    } else {
+      // No gig selected — income totals are gig-based, so a standalone invoice
+      // would be invisible. Back it with an auto "Övrigt" gig so it still counts.
+      try {
+        let ovrigtTypeId = findGigType(gigTypes, 'Övrigt', 'Other')?.id
+        if (!ovrigtTypeId) {
+          // Not in the loaded list — reuse an existing type before creating one,
+          // so repeated standalone invoices don't spawn duplicate "Övrigt" types.
+          const { data: existingType } = await supabase
+            .from('gig_types')
+            .select('id')
+            .eq('name', 'Övrigt')
+            .limit(1)
+            .maybeSingle()
+          if (existingType) {
+            ovrigtTypeId = existingType.id
+          } else {
+            const { data: newType, error: typeError } = await supabase
+              .from('gig_types')
+              .insert([{ name: 'Övrigt', name_en: 'Other', vat_rate: 0 }])
+              .select('id')
+              .single()
+            if (typeError) throw typeError
+            ovrigtTypeId = newType.id
+          }
+        }
+
+        const feeBase =
+          effectiveCurrency === companyCurrency ? subtotal : Math.round(subtotal * exchangeRate * 100) / 100
+
+        const { data: autoGig, error: autoGigError } = await supabase
+          .from('gigs')
+          .insert([
+            {
+              client_id: formData.client_id,
+              gig_type_id: ovrigtTypeId,
+              date: formData.invoice_date,
+              currency: effectiveCurrency,
+              fee: subtotal,
+              exchange_rate: exchangeRate,
+              fee_base: feeBase,
+              status: 'invoiced',
+            },
+          ])
+          .select('id')
+          .single()
+        if (autoGigError) throw autoGigError
+
+        const { error: autoLinkError } = await supabase
+          .from('invoice_gigs')
+          .insert([{ invoice_id: invoice.id, gig_id: autoGig.id }])
+        if (autoLinkError) throw autoLinkError
+      } catch (err) {
+        console.error('Error creating Övrigt gig for standalone invoice:', err)
+        toast.warning(tToast('gigLinkError'))
+      }
     }
 
     // Track usage
