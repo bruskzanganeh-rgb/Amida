@@ -276,9 +276,13 @@ export async function GET(request: NextRequest) {
     if (format === 'zip') {
       const zip = new JSZip()
 
+      // Overview files get a "0000_" prefix so they always sort to the top of
+      // the folder (above the date-prefixed receipts), never in the middle.
+      const summaryBaseName = `0000_${fileBaseName}`
+
       // Lägg till CSV-summering
       const csvContent = createCsvContent(typedExpenses, exportLocale)
-      zip.file(`${fileBaseName}.csv`, csvContent)
+      zip.file(`${summaryBaseName}.csv`, csvContent)
 
       // Skapa PDF-summering
       const summaryPdf = await PDFDocument.create()
@@ -353,7 +357,7 @@ export async function GET(request: NextRequest) {
       }
 
       const summaryPdfBytes = await summaryPdf.save()
-      zip.file(`${fileBaseName}-Summering.pdf`, summaryPdfBytes)
+      zip.file(`${summaryBaseName}-Summering.pdf`, summaryPdfBytes)
 
       // Ladda ner och lägg till kvittobilder
       for (const expense of expensesWithAttachments) {
