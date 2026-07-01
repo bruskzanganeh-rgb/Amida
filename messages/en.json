@@ -471,6 +471,7 @@
     "mergeSelectAtLeastOne": "Select at least one supplier to merge.",
     "mergeFailed": "Could not merge suppliers.",
     "sentToAccountant": "Sent to accountant",
+    "accountantShort": "Accountant",
     "markSentToAccountant": "Mark as sent to accountant",
     "unmarkSentToAccountant": "Undo sent to accountant",
     "expenseAlreadyExists": "Expense already exists",

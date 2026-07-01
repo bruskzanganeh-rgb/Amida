@@ -471,6 +471,7 @@
     "mergeSelectAtLeastOne": "Välj minst en leverantör att slå ihop.",
     "mergeFailed": "Kunde inte slå ihop leverantörer.",
     "sentToAccountant": "Skickad till revisor",
+    "accountantShort": "Revisor",
     "markSentToAccountant": "Markera som skickad till revisor",
     "unmarkSentToAccountant": "Ångra skickad till revisor",
     "expenseAlreadyExists": "Utgiften finns redan",

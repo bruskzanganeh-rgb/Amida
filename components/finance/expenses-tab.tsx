@@ -779,6 +779,7 @@ export default function ExpensesTab() {
                         <TableHead>{t('amount')}</TableHead>
                         <TableHead>{t('notes')}</TableHead>
                         {isSharedMode && <TableHead>{t('createdBy')}</TableHead>}
+                        <TableHead className="w-16 text-center">{t('accountantShort')}</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -804,11 +805,6 @@ export default function ExpensesTab() {
                               {expense.is_private && (
                                 <Badge variant="outline" className="text-xs border-dashed text-muted-foreground">
                                   {t('private')}
-                                </Badge>
-                              )}
-                              {expense.sent_to_accountant_at && (
-                                <Badge className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                                  {t('sentToAccountant')}
                                 </Badge>
                               )}
                             </div>
@@ -855,6 +851,18 @@ export default function ExpensesTab() {
                               <span className="text-xs text-muted-foreground">{getMemberLabel(expense.user_id)}</span>
                             </TableCell>
                           )}
+                          <TableCell className="text-center">
+                            {expense.sent_to_accountant_at ? (
+                              <span title={t('sentToAccountant')} className="inline-flex">
+                                <CheckCircle2
+                                  className="h-4 w-4 text-green-600 dark:text-green-400"
+                                  aria-label={t('sentToAccountant')}
+                                />
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/40">–</span>
+                            )}
+                          </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             {expense.attachment_url && (
                               <button
