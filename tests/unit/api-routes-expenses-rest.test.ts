@@ -27,9 +27,12 @@ vi.mock('@/lib/activity', () => ({
   logActivity: vi.fn(),
 }))
 
-vi.mock('@/lib/expenses/duplicate-checker', () => ({
-  findDuplicateExpense: vi.fn(),
-}))
+vi.mock('@/lib/expenses/duplicate-checker', async (importOriginal) => {
+  // Keep the real similarity helpers (used by supplier-matching in the scan
+  // route) but spy on findDuplicateExpense.
+  const actual = await importOriginal<typeof import('@/lib/expenses/duplicate-checker')>()
+  return { ...actual, findDuplicateExpense: vi.fn() }
+})
 
 vi.mock('@/lib/schemas/expense', () => ({
   updateExpenseSchema: {
@@ -1055,6 +1058,55 @@ describe('POST /api/expenses/scan', () => {
     expect(body.data.supplier).toBe('Test Store')
   })
 
+  it('snaps supplier to canonical via an explicit alias', async () => {
+    const client = mockAuthClient()
+    const settingsCh = chainMock(null, null)
+    settingsCh.single = vi.fn().mockResolvedValue({ data: { locale: 'sv' }, error: null })
+    const aliasCh = chainMock([{ alias: 'Tre', canonical: 'Hi3G Access AB' }], null)
+    client.from.mockReturnValueOnce(settingsCh).mockReturnValueOnce(aliasCh)
+    vi.mocked(createClient).mockResolvedValue(client as never)
+    vi.mocked(parseReceiptWithVision).mockResolvedValue({
+      date: '2026-01-01',
+      supplier: 'Tre',
+      amount: 199,
+      currency: 'SEK',
+      category: 'other',
+    } as never)
+
+    const { POST } = await import('@/app/api/expenses/scan/route')
+    const form = new FormData()
+    form.append('file', new File(['x'], 'receipt.jpg', { type: 'image/jpeg' }))
+    const req = makeRequest('http://localhost/api/expenses/scan', { method: 'POST', body: form })
+    const res = await POST(req)
+    const body = await res.json()
+    expect(body.data.supplier).toBe('Hi3G Access AB')
+  })
+
+  it('snaps supplier to an existing name via fuzzy matching', async () => {
+    const client = mockAuthClient()
+    const settingsCh = chainMock(null, null)
+    settingsCh.single = vi.fn().mockResolvedValue({ data: { locale: 'sv' }, error: null })
+    const aliasCh = chainMock([], null)
+    const existingCh = chainMock([{ supplier: 'SJ' }, { supplier: 'SJ' }], null)
+    client.from.mockReturnValueOnce(settingsCh).mockReturnValueOnce(aliasCh).mockReturnValueOnce(existingCh)
+    vi.mocked(createClient).mockResolvedValue(client as never)
+    vi.mocked(parseReceiptWithVision).mockResolvedValue({
+      date: '2026-01-01',
+      supplier: 'SJ AB',
+      amount: 500,
+      currency: 'SEK',
+      category: 'other',
+    } as never)
+
+    const { POST } = await import('@/app/api/expenses/scan/route')
+    const form = new FormData()
+    form.append('file', new File(['x'], 'receipt.jpg', { type: 'image/jpeg' }))
+    const req = makeRequest('http://localhost/api/expenses/scan', { method: 'POST', body: form })
+    const res = await POST(req)
+    const body = await res.json()
+    expect(body.data.supplier).toBe('SJ')
+  })
+
   it('scans PDF receipt with text parsing when text is sufficient', async () => {
     const { extractText } = await import('unpdf')
     const { parseReceiptWithText } = await import('@/lib/receipt/parser')
@@ -1463,6 +1515,74 @@ describe('GET /api/expenses/export', () => {
     const { GET } = await import('@/app/api/expenses/export/route')
     const req = makeRequest('http://localhost/api/expenses/export?year=2026&month=1&format=zip')
     const res = await GET(req)
+    expect(res.status).toBe(500)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 8. expenses/suppliers/merge POST
+// ---------------------------------------------------------------------------
+
+describe('POST /api/expenses/suppliers/merge', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  function mergeReq(body: unknown) {
+    return makeRequest('http://localhost/api/expenses/suppliers/merge', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  it('returns 401 when not authenticated', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient(null) as never)
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: ['SJ AB'], to: 'SJ' }))
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 400 when "to" is missing', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: ['SJ AB'] }))
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when "from" is not a non-empty string array', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: [], to: 'SJ' }))
+    expect(res.status).toBe(400)
+  })
+
+  it('is a no-op when every "from" already equals "to"', async () => {
+    vi.mocked(createClient).mockResolvedValue(mockAuthClient() as never)
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: ['SJ'], to: 'SJ' }))
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.updated).toBe(0)
+  })
+
+  it('merges suppliers, records aliases and returns the count', async () => {
+    const client = mockAuthClient()
+    client.from.mockReturnValue(chainMock([{ id: 'a' }, { id: 'b' }], null))
+    vi.mocked(createClient).mockResolvedValue(client as never)
+
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: ['SJ AB', 'SJ (Svenska Järnvägar)'], to: 'SJ' }))
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.updated).toBe(2)
+    expect(client.from).toHaveBeenCalledWith('supplier_aliases')
+  })
+
+  it('returns 500 when the update fails', async () => {
+    const client = mockAuthClient()
+    client.from.mockReturnValue(chainMock(null, { message: 'update fail' }))
+    vi.mocked(createClient).mockResolvedValue(client as never)
+
+    const { POST } = await import('@/app/api/expenses/suppliers/merge/route')
+    const res = await POST(mergeReq({ from: ['SJ AB'], to: 'SJ' }))
     expect(res.status).toBe(500)
   })
 })
