@@ -12,8 +12,8 @@ describe('findCanonicalSupplier', () => {
     expect(findCanonicalSupplier('SJ AB', [{ supplier: 'SJ', count: 10 }])).toBe('SJ')
   })
 
-  it('snaps when one name contains the other', () => {
-    expect(findCanonicalSupplier('SJ (Svenska Järnvägar)', [{ supplier: 'SJ', count: 5 }])).toBe('SJ')
+  it('does NOT snap on loose "contains" matches (handled by aliases instead)', () => {
+    expect(findCanonicalSupplier('SJ (Svenska Järnvägar)', [{ supplier: 'SJ', count: 5 }])).toBeNull()
   })
 
   it('prefers the most-used variant when several match', () => {
@@ -24,12 +24,13 @@ describe('findCanonicalSupplier', () => {
     expect(findCanonicalSupplier('SJ', existing)).toBe('SJ')
   })
 
-  it('accepts a high-confidence fuzzy match', () => {
-    expect(findCanonicalSupplier('Netflx', [{ supplier: 'Netflix', count: 4 }])).toBe('Netflix')
+  it('does NOT snap on fuzzy near-matches', () => {
+    expect(findCanonicalSupplier('Netflx', [{ supplier: 'Netflix', count: 4 }])).toBeNull()
   })
 
   it('does not snap unrelated names', () => {
     expect(findCanonicalSupplier('Apple', [{ supplier: 'Aimo Park', count: 5 }])).toBeNull()
+    expect(findCanonicalSupplier('G&L Redovisning', [{ supplier: 'StageSub AB', count: 12 }])).toBeNull()
   })
 
   it('ignores blank existing entries', () => {

@@ -1082,7 +1082,7 @@ describe('POST /api/expenses/scan', () => {
     expect(body.data.supplier).toBe('Hi3G Access AB')
   })
 
-  it('snaps supplier to an existing name via fuzzy matching', async () => {
+  it('snaps supplier to an existing name after suffix normalization', async () => {
     const client = mockAuthClient()
     const settingsCh = chainMock(null, null)
     settingsCh.single = vi.fn().mockResolvedValue({ data: { locale: 'sv' }, error: null })

@@ -128,7 +128,9 @@ export async function POST(request: NextRequest) {
       if (aliasHit) {
         result.supplier = aliasHit.canonical
       } else {
-        // 2. Fall back to fuzzy matching against existing suppliers.
+        // 2. Otherwise snap only to an existing supplier with the same
+        //    normalized name (e.g. "SJ AB" -> "SJ"). Strict on purpose so we
+        //    never override a correct AI reading with an unrelated name.
         const { data: existing } = await supabase.from('expenses').select('supplier').not('supplier', 'is', null)
         if (Array.isArray(existing) && existing.length > 0) {
           const counts = new Map<string, number>()

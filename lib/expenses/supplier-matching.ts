@@ -11,9 +11,11 @@ export type SupplierCount = {
  * canonical name that this candidate should snap to — or null if it's a new
  * supplier.
  *
- * Matching is intentionally conservative to avoid false positives (e.g.
- * "Apple" vs "Aimo Park"): exact (after normalization) and "contains" matches
- * are accepted directly, fuzzy matches only at a high similarity threshold.
+ * Deliberately STRICT to avoid overriding a correct AI reading: only snaps when
+ * the names are identical after normalizing away trailing legal suffixes
+ * (e.g. "SJ AB" -> "SJ", "Anthropic, PBC" -> "Anthropic"). Looser "contains"
+ * and fuzzy matching are NOT used here — those live in clusterSuppliers(), where
+ * the user confirms the merge, and in user-defined aliases.
  *
  * When several existing suppliers match, the most frequently used one wins so
  * the dominant spelling becomes canonical.
@@ -21,32 +23,18 @@ export type SupplierCount = {
 export function findCanonicalSupplier(candidate: string, existing: SupplierCount[]): string | null {
   if (!candidate?.trim() || existing.length === 0) return null
 
+  const normCandidate = normalizeSupplier(candidate)
+  if (!normCandidate) return null
+
   // Sort by usage so the most common variant is preferred on ties.
   const byUsage = [...existing].sort((a, b) => b.count - a.count)
 
-  let strongMatch: string | null = null // exact / contains
-  let fuzzyMatch: string | null = null
-
   for (const { supplier } of byUsage) {
     if (!supplier) continue
-
-    // Already the same name (after normalization) — nothing to snap.
-    const strict = isSimilarSupplier(candidate, supplier)
-    if (strict.matchType === 'exact' || strict.matchType === 'contains') {
-      strongMatch = supplier
-      break
-    }
-
-    // Conservative fuzzy: only accept high-confidence matches.
-    if (!fuzzyMatch) {
-      const fuzzy = isSimilarSupplier(candidate, supplier, 0.85)
-      if (fuzzy.matchType === 'fuzzy') {
-        fuzzyMatch = supplier
-      }
-    }
+    if (normalizeSupplier(supplier) === normCandidate) return supplier
   }
 
-  return strongMatch ?? fuzzyMatch
+  return null
 }
 
 export type SupplierGroup = {
