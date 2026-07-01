@@ -307,7 +307,11 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                     className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
                     onClick={() => toggleDoc(doc.id)}
                   >
-                    <Checkbox checked={selectedDocs.includes(doc.id)} onCheckedChange={() => toggleDoc(doc.id)} />
+                    <Checkbox
+                      checked={selectedDocs.includes(doc.id)}
+                      onCheckedChange={() => toggleDoc(doc.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     <div className="flex-1 min-w-0">
                       <span className="font-medium text-sm truncate block">{doc.file_name}</span>
                       <p className="text-xs text-muted-foreground">
@@ -357,6 +361,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                       <Checkbox
                         checked={selectedReceipts.includes(receipt.id)}
                         onCheckedChange={() => toggleReceipt(receipt.id)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

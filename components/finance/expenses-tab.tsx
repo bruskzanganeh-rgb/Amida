@@ -102,6 +102,7 @@ export default function ExpensesTab() {
   const [supplierFilter, setSupplierFilter] = useState<string>('all')
   const [gigFilter, setGigFilter] = useState<string>('all')
   const [privacyFilter, setPrivacyFilter] = useState<string>('all')
+  const [accountantFilter, setAccountantFilter] = useState<string>('all')
   const [memberFilter, setMemberFilter] = useState<string>('all')
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
@@ -314,6 +315,8 @@ export default function ExpensesTab() {
     if (gigFilter === 'unlinked' && e.gig_id) return false
     if (privacyFilter === 'private' && !e.is_private) return false
     if (privacyFilter === 'business' && e.is_private) return false
+    if (accountantFilter === 'sent' && !e.sent_to_accountant_at) return false
+    if (accountantFilter === 'not_sent' && e.sent_to_accountant_at) return false
     if (memberFilter !== 'all' && e.user_id !== memberFilter) return false
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
@@ -445,6 +448,18 @@ export default function ExpensesTab() {
                 <SelectItem value="all">{t('allTypes')}</SelectItem>
                 <SelectItem value="private">{t('onlyPrivate')}</SelectItem>
                 <SelectItem value="business">{t('onlyBusiness')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Select value={accountantFilter} onValueChange={setAccountantFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('allAccountant')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allAccountant')}</SelectItem>
+                <SelectItem value="sent">{t('onlySentToAccountant')}</SelectItem>
+                <SelectItem value="not_sent">{t('onlyNotSentToAccountant')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
