@@ -121,6 +121,23 @@ export default function ExportTab() {
     (selectedTypes.has('invoices') && invoicesInRange.length > 0) ||
     (selectedTypes.has('documents') && documentsInRange.length > 0)
 
+  // The original-pdf endpoint returns JSON { url } (a signed URL), not the PDF
+  // bytes. Resolve it, then fetch the actual file — otherwise we'd save the JSON
+  // as a corrupt ~500-byte "PDF".
+  async function fetchOriginalPdfBytes(invoiceId: string): Promise<ArrayBuffer | null> {
+    try {
+      const metaRes = await fetch(`/api/invoices/${invoiceId}/original-pdf`)
+      if (!metaRes.ok) return null
+      const meta = await metaRes.json().catch(() => null)
+      if (!meta?.url) return null
+      const fileRes = await fetch(meta.url)
+      if (!fileRes.ok) return null
+      return await fileRes.arrayBuffer()
+    } catch {
+      return null
+    }
+  }
+
   async function handleExport(format: 'zip' | 'pdf' | 'pdf-summary') {
     if (selectedTypes.size === 0) {
       toast.error(td('selectAtLeastOne'))
@@ -206,9 +223,8 @@ export default function ExportTab() {
             // Original uploaded PDF (if exists)
             if (invoice.original_pdf_url) {
               try {
-                const response = await fetch(`/api/invoices/${invoice.id}/original-pdf`)
-                if (response.ok) {
-                  const pdfBytes = await response.arrayBuffer()
+                const pdfBytes = await fetchOriginalPdfBytes(invoice.id)
+                if (pdfBytes) {
                   try {
                     const originalPdf = await PDFDocument.load(pdfBytes)
                     const pages = await mergedPdf.copyPages(originalPdf, originalPdf.getPageIndices())
@@ -342,9 +358,8 @@ export default function ExportTab() {
           // Original uploaded PDF
           if (invoice.original_pdf_url) {
             try {
-              const response = await fetch(`/api/invoices/${invoice.id}/original-pdf`)
-              if (response.ok) {
-                const pdfBlob = await response.arrayBuffer()
+              const pdfBlob = await fetchOriginalPdfBytes(invoice.id)
+              if (pdfBlob) {
                 const fileName = `Faktura_${invoice.invoice_number}_${invoice.invoice_date}_original.pdf`
                 folder.file(fileName, pdfBlob)
               }
