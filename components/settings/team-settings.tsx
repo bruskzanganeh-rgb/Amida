@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useSubscription } from '@/lib/hooks/use-subscription'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 
 export function TeamSettings() {
   const t = useTranslations('team')
@@ -125,9 +126,13 @@ export function TeamSettings() {
         body: JSON.stringify({ email: inviteEmail || undefined }),
       })
 
-      const data = await res.json()
+      const data = await readJsonSafe<{ error?: string; url: string; emailSent?: boolean }>(res)
       if (!res.ok) {
-        toast.error(data.error || t('inviteError'))
+        toast.error(data?.error || t('inviteError'))
+        return
+      }
+      if (!data) {
+        toast.error(t('inviteError'))
         return
       }
 

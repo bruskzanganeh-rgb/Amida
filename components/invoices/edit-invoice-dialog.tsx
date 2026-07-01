@@ -20,6 +20,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/types/supabase'
 import { downloadFile } from '@/lib/download'
+import { readJsonSafe } from '@/lib/http'
 import { getRate, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
@@ -151,8 +152,8 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
         source === 'sent' ? `/api/invoices/${invoiceId}/sent-pdf` : `/api/invoices/${invoiceId}/original-pdf`
       const response = await fetch(endpoint)
       if (response.ok) {
-        const data = await response.json()
-        setPdfUrl(data.url)
+        const data = await readJsonSafe<{ url: string }>(response)
+        setPdfUrl(data?.url ?? null)
         setPdfSource(source)
       } else {
         setPdfUrl(null)

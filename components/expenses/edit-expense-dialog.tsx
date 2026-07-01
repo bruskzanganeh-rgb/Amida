@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { readJsonSafe } from '@/lib/http'
 import { convert, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import { Loader2, Trash2, Upload, Image as ImageIcon, X } from 'lucide-react'
 import NextImage from 'next/image'
@@ -137,8 +138,8 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
     try {
       const response = await fetch(`/api/expenses/${expenseId}/attachment`)
       if (response.ok) {
-        const data = await response.json()
-        setAttachmentUrl(data.url)
+        const data = await readJsonSafe<{ url: string }>(response)
+        setAttachmentUrl(data?.url ?? null)
       } else {
         setAttachmentUrl(null)
       }
@@ -164,13 +165,13 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         body: formData,
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ url?: string; error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || tt('couldNotUpload'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tt('couldNotUpload'))
       }
 
-      setAttachmentUrl(result.url)
+      setAttachmentUrl(result.url ?? null)
       setHasAttachment(true)
       toast.success(tt('receiptUploaded'))
     } catch (error) {
@@ -189,10 +190,10 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         method: 'DELETE',
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || tt('couldNotDelete'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tt('couldNotDelete'))
       }
 
       setAttachmentUrl(null)
@@ -264,10 +265,10 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         }),
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || tt('couldNotSave'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tt('couldNotSave'))
       }
 
       toast.success(tt('expenseUpdated'))
@@ -290,10 +291,10 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
         method: 'DELETE',
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || tt('couldNotDelete'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tt('couldNotDelete'))
       }
 
       toast.success(tt('expenseDeleted'))

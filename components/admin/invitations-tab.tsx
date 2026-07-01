@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Copy, Trash2, RefreshCw, Ticket } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { readJsonSafe } from '@/lib/http'
 
 type InvitationCode = {
   id: string
@@ -41,8 +42,8 @@ export function InvitationsTab() {
       setLoading(true)
       const res = await fetch('/api/admin/invitation-codes')
       if (res.ok) {
-        const { codes: data } = await res.json()
-        setCodes(data || [])
+        const parsed = await readJsonSafe<{ codes?: InvitationCode[] }>(res)
+        setCodes(parsed?.codes ?? [])
       }
       setLoading(false)
     }
@@ -80,11 +81,11 @@ export function InvitationsTab() {
       setNewExpiresAt('')
       setRefreshKey((k) => k + 1)
     } else {
-      const data = await res.json()
+      const data = await readJsonSafe<{ error?: string }>(res)
       if (res.status === 409) {
         toast.error(t('codeExists'))
       } else {
-        toast.error(data.error || 'Error')
+        toast.error(data?.error || 'Error')
       }
     }
     setCreating(false)

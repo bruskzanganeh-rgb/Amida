@@ -26,6 +26,7 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { readJsonSafe } from '@/lib/http'
 
 export function SubscriptionSettings() {
   const t = useTranslations('subscription')
@@ -62,11 +63,11 @@ export function SubscriptionSettings() {
         body: JSON.stringify({ priceId, plan }),
       })
 
-      const data = await res.json()
-      if (data.url) {
+      const data = await readJsonSafe<{ url?: string; error?: string }>(res)
+      if (data?.url) {
         window.location.href = data.url
       } else {
-        throw new Error(data.error || tToast('checkoutError'))
+        throw new Error(data?.error || tToast('checkoutError'))
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : tToast('checkoutError'))
@@ -83,14 +84,14 @@ export function SubscriptionSettings() {
         body: JSON.stringify({ plan, interval }),
       })
 
-      const data = await res.json()
+      const data = await readJsonSafe<{ message?: string; error?: string; scheduled?: boolean }>(res)
       if (!res.ok) {
         // Surface backend's friendly message when present (e.g. block on
         // team→pro downgrade with extra members).
-        throw new Error(data.message || data.error || 'change_plan_failed')
+        throw new Error(data?.message || data?.error || 'change_plan_failed')
       }
 
-      if (data.scheduled) {
+      if (data?.scheduled) {
         toast.success(t('downgradeScheduled'))
       } else {
         toast.success(t('changePlanSuccess'))
@@ -108,8 +109,8 @@ export function SubscriptionSettings() {
     setChangingPlan(true)
     try {
       const res = await fetch('/api/stripe/cancel-downgrade', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      const data = await readJsonSafe<{ error?: string }>(res)
+      if (!res.ok) throw new Error(data?.error)
       toast.success(t('downgradeCancelled'))
       refresh()
     } catch (err: unknown) {
@@ -123,8 +124,8 @@ export function SubscriptionSettings() {
     setReactivating(true)
     try {
       const res = await fetch('/api/stripe/reactivate', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      const data = await readJsonSafe<{ error?: string }>(res)
+      if (!res.ok) throw new Error(data?.error)
       toast.success(t('reactivateSuccess'))
       refresh()
     } catch {
@@ -138,8 +139,8 @@ export function SubscriptionSettings() {
     setCancelling(true)
     try {
       const res = await fetch('/api/stripe/cancel', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      const data = await readJsonSafe<{ error?: string }>(res)
+      if (!res.ok) throw new Error(data?.error)
       toast.success(t('cancelSuccess'))
       refresh()
     } catch {
@@ -170,8 +171,8 @@ export function SubscriptionSettings() {
         body: JSON.stringify({ transactionId, productId }),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Validation failed')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      if (!res.ok) throw new Error(data?.error || 'Validation failed')
 
       toast.success(t('upgradeSuccess'))
       refresh()

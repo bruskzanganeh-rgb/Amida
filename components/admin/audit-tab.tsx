@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollText, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { readJsonSafe } from '@/lib/http'
 
 type AuditLog = {
   id: number
@@ -79,10 +80,12 @@ export function AuditTab({ users }: Props) {
 
       const res = await fetch(`/api/admin/audit?${params}`)
       if (res.ok) {
-        const data = await res.json()
-        setLogs(data.logs)
-        setTotal(data.total)
-        setTotalPages(data.totalPages)
+        const data = await readJsonSafe<{ logs: AuditLog[]; total: number; totalPages: number }>(res)
+        if (data) {
+          setLogs(data.logs)
+          setTotal(data.total)
+          setTotalPages(data.totalPages)
+        }
       }
       setLoading(false)
     }

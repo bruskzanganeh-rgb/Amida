@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,14 +45,14 @@ export default function SignupPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: inviteToken }),
         })
-        const data = await res.json()
+        const data = await readJsonSafe<{ valid?: boolean; company_name?: string; reason?: string }>(res)
 
-        if (data.valid) {
+        if (data?.valid) {
           setInviteValid(true)
-          setInviteCompanyName(data.company_name)
+          setInviteCompanyName(data.company_name ?? null)
         } else {
           setInviteValid(false)
-          if (data.reason === 'expired') {
+          if (data?.reason === 'expired') {
             setInviteError(t('inviteExpired'))
           } else {
             setInviteError(t('inviteInvalid'))
@@ -88,10 +89,10 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: invitationCode }),
       })
-      const codeData = await codeRes.json()
+      const codeData = await readJsonSafe<{ valid?: boolean; reason?: string }>(codeRes)
 
-      if (!codeData.valid) {
-        setError(codeData.reason === 'expired' ? t('codeExpired') : t('invalidCode'))
+      if (!codeData?.valid) {
+        setError(codeData?.reason === 'expired' ? t('codeExpired') : t('invalidCode'))
         setLoading(false)
         return
       }

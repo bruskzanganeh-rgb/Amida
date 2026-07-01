@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { ALLOWED_RECEIPT_TYPES, MAX_FILE_SIZE } from '@/lib/upload/file-validation'
+import { readJsonSafe } from '@/lib/http'
 
 type Step = 'select' | 'review' | 'complete'
 
@@ -145,6 +146,9 @@ function findHistoricalMatch(supplierName: string, mapping: SupplierMapping): Su
   return null
 }
 
+// Håll varje uppladdning tryggt under plattformens ~4.5 MB gräns för request-body
+const MAX_UPLOAD_BYTES = 3.5 * 1024 * 1024
+
 export default function ImportPage() {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
@@ -167,8 +171,8 @@ export default function ImportPage() {
       try {
         const response = await fetch('/api/expenses/supplier-categories')
         if (response.ok) {
-          const data = await response.json()
-          setSupplierMapping(data.mapping || {})
+          const data = await readJsonSafe<{ mapping?: SupplierMapping }>(response)
+          setSupplierMapping(data?.mapping || {})
         }
       } catch (err) {
         console.error('Failed to fetch supplier mapping:', err)
@@ -305,10 +309,18 @@ export default function ImportPage() {
               body: formData,
             })
 
-            const result = await response.json()
+            const result = (await readJsonSafe(response)) as {
+              type: 'expense' | 'invoice' | 'document'
+              data: ExpenseData & InvoiceData & DocumentData
+              confidence: number
+              suggestedFilename: string
+              clientMatch?: ClientMatchResult
+              error?: string
+            } | null
 
-            if (!response.ok) {
-              throw new Error(result.error || t('analysisFailed'))
+            if (!response.ok || !result) {
+              if (response.status === 413) throw new Error(t('importFilesTooLarge'))
+              throw new Error(result?.error || t('analysisFailed'))
             }
 
             setFiles((prev) =>
@@ -414,7 +426,9 @@ export default function ImportPage() {
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const data = await readJsonSafe<{
+            results?: { isDuplicate: boolean; existingExpense?: AnalyzedFile['existingExpense'] }[]
+          }>(response)
           setFiles((prev) =>
             prev.map((f) => {
               if (f.type !== 'expense' || f.status !== 'done') return f
@@ -424,8 +438,8 @@ export default function ImportPage() {
                 (e) => e.date === fileData.date && e.supplier === fileData.supplier && e.amount === fileData.total,
               )
 
-              if (matchIndex >= 0 && data.results[matchIndex]) {
-                const dupResult = data.results[matchIndex]
+              const dupResult = data?.results?.[matchIndex]
+              if (matchIndex >= 0 && dupResult) {
                 return {
                   ...f,
                   isDuplicate: dupResult.isDuplicate,
@@ -464,11 +478,11 @@ export default function ImportPage() {
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const data = await readJsonSafe<{ results?: { id: string; isDuplicate: boolean }[] }>(response)
           setFiles((prev) =>
             prev.map((f) => {
               if (f.type !== 'invoice' || f.status !== 'done') return f
-              const match = data.results?.find((r: { id: string; isDuplicate: boolean }) => r.id === f.id)
+              const match = data?.results?.find((r: { id: string; isDuplicate: boolean }) => r.id === f.id)
               if (match?.isDuplicate) {
                 return { ...f, isDuplicate: true, selected: false }
               }
@@ -555,38 +569,62 @@ export default function ImportPage() {
     setImportResults([])
 
     try {
-      const formData = new FormData()
+      // Dela upp filerna i mindre grupper så varje request håller sig under
+      // plattformens gräns för request-body (flera stora PDF:er i en och samma
+      // request gav förut ett 413 som kraschade response.json() i WebKit).
+      const chunks: AnalyzedFile[][] = []
+      let current: AnalyzedFile[] = []
+      let currentBytes = 0
+      for (const f of selectedFiles) {
+        if (current.length > 0 && currentBytes + f.file.size > MAX_UPLOAD_BYTES) {
+          chunks.push(current)
+          current = []
+          currentBytes = 0
+        }
+        current.push(f)
+        currentBytes += f.file.size
+      }
+      if (current.length > 0) chunks.push(current)
 
-      const metadata = selectedFiles.map((f) => ({
-        id: f.id,
-        type: f.type,
-        data: f.data,
-        suggestedFilename: f.suggestedFilename,
-      }))
-      formData.append('metadata', JSON.stringify(metadata))
-      formData.append('skipDuplicates', 'false')
+      const allResults: ImportResult[] = []
 
-      selectedFiles.forEach((f) => {
-        formData.append(`file_${f.id}`, f.file)
-      })
+      for (const chunk of chunks) {
+        const formData = new FormData()
 
-      const response = await fetch('/api/import/batch', {
-        method: 'POST',
-        body: formData,
-      })
+        const metadata = chunk.map((f) => ({
+          id: f.id,
+          type: f.type,
+          data: f.data,
+          suggestedFilename: f.suggestedFilename,
+        }))
+        formData.append('metadata', JSON.stringify(metadata))
+        formData.append('skipDuplicates', 'false')
 
-      const result = await response.json()
+        chunk.forEach((f) => {
+          formData.append(`file_${f.id}`, f.file)
+        })
 
-      if (!response.ok) {
-        throw new Error(result.error || t('importFailed'))
+        const response = await fetch('/api/import/batch', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const result = await readJsonSafe<{ error?: string; results?: ImportResult[] }>(response)
+
+        if (!response.ok || !result) {
+          if (response.status === 413) throw new Error(t('importFilesTooLarge'))
+          throw new Error(result?.error || t('importServerError', { status: response.status || 0 }))
+        }
+
+        allResults.push(...(result.results || []))
       }
 
-      setImportResults(result.results)
+      setImportResults(allResults)
       setCurrentStep('complete')
 
-      const succeeded = result.summary.succeeded
-      const failed = result.summary.failed
-      const skipped = result.summary.skipped
+      const succeeded = allResults.filter((r) => r.success).length
+      const failed = allResults.filter((r) => !r.success && !r.skippedAsDuplicate).length
+      const skipped = allResults.filter((r) => r.skippedAsDuplicate).length
 
       if (succeeded > 0 && failed === 0) {
         toast.success(

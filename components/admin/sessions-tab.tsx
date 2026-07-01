@@ -12,6 +12,7 @@ import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { readJsonSafe } from '@/lib/http'
 
 type Session = {
   id: string
@@ -164,8 +165,8 @@ export function SessionsTab({ users }: Props) {
       const params = new URLSearchParams({ active_only: 'true' })
       const res = await fetch(`/api/admin/sessions?${params}`)
       if (res.ok) {
-        const data = await res.json()
-        setActiveSessions(data.sessions)
+        const data = await readJsonSafe<{ sessions: Session[] }>(res)
+        if (data) setActiveSessions(data.sessions)
       }
     }
 
@@ -178,11 +179,13 @@ export function SessionsTab({ users }: Props) {
 
       const res = await fetch(`/api/admin/sessions?${params}`)
       if (res.ok) {
-        const data = await res.json()
-        setSessions(data.sessions)
-        setTotal(data.total)
-        setTotalPages(data.totalPages)
-        setRenderTimestamp(Date.now())
+        const data = await readJsonSafe<{ sessions: Session[]; total: number; totalPages: number }>(res)
+        if (data) {
+          setSessions(data.sessions)
+          setTotal(data.total)
+          setTotalPages(data.totalPages)
+          setRenderTimestamp(Date.now())
+        }
       }
       setLoading(false)
     }

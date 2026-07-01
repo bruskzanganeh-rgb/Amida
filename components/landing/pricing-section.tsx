@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { motion, type Variants } from 'framer-motion'
+import { readJsonSafe } from '@/lib/http'
 
 const fadeIn: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -43,7 +44,7 @@ export function PricingSection() {
 
   useEffect(() => {
     fetch('/api/config/tiers')
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? readJsonSafe<Partial<Record<keyof TierConfig, Partial<TierData>>>>(r) : null))
       .then((data) => {
         if (data)
           setTiers({

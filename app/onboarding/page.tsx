@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -283,8 +284,8 @@ export default function OnboardingPage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || tToast('onboardingSaveError'))
+        const data = await readJsonSafe<{ error?: string }>(res)
+        throw new Error(data?.error || tToast('onboardingSaveError'))
       }
 
       // Fetch calendar token to build URL
@@ -386,11 +387,11 @@ export default function OnboardingPage() {
                             plan: 'pro',
                           }),
                         })
-                        const data = await res.json()
-                        if (data.url) {
+                        const data = await readJsonSafe<{ url?: string; error?: string }>(res)
+                        if (data?.url) {
                           window.location.href = data.url
                         } else {
-                          throw new Error(data.error)
+                          throw new Error(data?.error)
                         }
                       } catch {
                         toast.error(tToast('checkoutError'))

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import {
   Dialog,
   DialogContent,
@@ -130,10 +131,10 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
         }),
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || tr('couldNotSend'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tr('couldNotSend'))
       }
 
       toast.success(tr('reminderSent'))

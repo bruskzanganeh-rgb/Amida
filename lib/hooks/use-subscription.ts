@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 
 type Subscription = {
   id: string
@@ -64,9 +65,9 @@ export function useSubscription() {
       try {
         const res = await fetch('/api/config/tiers')
         if (res.ok) {
-          const data = await res.json()
+          const data = await readJsonSafe<TierConfig>(res)
           if (!cancelled) {
-            setTierConfig(data)
+            if (data) setTierConfig(data)
             setTierLoaded(true)
           }
         }
@@ -79,8 +80,8 @@ export function useSubscription() {
       try {
         const res = await fetch('/api/storage/quota')
         if (res.ok) {
-          const data = await res.json()
-          if (!cancelled) setStorageQuota(data)
+          const data = await readJsonSafe<StorageQuota>(res)
+          if (data && !cancelled) setStorageQuota(data)
         }
       } catch {
         // Ignore - storage quota is non-critical

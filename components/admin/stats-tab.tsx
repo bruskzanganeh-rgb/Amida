@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { formatDistanceToNow, format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 import { sv, enUS } from 'date-fns/locale'
 import { useLocale } from 'next-intl'
+import { readJsonSafe } from '@/lib/http'
 
 type SponsorImpressionRow = {
   id: string
@@ -62,8 +63,8 @@ export function StatsTab({ stats: initialStats }: { stats: Stats | null }) {
     if (to) params.set('to', to)
     const res = await fetch(`/api/admin/stats?${params.toString()}`)
     if (res.ok) {
-      const data = await res.json()
-      setStats(data)
+      const data = await readJsonSafe<Stats>(res)
+      if (data) setStats(data)
     }
   }, [])
 

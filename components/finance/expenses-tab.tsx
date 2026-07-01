@@ -10,6 +10,7 @@ import { categoryLabel } from '@/lib/expenses/categories'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { parseLocalDate } from '@/lib/dates'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { readJsonSafe } from '@/lib/http'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -177,8 +178,8 @@ export default function ExpensesTab() {
     try {
       const response = await fetch(`/api/expenses/${expenseId}/attachment`)
       if (response.ok) {
-        const data = await response.json()
-        setPreviewUrl(data.url)
+        const data = await readJsonSafe<{ url: string }>(response)
+        setPreviewUrl(data?.url ?? null)
       } else {
         toast.error(tt('couldNotLoadReceiptImage'))
         setPreviewOpen(false)
@@ -214,15 +215,15 @@ export default function ExpensesTab() {
       const response = await fetch(`/api/expenses/export?${params}`)
 
       if (format === 'individual') {
-        const result = await response.json()
-        if (!response.ok) throw new Error(result.error || t('exportFailed'))
+        const result = await readJsonSafe<{ error?: string; expenses: { attachment_url: string | null }[] }>(response)
+        if (!response.ok || !result) throw new Error(result?.error || t('exportFailed'))
         const withReceipts = result.expenses.filter((e: { attachment_url: string | null }) => e.attachment_url)
         if (withReceipts.length === 0) {
           toast.error(t('noReceiptsForMonth'))
           return
         }
         for (const expense of withReceipts) {
-          window.open(expense.attachment_url, '_blank')
+          if (expense.attachment_url) window.open(expense.attachment_url, '_blank')
         }
         toast.success(t('openedReceipts', { count: withReceipts.length }))
         return
@@ -275,8 +276,8 @@ export default function ExpensesTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
       })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || tt('genericError'))
+      const result = await readJsonSafe<{ error?: string; deleted: number }>(response)
+      if (!response.ok || !result) throw new Error(result?.error || tt('genericError'))
       toast.success(t('bulkDeleted', { count: result.deleted }))
       clearSelection()
       mutateExpenses()

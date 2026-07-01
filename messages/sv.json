@@ -483,6 +483,8 @@
     "importCompleteDescription": "Alla filer har importerats",
     "importedFiles": "Importerade filer",
     "importFailed": "Import misslyckades",
+    "importFilesTooLarge": "Filerna är för stora för att importeras på en gång. Prova att importera färre filer åt gången.",
+    "importServerError": "Servern svarade oväntat (HTTP {status}). Försök igen.",
     "importFiles": "Importera filer",
     "importing": "Importerar...",
     "importMore": "Importera fler",

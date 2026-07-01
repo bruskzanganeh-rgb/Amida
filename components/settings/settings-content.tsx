@@ -46,6 +46,7 @@ import { useSubscription } from '@/lib/hooks/use-subscription'
 import { COUNTRY_CONFIGS, getCountryConfig } from '@/lib/country-config'
 import { PageTransition } from '@/components/ui/page-transition'
 import { Skeleton } from '@/components/ui/skeleton'
+import { readJsonSafe } from '@/lib/http'
 
 type CompanySettings = {
   id: string
@@ -893,8 +894,8 @@ export default function SettingsPage() {
                     try {
                       const res = await fetch('/api/account', { method: 'DELETE' })
                       if (!res.ok) {
-                        const data = await res.json()
-                        toast.error(data.error || 'Failed to delete account')
+                        const data = await readJsonSafe<{ error?: string }>(res)
+                        toast.error(data?.error || 'Failed to delete account')
                         setDeleting(false)
                         return
                       }

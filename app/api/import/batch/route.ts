@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
         const year =
           fileMeta.type === 'expense'
             ? (fileMeta.data as ExpenseData).date?.substring(0, 4) || new Date().getFullYear().toString()
-            : (fileMeta.data as InvoiceData).invoiceDate.substring(0, 4)
+            : (fileMeta.data as InvoiceData).invoiceDate?.substring(0, 4) || new Date().getFullYear().toString()
 
         const storagePath =
           fileMeta.type === 'expense'

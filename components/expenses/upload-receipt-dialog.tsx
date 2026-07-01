@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import { convert, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency/exchange'
 import {
   Dialog,
@@ -227,10 +228,21 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
         body: formDataToSend,
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{
+        error?: string
+        data: {
+          date: string | null
+          supplier: string
+          amount: number
+          currency: string | null
+          category: string | null
+          notes?: string
+          confidence: number
+        }
+      }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || t('couldNotScanReceipt'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || t('couldNotScanReceipt'))
       }
 
       setFormData({
@@ -311,10 +323,15 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
         body: formDataToSend,
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{
+        error?: string
+        isDuplicate?: boolean
+        existingExpense: Omit<DuplicateInfo, 'matchType' | 'inputSupplier'>
+        matchType?: DuplicateInfo['matchType']
+      }>(response)
 
       // Dublettkontroll - visa varning istället för att spara
-      if (result.isDuplicate && !forceSave) {
+      if (result?.isDuplicate && !forceSave) {
         setDuplicateWarning({
           ...result.existingExpense,
           matchType: result.matchType,
@@ -324,8 +341,8 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
         return
       }
 
-      if (!response.ok) {
-        throw new Error(result.error || tt('couldNotSaveExpense'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || tt('couldNotSaveExpense'))
       }
 
       // Reset och stäng

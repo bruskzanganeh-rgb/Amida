@@ -2,6 +2,7 @@
 
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 
 const supabase = createClient()
 
@@ -74,8 +75,8 @@ export function useCompany() {
       try {
         const res = await fetch('/api/company/members')
         if (res.ok) {
-          const json = await res.json()
-          members = json.members || []
+          const json = await readJsonSafe<{ members?: CompanyMember[] }>(res)
+          members = json?.members || []
         }
       } catch {
         // Fallback to basic query without emails

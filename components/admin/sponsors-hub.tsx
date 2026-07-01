@@ -32,6 +32,7 @@ import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { readJsonSafe } from '@/lib/http'
 
 type InstrumentCategory = {
   id: string
@@ -92,6 +93,21 @@ type AnalysisMatch = {
 }
 
 type TargetingView = 'all' | 'analyze' | 'uncategorized'
+
+type AnalyzeResponse = {
+  error?: string
+  results?: {
+    user_id: string
+    email?: string | null
+    company_name?: string | null
+    matches: {
+      text: string
+      category_id: string | null
+      category_name: string | null
+      confidence: number
+    }[]
+  }[]
+}
 
 export function SponsorsHub({
   sponsors,
@@ -184,7 +200,7 @@ export function SponsorsHub({
 
   useEffect(() => {
     fetch('/api/admin/sponsor-stats')
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? readJsonSafe<CoverageData>(r) : null))
       .then((data) => {
         if (data) setCoverage(data)
       })
@@ -491,8 +507,14 @@ export function SponsorsHub({
     }
     const res = await fetch(`/api/admin/sponsor-stats/${sponsorId}?${params.toString()}`)
     if (res.ok) {
-      const data = await res.json()
-      setSponsorStats(data)
+      const data = await readJsonSafe<{
+        app: number
+        pdf: number
+        click: number
+        total: number
+        byCity: { city: string; country: string; app: number; pdf: number; click: number; total: number }[]
+      }>(res)
+      if (data) setSponsorStats(data)
     }
     setLoadingSponsorStats(false)
   }
@@ -519,13 +541,13 @@ export function SponsorsHub({
     setAnalysisResults([])
     try {
       const res = await fetch('/api/admin/analyze-instruments', { method: 'POST' })
-      const data = await res.json()
+      const data = await readJsonSafe<AnalyzeResponse>(res)
       if (!res.ok) {
-        toast.error(data.error || 'Analysis failed')
+        toast.error(data?.error || 'Analysis failed')
         setAnalyzing(false)
         return
       }
-      if (!data.results || data.results.length === 0) {
+      if (!data?.results || data.results.length === 0) {
         toast.info(t('noUnmatchedText'))
         setAnalyzing(false)
         return
@@ -566,8 +588,8 @@ export function SponsorsHub({
         }),
       })
       if (res.ok) {
-        const data = await res.json()
-        toast.success(`${t('matchesApplied')} (${data.applied})`)
+        const data = await readJsonSafe<{ applied?: number }>(res)
+        toast.success(`${t('matchesApplied')} (${data?.applied})`)
         setAnalysisResults([])
         onReload()
       } else {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import {
   Dialog,
   DialogContent,
@@ -130,10 +131,13 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
         const response = await fetch(
           `/api/expenses/export?year=${selectedYear}&month=${selectedMonth}&format=individual&locale=${formatLocale}`,
         )
-        const result = await response.json()
+        const result = await readJsonSafe<{
+          error?: string
+          expenses: { attachment_url: string | null }[]
+        }>(response)
 
-        if (!response.ok) {
-          throw new Error(result.error || t('exportFailed'))
+        if (!response.ok || !result) {
+          throw new Error(result?.error || t('exportFailed'))
         }
 
         // Öppna varje kvitto i ny flik (endast de med bilagor)
@@ -145,7 +149,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
         }
 
         for (const expense of expensesWithReceipts) {
-          window.open(expense.attachment_url, '_blank')
+          if (expense.attachment_url) window.open(expense.attachment_url, '_blank')
         }
 
         toast.success(t('openedReceipts', { count: expensesWithReceipts.length }))
@@ -156,8 +160,8 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
         )
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || t('exportFailed'))
+          const errorData = await readJsonSafe<{ error?: string }>(response)
+          throw new Error(errorData?.error || t('exportFailed'))
         }
 
         // Skapa download

@@ -39,6 +39,7 @@ import {
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { readJsonSafe } from '@/lib/http'
 
 type Member = {
   user_id: string
@@ -162,8 +163,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       setUsers((prev) => prev.filter((u) => u.user_id !== ownerUserId))
       toast.success(t('companyDeleted'))
     } else {
-      const data = await res.json()
-      toast.error(data.error || 'Failed to delete')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      toast.error(data?.error || 'Failed to delete')
     }
     setDeletingUser(null)
     setConfirmDeleteId(null)
@@ -202,8 +203,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       }
       setEditUserId(null)
     } else {
-      const data = await res.json()
-      toast.error(data.error || 'Failed to update user')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      toast.error(data?.error || 'Failed to update user')
     }
     setEditSaving(false)
   }
@@ -224,8 +225,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       )
       toast.success(t('memberRemoved'))
     } else {
-      const data = await res.json()
-      toast.error(data.error || 'Failed to remove member')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      toast.error(data?.error || 'Failed to remove member')
     }
   }
 
@@ -252,8 +253,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       setAddForm({ email: '', password: '', company_name: '', full_name: '' })
       onReload()
     } else {
-      const data = await res.json()
-      toast.error(data.error || 'Failed')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      toast.error(data?.error || 'Failed')
     }
     setAddSaving(false)
   }
@@ -279,8 +280,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
       setInviteForm({ email: '', password: '' })
       onReload()
     } else {
-      const data = await res.json()
-      toast.error(data.error || 'Failed')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      toast.error(data?.error || 'Failed')
     }
     setInviteSaving(false)
   }
@@ -294,11 +295,16 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
         body: JSON.stringify({ userId }),
       })
       if (res.ok) {
-        const { url } = await res.json()
-        setImpersonateUrl(url)
+        const parsed = await readJsonSafe<{ url?: string }>(res)
+        if (parsed?.url) {
+          setImpersonateUrl(parsed.url)
+        } else {
+          toast.error(t('impersonateError'))
+          setImpersonatingId(null)
+        }
       } else {
-        const data = await res.json()
-        toast.error(data.error || t('impersonateError'))
+        const data = await readJsonSafe<{ error?: string }>(res)
+        toast.error(data?.error || t('impersonateError'))
         setImpersonatingId(null)
       }
     } catch {

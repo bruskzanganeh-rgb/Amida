@@ -30,6 +30,7 @@ import { SessionsTab } from '@/components/admin/sessions-tab'
 import { StripeTab } from '@/components/admin/stripe-tab'
 import { InvitationsTab } from '@/components/admin/invitations-tab'
 import { ClientErrorsTab } from '@/components/admin/client-errors-tab'
+import { readJsonSafe } from '@/lib/http'
 
 type User = {
   user_id: string
@@ -113,6 +114,32 @@ type ConfigEntry = {
   value: string
 }
 
+type StripeData = {
+  metrics: {
+    mrr: number
+    arr: number
+    monthlyCount: number
+    yearlyCount: number
+    adminSetCount: number
+    activePro: number
+    cancelingCount: number
+    pastDueCount: number
+  }
+  events: {
+    id: number
+    table_name: string
+    record_id: string
+    action: string
+    old_data: Record<string, unknown> | null
+    new_data: Record<string, unknown> | null
+    changed_fields: string[] | null
+    user_id: string | null
+    created_at: string
+  }[]
+  webhookUrl: string
+  webhookConfigured: boolean
+}
+
 export default function AdminPage() {
   const t = useTranslations('admin')
 
@@ -136,31 +163,7 @@ export default function AdminPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [categories, setCategories] = useState<InstrumentCategory[]>([])
-  const [stripeData, setStripeData] = useState<{
-    metrics: {
-      mrr: number
-      arr: number
-      monthlyCount: number
-      yearlyCount: number
-      adminSetCount: number
-      activePro: number
-      cancelingCount: number
-      pastDueCount: number
-    }
-    events: {
-      id: number
-      table_name: string
-      record_id: string
-      action: string
-      old_data: Record<string, unknown> | null
-      new_data: Record<string, unknown> | null
-      changed_fields: string[] | null
-      user_id: string | null
-      created_at: string
-    }[]
-    webhookUrl: string
-    webhookConfigured: boolean
-  } | null>(null)
+  const [stripeData, setStripeData] = useState<StripeData | null>(null)
 
   // Config
   const [configValues, setConfigValues] = useState<Record<string, string>>({})
@@ -213,8 +216,8 @@ export default function AdminPage() {
     // Users
     const usersRes = await fetch('/api/admin/users')
     if (usersRes.ok) {
-      const { users: userData } = await usersRes.json()
-      setUsers(userData || [])
+      const parsed = await readJsonSafe<{ users?: User[] }>(usersRes)
+      setUsers(parsed?.users ?? [])
     }
 
     // Sponsors
@@ -251,14 +254,15 @@ export default function AdminPage() {
     // Stats
     const statsRes = await fetch('/api/admin/stats')
     if (statsRes.ok) {
-      const statsData = await statsRes.json()
-      setStats(statsData)
+      const statsData = await readJsonSafe<Stats>(statsRes)
+      if (statsData) setStats(statsData)
     }
 
     // Config
     const configRes = await fetch('/api/admin/config')
     if (configRes.ok) {
-      const { config } = await configRes.json()
+      const parsed = await readJsonSafe<{ config?: ConfigEntry[] }>(configRes)
+      const config = parsed?.config
       if (config) {
         const map: Record<string, string> = {}
         config.forEach((c: ConfigEntry) => {
@@ -271,8 +275,8 @@ export default function AdminPage() {
     // Stripe
     const stripeRes = await fetch('/api/admin/stripe')
     if (stripeRes.ok) {
-      const stripeJson = await stripeRes.json()
-      setStripeData(stripeJson)
+      const stripeJson = await readJsonSafe<StripeData>(stripeRes)
+      if (stripeJson) setStripeData(stripeJson)
     }
   }
 

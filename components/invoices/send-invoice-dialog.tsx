@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import {
   Dialog,
   DialogContent,
@@ -218,10 +219,10 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
         }),
       })
 
-      const result = await response.json()
+      const result = await readJsonSafe<{ error?: string }>(response)
 
-      if (!response.ok) {
-        throw new Error(result.error || t('couldNotSendEmail'))
+      if (!response.ok || !result) {
+        throw new Error(result?.error || t('couldNotSendEmail'))
       }
 
       toast.success(t('invoiceSent'))

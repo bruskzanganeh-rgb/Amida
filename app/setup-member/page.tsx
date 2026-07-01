@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,8 +55,8 @@ export default function SetupMemberPage() {
     })
 
     if (!res.ok) {
-      const data = await res.json()
-      setError(data.error || 'Failed to save')
+      const data = await readJsonSafe<{ error?: string }>(res)
+      setError(data?.error || 'Failed to save')
       setSaving(false)
       return
     }

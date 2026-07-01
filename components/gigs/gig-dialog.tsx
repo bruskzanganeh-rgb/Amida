@@ -19,6 +19,7 @@ import { MultiDayDatePicker } from '@/components/ui/multi-day-date-picker'
 import { format } from 'date-fns'
 import { SUPPORTED_CURRENCIES, type SupportedCurrency, getRate } from '@/lib/currency/exchange'
 import { cn } from '@/lib/utils'
+import { readJsonSafe } from '@/lib/http'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { CreateClientDialog } from '@/components/clients/create-client-dialog'
 import { CreateGigTypeDialog } from '@/components/gig-types/create-gig-type-dialog'
@@ -137,8 +138,8 @@ export function GigDialog({
     try {
       const res = await fetch('/api/gigs/draft', { method: 'POST' })
       if (res.ok) {
-        const data = await res.json()
-        setDraftGigId(data.id)
+        const data = await readJsonSafe<{ id: string }>(res)
+        if (data?.id) setDraftGigId(data.id)
       }
     } catch (err) {
       console.error('Failed to create draft:', err)
@@ -406,8 +407,10 @@ export function GigDialog({
               body: JSON.stringify({ entries: unparsedEntries }),
             })
             if (res.ok) {
-              const data = await res.json()
-              return { ...parsedSessions, ...(data.sessions || {}) }
+              const data = await readJsonSafe<{
+                sessions?: Record<string, { start: string; end: string | null; label?: string }[]>
+              }>(res)
+              return { ...parsedSessions, ...(data?.sessions || {}) }
             }
           } catch (err) {
             console.error('Schedule parse error:', err)
@@ -580,9 +583,12 @@ export function GigDialog({
         body: JSON.stringify({ entries: [{ date, text }] }),
       })
       if (res.ok) {
-        const data = await res.json()
-        if (data.sessions?.[date]) {
-          setParsedSessions((prev) => ({ ...prev, [date]: data.sessions[date] }))
+        const data = await readJsonSafe<{
+          sessions?: Record<string, { start: string; end: string | null; label?: string }[]>
+        }>(res)
+        const sessions = data?.sessions?.[date]
+        if (sessions) {
+          setParsedSessions((prev) => ({ ...prev, [date]: sessions }))
         }
       }
     } catch (err) {
@@ -616,10 +622,16 @@ export function GigDialog({
         throw new Error(body.error || `Scan failed (${res.status})`)
       }
 
-      const result = await res.json()
+      const result = await readJsonSafe<{
+        dates?: Record<string, { start: string; end: string | null; label?: string }[]>
+        scheduleTexts?: Record<string, string>
+        venues?: Record<string, string>
+        projectName?: string
+        venue?: string
+      }>(res)
 
       // Set dates and sessions from scan result
-      if (result.dates) {
+      if (result?.dates) {
         const dates = Object.keys(result.dates)
           .sort()
           .map((d) => new Date(d + 'T12:00:00'))
@@ -638,21 +650,21 @@ export function GigDialog({
       }
 
       // Set schedule texts
-      if (result.scheduleTexts) {
+      if (result?.scheduleTexts) {
         setScheduleTexts(result.scheduleTexts)
       }
 
       // Set per-date venue overrides (for touring schedules)
-      if (result.venues && typeof result.venues === 'object') {
+      if (result?.venues && typeof result.venues === 'object') {
         setDateVenues(result.venues as Record<string, string>)
       }
 
       // Pre-fill project name and venue if empty
-      if (result.projectName && !formData.project_name) {
-        setFormData((f) => ({ ...f, project_name: result.projectName }))
+      if (result?.projectName && !formData.project_name) {
+        setFormData((f) => ({ ...f, project_name: result.projectName! }))
       }
-      if (result.venue && !formData.venue) {
-        setFormData((f) => ({ ...f, venue: result.venue }))
+      if (result?.venue && !formData.venue) {
+        setFormData((f) => ({ ...f, venue: result.venue! }))
       }
 
       setScheduleFile(file)

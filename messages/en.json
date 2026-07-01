@@ -483,6 +483,8 @@
     "importCompleteDescription": "All files have been imported",
     "importedFiles": "Imported files",
     "importFailed": "Import failed",
+    "importFilesTooLarge": "The files are too large to import at once. Try importing fewer files at a time.",
+    "importServerError": "The server responded unexpectedly (HTTP {status}). Please try again.",
     "importFiles": "Import files",
     "importing": "Importing...",
     "importMore": "Import more",

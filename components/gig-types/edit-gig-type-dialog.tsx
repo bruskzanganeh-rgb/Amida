@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { readJsonSafe } from '@/lib/http'
 import {
   Dialog,
   DialogContent,
@@ -67,9 +68,9 @@ export function EditGigTypeDialog({ gigType, open, onOpenChange, onSuccess }: Ed
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: formData.name, targetLang: 'en' }),
       })
-      const data = await res.json()
-      if (data.translation) {
-        setFormData((prev) => ({ ...prev, name_en: data.translation }))
+      const data = await readJsonSafe<{ translation?: string }>(res)
+      if (data?.translation) {
+        setFormData((prev) => ({ ...prev, name_en: data.translation! }))
       }
     } catch {
       // Silently fail
