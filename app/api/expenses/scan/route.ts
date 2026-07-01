@@ -122,13 +122,15 @@ export async function POST(request: NextRequest) {
       // 1. Explicit alias mapping wins (e.g. "Tre" -> "Hi3G Access AB"), even
       //    when the names aren't similar as text.
       const { data: aliases } = await supabase.from('supplier_aliases').select('alias, canonical')
-      const aliasHit = aliases?.find((a) => a.alias.toLowerCase() === result.supplier.toLowerCase())
+      const aliasHit = Array.isArray(aliases)
+        ? aliases.find((a) => a.alias.toLowerCase() === result.supplier.toLowerCase())
+        : undefined
       if (aliasHit) {
         result.supplier = aliasHit.canonical
       } else {
         // 2. Fall back to fuzzy matching against existing suppliers.
         const { data: existing } = await supabase.from('expenses').select('supplier').not('supplier', 'is', null)
-        if (existing && existing.length > 0) {
+        if (Array.isArray(existing) && existing.length > 0) {
           const counts = new Map<string, number>()
           for (const row of existing) {
             const s = (row as { supplier: string | null }).supplier
