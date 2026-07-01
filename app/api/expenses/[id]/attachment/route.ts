@@ -100,12 +100,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Hämta befintlig expense - verifiera ägarskap (service role för att undvika RLS-problem)
-    const { data: expense, error: fetchError } = await serviceSupabase
+    // Hämta befintlig expense via RLS-klienten — den scopar till användarens
+    // company (utgifter är delade), så kollegors kvitton kan också hanteras.
+    const { data: expense, error: fetchError } = await supabase
       .from('expenses')
       .select('attachment_url, date')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single()
 
     if (fetchError || !expense) {
@@ -143,11 +143,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { data: urlData } = serviceSupabase.storage.from('expenses').getPublicUrl(filePath)
 
     // Uppdatera expense med ny attachment_url och file_size
-    const { error: updateError } = await serviceSupabase
+    const { error: updateError } = await supabase
       .from('expenses')
       .update({ attachment_url: urlData.publicUrl, file_size: buffer.length })
       .eq('id', id)
-      .eq('user_id', user.id)
 
     if (updateError) {
       console.error('Update error:', updateError)
@@ -181,12 +180,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { id } = await params
     const serviceSupabase = createAdminClient()
 
-    // Hämta expense - verifiera ägarskap (service role för att undvika RLS-problem)
-    const { data: expense, error: fetchError } = await serviceSupabase
+    // Hämta expense via RLS-klienten — scopar till användarens company så
+    // kollegors kvitton kan också hanteras (utgifter är delade).
+    const { data: expense, error: fetchError } = await supabase
       .from('expenses')
       .select('attachment_url')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single()
 
     if (fetchError || !expense) {
@@ -208,11 +207,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Uppdatera expense - ta bort attachment_url
-    const { error: updateError } = await serviceSupabase
-      .from('expenses')
-      .update({ attachment_url: null })
-      .eq('id', id)
-      .eq('user_id', user.id)
+    const { error: updateError } = await supabase.from('expenses').update({ attachment_url: null }).eq('id', id)
 
     if (updateError) {
       console.error('Update error:', updateError)

@@ -19,11 +19,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Hämta alla utgifter med leverantör, kategori och valuta (scoped to user)
+    // Hämta alla utgifter med leverantör, kategori och valuta (bolagsscopat via
+    // RLS) så auto-kategoriseringen blir konsekvent för hela teamet.
     const { data: expenses, error } = await supabase
       .from('expenses')
       .select('supplier, category, currency')
-      .eq('user_id', user.id)
       .not('category', 'is', null)
       .not('supplier', 'is', null)
 

@@ -38,12 +38,11 @@ export async function POST(request: NextRequest) {
 
     // Dublettkontroll med fuzzy matching (om inte forceSave)
     if (!forceSave) {
-      // Hämta alla utgifter för samma datum (scoped to user)
+      // Hämta alla utgifter för samma datum (bolagsscopat via RLS — utgifter delas)
       const { data: existingExpenses } = await supabase
         .from('expenses')
         .select('id, date, supplier, amount, category')
         .eq('date', date)
-        .eq('user_id', user.id)
 
       if (existingExpenses && existingExpenses.length > 0) {
         const duplicateResult = findDuplicateExpense({ date, supplier, amount }, existingExpenses as DuplicateExpense[])

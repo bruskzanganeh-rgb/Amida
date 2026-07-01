@@ -551,7 +551,7 @@ describe('DELETE /api/expenses/[id]/attachment', () => {
     const admin = mockAdminClient()
     const ch = chainMock(null, { message: 'not found' })
     ch.single = vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } })
-    admin.from.mockReturnValue(ch)
+    client.from.mockReturnValue(ch)
     vi.mocked(createAdminClient).mockReturnValue(admin as never)
 
     const { DELETE } = await import('@/app/api/expenses/[id]/attachment/route')
@@ -567,7 +567,7 @@ describe('DELETE /api/expenses/[id]/attachment', () => {
     const admin = mockAdminClient()
     const ch = chainMock({ attachment_url: null }, null)
     ch.single = vi.fn().mockResolvedValue({ data: { attachment_url: null }, error: null })
-    admin.from.mockReturnValue(ch)
+    client.from.mockReturnValue(ch)
     vi.mocked(createAdminClient).mockReturnValue(admin as never)
 
     const { DELETE } = await import('@/app/api/expenses/[id]/attachment/route')
@@ -592,7 +592,7 @@ describe('DELETE /api/expenses/[id]/attachment', () => {
       error: null,
     })
     const updateCh = chainMock(null, null)
-    admin.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
+    client.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
     admin.storage.from.mockReturnValue({
       remove: vi.fn().mockResolvedValue({ error: null }),
     } as never)
@@ -619,7 +619,7 @@ describe('DELETE /api/expenses/[id]/attachment', () => {
       error: null,
     })
     const updateCh = chainMock(null, { message: 'update fail' })
-    admin.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
+    client.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
     admin.storage.from.mockReturnValue({
       remove: vi.fn().mockResolvedValue({ error: null }),
     } as never)
@@ -709,7 +709,7 @@ describe('POST /api/expenses/[id]/attachment', () => {
     })
     // Update chain
     const updateCh = chainMock(null, null)
-    admin.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
+    client.from.mockReturnValueOnce(fetchCh).mockReturnValueOnce(updateCh)
     admin.storage.from.mockReturnValue({
       upload: vi.fn().mockResolvedValue({ error: null }),
       getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://pub.url/file.jpg' } }),

@@ -22,12 +22,11 @@ export async function POST(request: NextRequest) {
 
     const { date, supplier, amount } = parsed.data
 
-    // Hämta alla utgifter för samma datum (scoped to user)
+    // Hämta alla utgifter för samma datum (bolagsscopat via RLS — utgifter delas)
     const { data: existingExpenses, error } = await supabase
       .from('expenses')
       .select('id, date, supplier, amount, category')
       .eq('date', date)
-      .eq('user_id', user.id)
 
     if (error) {
       console.error('Duplicate check error:', error)
@@ -67,14 +66,13 @@ export async function PUT(request: NextRequest) {
 
     const { expenses } = parsed.data
 
-    // Hämta alla befintliga utgifter för relevanta datum (scoped to user)
+    // Hämta alla befintliga utgifter för relevanta datum (bolagsscopat via RLS)
     const uniqueDates = [...new Set(expenses.map((e) => e.date))]
 
     const { data: existingExpenses, error } = await supabase
       .from('expenses')
       .select('id, date, supplier, amount, category')
       .in('date', uniqueDates)
-      .eq('user_id', user.id)
 
     if (error) {
       console.error('Batch duplicate check error:', error)

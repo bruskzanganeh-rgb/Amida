@@ -54,7 +54,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .from('expenses')
       .update(updateData)
       .eq('id', id)
-      .eq('user_id', user.id)
       .select('*, gig:gigs(id, project_name, date, client:clients(name))')
       .single()
 
@@ -85,7 +84,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { id } = await params
 
-    const { error } = await supabase.from('expenses').delete().eq('id', id).eq('user_id', user.id)
+    // Expenses are shared within a company; RLS scopes to the caller's company,
+    // so don't also filter by user_id or a member can't delete a colleague's.
+    const { error } = await supabase.from('expenses').delete().eq('id', id)
 
     if (error) {
       console.error('Delete expense error:', error)
