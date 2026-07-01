@@ -396,6 +396,30 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_aliases: {
+        Row: {
+          id: string
+          company_id: string
+          alias: string
+          canonical: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id?: string
+          alias: string
+          canonical: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          alias?: string
+          canonical?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       company_members: {
         Row: {
           id: string

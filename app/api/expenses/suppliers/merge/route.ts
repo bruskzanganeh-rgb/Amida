@@ -43,6 +43,18 @@ export async function POST(request: NextRequest) {
 
     const updated = data?.length || 0
 
+    // Remember the mapping so future receipt scans snap these names to the
+    // canonical one, even when they aren't similar as text (e.g. "Tre" ->
+    // "Hi3G Access AB"). company_id defaults to get_user_company_id().
+    const aliasRows = from.map((alias) => ({ alias, canonical: to }))
+    const { error: aliasError } = await supabase
+      .from('supplier_aliases')
+      .upsert(aliasRows, { onConflict: 'company_id,alias', ignoreDuplicates: false })
+    if (aliasError) {
+      // Non-fatal: the merge itself already succeeded.
+      console.error('Supplier alias upsert error:', aliasError)
+    }
+
     await logActivity({
       userId: user.id,
       eventType: 'expense_updated',

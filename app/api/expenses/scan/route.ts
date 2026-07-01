@@ -116,19 +116,31 @@ export async function POST(request: NextRequest) {
       result = await parseReceiptWithVision(base64, mimeType, user.id, locale)
     }
 
-    // Snap the extracted supplier to an existing one to avoid duplicates like
+    // Snap the extracted supplier to a canonical name to avoid duplicates like
     // "SJ" / "SJ AB" / "SJ (Svenska Järnvägar)". Scoped company-wide via RLS.
     if (result?.supplier) {
-      const { data: existing } = await supabase.from('expenses').select('supplier').not('supplier', 'is', null)
-      if (existing && existing.length > 0) {
-        const counts = new Map<string, number>()
-        for (const row of existing) {
-          const s = (row as { supplier: string | null }).supplier
-          if (s) counts.set(s, (counts.get(s) || 0) + 1)
+      // 1. Explicit alias mapping wins (e.g. "Tre" -> "Hi3G Access AB"), even
+      //    when the names aren't similar as text.
+      const { data: aliases } = await supabase.from('supplier_aliases').select('alias, canonical')
+      const aliasHit = aliases?.find((a) => a.alias.toLowerCase() === result.supplier.toLowerCase())
+      if (aliasHit) {
+        result.supplier = aliasHit.canonical
+      } else {
+        // 2. Fall back to fuzzy matching against existing suppliers.
+        const { data: existing } = await supabase.from('expenses').select('supplier').not('supplier', 'is', null)
+        if (existing && existing.length > 0) {
+          const counts = new Map<string, number>()
+          for (const row of existing) {
+            const s = (row as { supplier: string | null }).supplier
+            if (s) counts.set(s, (counts.get(s) || 0) + 1)
+          }
+          const supplierCounts: SupplierCount[] = [...counts.entries()].map(([supplier, count]) => ({
+            supplier,
+            count,
+          }))
+          const canonical = findCanonicalSupplier(result.supplier, supplierCounts)
+          if (canonical) result.supplier = canonical
         }
-        const supplierCounts: SupplierCount[] = [...counts.entries()].map(([supplier, count]) => ({ supplier, count }))
-        const canonical = findCanonicalSupplier(result.supplier, supplierCounts)
-        if (canonical) result.supplier = canonical
       }
     }
 
