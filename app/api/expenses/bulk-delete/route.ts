@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ids must be a non-empty array of strings' }, { status: 400 })
     }
 
-    const { data, error } = await supabase.from('expenses').delete().in('id', ids).eq('user_id', user.id).select('id')
+    // Expenses are shared within a company; RLS ("Company expenses access")
+    // already scopes deletes to the caller's company, so we must NOT also filter
+    // by user_id or a member can't delete a colleague's selected expense.
+    const { data, error } = await supabase.from('expenses').delete().in('id', ids).select('id')
 
     if (error) {
       console.error('Bulk delete error:', error)

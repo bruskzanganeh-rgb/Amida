@@ -193,8 +193,16 @@ export async function GET(request: NextRequest) {
         gig:gigs(project_name, venue)
       `,
       )
-      .eq('user_id', user.id)
       .order('date', { ascending: true })
+
+    // Expenses are shared within a company (see migration 036), so scope by
+    // company — not the current user — otherwise a member can't export a
+    // colleague's receipts. Fall back to user_id if there's no company.
+    if (membership?.company_id) {
+      query = query.eq('company_id', membership.company_id)
+    } else {
+      query = query.eq('user_id', user.id)
+    }
 
     if (selectedIds && selectedIds.length > 0) {
       query = query.in('id', selectedIds)
