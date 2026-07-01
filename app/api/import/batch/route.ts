@@ -472,18 +472,15 @@ export async function POST(request: NextRequest) {
             dueDate = dueDateObj.toISOString().split('T')[0]
           }
 
-          // Använd atomisk RPC för faktura-numreringen — race-condition-säker
-          // även när flera teammedlemmar importerar parallellt. Fallback till
-          // max+1 om company_id saknas (gamla soloanvändare utan membership).
+          // Imported invoices keep the number the user reviewed/entered (or that
+          // the AI parsed) — that's the whole point of the editable "Fakturanr"
+          // field. Only auto-assign when it's missing. Auto = max(existing)+1 to
+          // stay consistent with the "Ny faktura" flow (create-invoice-dialog),
+          // which uses max+1 and does NOT bump companies.next_invoice_number — so
+          // the get_next_invoice_number counter drifts behind and would collide.
           let invoiceNumber: number
-          if (companyId) {
-            const { data: nextNum, error: rpcError } = await supabase.rpc('get_next_invoice_number', {
-              cid: companyId,
-            })
-            if (rpcError || nextNum == null) {
-              throw new Error(`Failed to get next invoice number: ${rpcError?.message || 'null result'}`)
-            }
-            invoiceNumber = nextNum as number
+          if (invoiceData.invoiceNumber && invoiceData.invoiceNumber > 0) {
+            invoiceNumber = invoiceData.invoiceNumber
           } else {
             const { data: maxInv } = await supabase
               .from('invoices')
@@ -492,6 +489,11 @@ export async function POST(request: NextRequest) {
               .limit(1)
               .single()
             invoiceNumber = (maxInv?.invoice_number || 0) + 1
+          }
+
+          // Clear error instead of a raw unique-constraint violation.
+          if (existingInvoices?.some((inv) => inv.invoice_number === invoiceNumber)) {
+            throw new Error(`Fakturanummer ${invoiceNumber} finns redan`)
           }
 
           const { data: invoice, error: insertError } = await supabase
