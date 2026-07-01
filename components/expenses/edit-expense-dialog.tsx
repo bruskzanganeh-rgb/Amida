@@ -63,11 +63,19 @@ type EditExpenseDialogProps = {
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
   gigs: Gig[]
+  existingSuppliers?: string[]
 }
 
 const currencies = SUPPORTED_CURRENCIES
 
-export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs }: EditExpenseDialogProps) {
+export function EditExpenseDialog({
+  expense,
+  open,
+  onOpenChange,
+  onSuccess,
+  gigs,
+  existingSuppliers = [],
+}: EditExpenseDialogProps) {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
@@ -443,9 +451,17 @@ export function EditExpenseDialog({ expense, open, onOpenChange, onSuccess, gigs
                 <Label htmlFor="supplier">{t('supplier')}</Label>
                 <Input
                   id="supplier"
+                  list="supplier-suggestions"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                 />
+                {existingSuppliers.length > 0 && (
+                  <datalist id="supplier-suggestions">
+                    {existingSuppliers.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
+                )}
               </div>
 
               <div className="flex gap-3">

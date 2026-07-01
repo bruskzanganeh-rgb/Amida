@@ -46,6 +46,7 @@ type UploadReceiptDialogProps = {
   onSuccess: () => void
   gigId?: string
   gigTitle?: string
+  existingSuppliers?: string[]
 }
 
 type Gig = {
@@ -79,7 +80,14 @@ type DuplicateInfo = {
 
 const currencies = SUPPORTED_CURRENCIES
 
-export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigTitle }: UploadReceiptDialogProps) {
+export function UploadReceiptDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  gigId,
+  gigTitle,
+  existingSuppliers = [],
+}: UploadReceiptDialogProps) {
   const t = useTranslations('expense')
   const tc = useTranslations('common')
   const tt = useTranslations('toast')
@@ -554,10 +562,18 @@ export function UploadReceiptDialog({ open, onOpenChange, onSuccess, gigId, gigT
                 <Label htmlFor="supplier">{t('supplier')}</Label>
                 <Input
                   id="supplier"
+                  list="supplier-suggestions"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                   placeholder="T.ex. SJ, ICA, Spotify"
                 />
+                {existingSuppliers.length > 0 && (
+                  <datalist id="supplier-suggestions">
+                    {existingSuppliers.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
+                )}
               </div>
 
               <div className="flex gap-3">

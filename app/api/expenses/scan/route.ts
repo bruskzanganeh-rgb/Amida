@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseReceiptWithVision, parseReceiptWithText } from '@/lib/receipt/parser'
+import { findCanonicalSupplier, type SupplierCount } from '@/lib/expenses/supplier-matching'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { extractText, renderPageAsImage } from 'unpdf'
 
@@ -113,6 +114,22 @@ export async function POST(request: NextRequest) {
 
       // Parsa med Claude Vision
       result = await parseReceiptWithVision(base64, mimeType, user.id, locale)
+    }
+
+    // Snap the extracted supplier to an existing one to avoid duplicates like
+    // "SJ" / "SJ AB" / "SJ (Svenska Järnvägar)". Scoped company-wide via RLS.
+    if (result?.supplier) {
+      const { data: existing } = await supabase.from('expenses').select('supplier').not('supplier', 'is', null)
+      if (existing && existing.length > 0) {
+        const counts = new Map<string, number>()
+        for (const row of existing) {
+          const s = (row as { supplier: string | null }).supplier
+          if (s) counts.set(s, (counts.get(s) || 0) + 1)
+        }
+        const supplierCounts: SupplierCount[] = [...counts.entries()].map(([supplier, count]) => ({ supplier, count }))
+        const canonical = findCanonicalSupplier(result.supplier, supplierCounts)
+        if (canonical) result.supplier = canonical
+      }
     }
 
     return NextResponse.json({

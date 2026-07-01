@@ -30,6 +30,7 @@ import {
   FileText,
   Files,
   CheckCircle2,
+  Merge,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { UploadReceiptDialog } from '@/components/expenses/upload-receipt-dialog'
 import { EditExpenseDialog } from '@/components/expenses/edit-expense-dialog'
 import { ExportDialog } from '@/components/expenses/export-dialog'
+import { MergeSuppliersDialog } from '@/components/expenses/merge-suppliers-dialog'
 import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import { format } from 'date-fns'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
@@ -99,9 +101,11 @@ export default function ExpensesTab() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [supplierFilter, setSupplierFilter] = useState<string>('all')
   const [gigFilter, setGigFilter] = useState<string>('all')
+  const [privacyFilter, setPrivacyFilter] = useState<string>('all')
   const [memberFilter, setMemberFilter] = useState<string>('all')
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showMergeDialog, setShowMergeDialog] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
   const [mobileExpenseLimit, setMobileExpenseLimit] = useState(20)
 
@@ -294,6 +298,13 @@ export default function ExpensesTab() {
     categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
   )
   const suppliers = [...new Set(expenses.map((e) => e.supplier))].sort()
+  const supplierCounts = (() => {
+    const counts = new Map<string, number>()
+    for (const e of expenses) {
+      if (e.supplier) counts.set(e.supplier, (counts.get(e.supplier) || 0) + 1)
+    }
+    return [...counts.entries()].map(([supplier, count]) => ({ supplier, count }))
+  })()
 
   const filteredExpenses = expenses.filter((e) => {
     if (yearFilter !== 'all' && parseLocalDate(e.date).getFullYear().toString() !== yearFilter) return false
@@ -301,6 +312,8 @@ export default function ExpensesTab() {
     if (supplierFilter !== 'all' && e.supplier !== supplierFilter) return false
     if (gigFilter === 'linked' && !e.gig_id) return false
     if (gigFilter === 'unlinked' && e.gig_id) return false
+    if (privacyFilter === 'private' && !e.is_private) return false
+    if (privacyFilter === 'business' && e.is_private) return false
     if (memberFilter !== 'all' && e.user_id !== memberFilter) return false
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
@@ -423,6 +436,18 @@ export default function ExpensesTab() {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Select value={privacyFilter} onValueChange={setPrivacyFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('allTypes')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allTypes')}</SelectItem>
+                <SelectItem value="private">{t('onlyPrivate')}</SelectItem>
+                <SelectItem value="business">{t('onlyBusiness')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {isSharedMode && !shouldFilter && (
             <div>
               <Select value={memberFilter} onValueChange={setMemberFilter}>
@@ -441,6 +466,12 @@ export default function ExpensesTab() {
                 </SelectContent>
               </Select>
             </div>
+          )}
+          {supplierCounts.length > 1 && (
+            <Button variant="outline" onClick={() => setShowMergeDialog(true)} className="ml-auto">
+              <Merge className="h-4 w-4 mr-1" />
+              {t('mergeSuppliers')}
+            </Button>
           )}
         </div>
 
@@ -850,9 +881,17 @@ export default function ExpensesTab() {
           open={showUploadDialog}
           onOpenChange={setShowUploadDialog}
           onSuccess={() => mutateExpenses()}
+          existingSuppliers={suppliers}
         />
 
         <ExportDialog open={showExportDialog} onOpenChange={setShowExportDialog} />
+
+        <MergeSuppliersDialog
+          open={showMergeDialog}
+          onOpenChange={setShowMergeDialog}
+          suppliers={supplierCounts}
+          onMerged={() => mutateExpenses()}
+        />
 
         <ConfirmDialog
           open={bulkDeleteOpen}
@@ -870,6 +909,7 @@ export default function ExpensesTab() {
           onOpenChange={(open) => !open && setSelectedExpense(null)}
           onSuccess={() => mutateExpenses()}
           gigs={gigs}
+          existingSuppliers={suppliers}
         />
 
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>

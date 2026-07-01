@@ -18,13 +18,15 @@ export type DuplicateCheckResult = {
  * Normalize supplier name for comparison
  * Removes common suffixes like ", PBC", "AB", "Inc", etc.
  */
-function normalizeSupplier(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    // Remove common company suffixes
-    .replace(/,?\s*(pbc|ab|hb|kb|inc|llc|ltd|gmbh|as|oy|a\/s)\.?$/i, '')
-    .trim()
+export function normalizeSupplier(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      // Remove common company suffixes
+      .replace(/,?\s*(pbc|ab|hb|kb|inc|llc|ltd|gmbh|as|oy|a\/s)\.?$/i, '')
+      .trim()
+  )
 }
 
 /**
@@ -43,7 +45,7 @@ function calculateSimilarity(str1: string, str2: string): number {
 export function isSimilarSupplier(
   supplierA: string,
   supplierB: string,
-  threshold: number = 0.7
+  threshold: number = 0.7,
 ): { isSimilar: boolean; matchType: 'exact' | 'contains' | 'fuzzy' | null } {
   const normalizedA = normalizeSupplier(supplierA)
   const normalizedB = normalizeSupplier(supplierB)
@@ -72,10 +74,10 @@ export function isSimilarSupplier(
  */
 export function findDuplicateExpense(
   expense: { date: string; supplier: string; amount: number },
-  existingExpenses: DuplicateExpense[]
+  existingExpenses: DuplicateExpense[],
 ): DuplicateCheckResult {
   // Only check expenses with the same date
-  const sameDateExpenses = existingExpenses.filter(e => e.date === expense.date)
+  const sameDateExpenses = existingExpenses.filter((e) => e.date === expense.date)
 
   for (const existing of sameDateExpenses) {
     // Check if amounts match (within 0.01 tolerance)
@@ -104,7 +106,7 @@ export function findDuplicateExpense(
  */
 export function findDuplicateExpenses(
   expenses: Array<{ date: string; supplier: string; amount: number }>,
-  existingExpenses: DuplicateExpense[]
+  existingExpenses: DuplicateExpense[],
 ): Array<{ index: number } & DuplicateCheckResult> {
   return expenses.map((expense, index) => ({
     index,
