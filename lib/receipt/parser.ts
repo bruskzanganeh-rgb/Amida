@@ -71,13 +71,14 @@ Rules:
 - Amount should be the TOTAL (including VAT/tax)
 - Detect currency from symbols (kr/SEK, €/EUR, $/USD, £/GBP)
 - Choose the best-fitting category
+- SUPPLIER = the SELLER that issued the invoice/receipt (the party you PAY). Identify it by the logo, organisation/VAT number, F-tax approval, and bank/giro/IBAN details — usually in the header or footer. On an invoice ("Faktura") this is often at the very bottom. Do NOT use the customer/recipient the invoice is addressed to — that is the billing address block near the top, often marked "Kund", "Kundnummer", or "Er ref".
 
 Category values (use these exact English keys — they are internal identifiers, not display labels):
 ${CATEGORY_LIST_EN}
 
 Return ONLY JSON with these fields:
 - date: date (YYYY-MM-DD) or null if unclear
-- supplier: supplier/store/company name (keep original language)
+- supplier: the SELLER/issuer company name (NOT the customer being billed), keep original language
 - amount: total amount (number)
 - currency: currency code (SEK/EUR/USD/GBP/DKK/NOK)
 - category: one of the exact English keys listed above
@@ -95,13 +96,14 @@ Regler:
 - Belopp ska vara TOTALSUMMAN (inklusive moms)
 - Gissa valuta baserat på symboler (kr/SEK, €/EUR, $/USD, £/GBP)
 - Välj kategori som passar bäst
+- LEVERANTÖR = SÄLJAREN som ställt ut fakturan/kvittot (den du BETALAR TILL). Känns igen på logotyp, organisationsnummer, "Godkänd för F-skatt", samt bankgiro/plusgiro/IBAN — oftast i sidhuvudet eller sidfoten. På en faktura står säljaren ofta längst ner. Använd ALDRIG kunden/mottagaren som fakturan är ställd till — det är adressblocket högt upp, ofta märkt "Kund", "Kundnummer" eller "Er ref".
 
 Kategorivärden (använd EXAKT dessa engelska nycklar — de är interna identifierare, inte visningsetiketter):
 ${CATEGORY_LIST_SV}
 
 Returnera ENDAST JSON med dessa fält:
 - date: datum (YYYY-MM-DD) eller null om otydligt
-- supplier: leverantör/butik/företag
+- supplier: SÄLJARENS/utställarens företagsnamn (INTE kunden som faktureras)
 - amount: totalbelopp (nummer)
 - currency: valuta (SEK/EUR/USD/GBP/DKK/NOK)
 - category: EN AV de engelska nycklarna ovan (t.ex. "travel", INTE "Resa")
