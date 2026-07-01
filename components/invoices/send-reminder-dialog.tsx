@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Bell, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format, differenceInDays } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
@@ -91,7 +92,7 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
         tr('emailDefaultBodyEn', {
           number: invoice.invoice_number,
           total: formattedTotal,
-          dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
+          dueDate: format(parseLocalDate(invoice.due_date), 'PPP', { locale: dateLocale }),
           daysOverdue: String(daysOverdue),
           bankAccount,
           company: companyName,
@@ -103,7 +104,7 @@ export function SendReminderDialog({ invoice, open, onOpenChange, onSuccess, rem
         tr('emailDefaultBodySv', {
           number: invoice.invoice_number,
           total: formattedTotal,
-          dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
+          dueDate: format(parseLocalDate(invoice.due_date), 'PPP', { locale: dateLocale }),
           daysOverdue: String(daysOverdue),
           bankAccount,
           company: companyName,

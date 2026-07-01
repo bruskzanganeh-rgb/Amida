@@ -116,7 +116,7 @@ export function GigDialog({
   >({})
   const [parsingSessions, setParsingSessions] = useState<Record<string, boolean>>({})
   const [scanningSchedule, setScanningSchedule] = useState(false)
-  const [scheduleFile, setScheduleFile] = useState<File | null>(null)
+  const [scheduleFiles, setScheduleFiles] = useState<File[]>([])
   const scheduleFileRef = useRef<HTMLInputElement>(null)
   const [dateEntryMode, setDateEntryMode] = useState<'choose' | 'manual' | 'import'>('choose')
   const [draftGigId, setDraftGigId] = useState<string | null>(null)
@@ -178,7 +178,7 @@ export function GigDialog({
       loadBaseCurrency()
 
       // Always reset schedule file state when dialog opens (prevents re-upload on edit)
-      setScheduleFile(null)
+      setScheduleFiles([])
 
       setManualExchangeRate('')
 
@@ -483,16 +483,8 @@ export function GigDialog({
         toast.warning(tToast('gigDatesError'))
       }
 
-      // Upload schedule file if imported (only new imports, not re-saves)
-      if (scheduleFile) {
-        try {
-          await uploadGigAttachment(gig.id, scheduleFile, 'schedule')
-          setScheduleFile(null)
-        } catch (err) {
-          console.error('Schedule file upload error:', err)
-          toast.warning(tToast('scheduleUploadError'))
-        }
-      }
+      // Upload schedule files if imported (only new imports, not re-saves)
+      await uploadScheduleFiles(gig.id)
     } else {
       // Create mode — update the draft gig with real data
       if (draftGigId) {
@@ -513,16 +505,8 @@ export function GigDialog({
           toast.warning(tToast('gigDatesError'))
         }
 
-        // Upload schedule file if imported
-        if (scheduleFile) {
-          try {
-            await uploadGigAttachment(draftGigId, scheduleFile, 'schedule')
-            setScheduleFile(null)
-          } catch (err) {
-            console.error('Schedule file upload error:', err)
-            toast.warning(tToast('scheduleUploadError'))
-          }
-        }
+        // Upload schedule files if imported
+        await uploadScheduleFiles(draftGigId)
 
         toast.success(tToast('gigCreated'))
         onCreated?.(draftGigId)
@@ -546,15 +530,7 @@ export function GigDialog({
           toast.warning(tToast('gigDatesError'))
         }
 
-        if (scheduleFile) {
-          try {
-            await uploadGigAttachment(newGig.id, scheduleFile, 'schedule')
-            setScheduleFile(null)
-          } catch (err) {
-            console.error('Schedule file upload error:', err)
-            toast.warning(tToast('scheduleUploadError'))
-          }
-        }
+        await uploadScheduleFiles(newGig.id)
 
         toast.success(tToast('gigCreated'))
         onCreated?.(newGig.id)
@@ -602,73 +578,105 @@ export function GigDialog({
     scheduleFileRef.current?.click()
   }
 
+  // Upload all imported schedule files as 'schedule' attachments on the gig.
+  async function uploadScheduleFiles(gigId: string) {
+    if (scheduleFiles.length === 0) return
+    for (const file of scheduleFiles) {
+      try {
+        await uploadGigAttachment(gigId, file, 'schedule')
+      } catch (err) {
+        console.error('Schedule file upload error:', err)
+        toast.warning(tToast('scheduleUploadError'))
+      }
+    }
+    setScheduleFiles([])
+  }
+
+  type ParsedSession = { start: string; end: string | null; label?: string }
+
   async function handleScheduleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files ? Array.from(e.target.files) : []
+    if (files.length === 0) return
 
     setDateEntryMode('import')
     setScanningSchedule(true)
+
+    // Merge parsed results across all selected images/PDFs.
+    const mergedSessions: Record<string, ParsedSession[]> = {}
+    const mergedTexts: Record<string, string> = {}
+    const mergedVenues: Record<string, string> = {}
+    const dateSet = new Set<string>()
+    let mergedProjectName = ''
+    let mergedVenue = ''
+    let okCount = 0
+
     try {
-      const formDataUpload = new FormData()
-      formDataUpload.append('file', file)
+      for (const file of files) {
+        const formDataUpload = new FormData()
+        formDataUpload.append('file', file)
 
-      const res = await fetch('/api/gigs/scan-schedule', {
-        method: 'POST',
-        body: formDataUpload,
-      })
+        const res = await fetch('/api/gigs/scan-schedule', { method: 'POST', body: formDataUpload })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          toast.error(body.error || `Scan failed (${res.status})`)
+          continue
+        }
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || `Scan failed (${res.status})`)
-      }
+        const result = await readJsonSafe<{
+          dates?: Record<string, ParsedSession[]>
+          scheduleTexts?: Record<string, string>
+          venues?: Record<string, string>
+          projectName?: string
+          venue?: string
+        }>(res)
+        okCount++
 
-      const result = await readJsonSafe<{
-        dates?: Record<string, { start: string; end: string | null; label?: string }[]>
-        scheduleTexts?: Record<string, string>
-        venues?: Record<string, string>
-        projectName?: string
-        venue?: string
-      }>(res)
-
-      // Set dates and sessions from scan result
-      if (result?.dates) {
-        const dates = Object.keys(result.dates)
-          .sort()
-          .map((d) => new Date(d + 'T12:00:00'))
-        setSelectedDates(dates)
-
-        // Store parsed sessions so they don't get re-parsed on save
-        const scannedSessions: Record<string, { start: string; end: string | null; label?: string }[]> = {}
-        for (const [date, sessions] of Object.entries(result.dates)) {
-          if (Array.isArray(sessions) && sessions.length > 0) {
-            scannedSessions[date] = sessions as { start: string; end: string | null; label?: string }[]
+        if (result?.dates) {
+          for (const [date, sessions] of Object.entries(result.dates)) {
+            dateSet.add(date)
+            if (Array.isArray(sessions) && sessions.length > 0) {
+              mergedSessions[date] = [...(mergedSessions[date] || []), ...(sessions as ParsedSession[])]
+            }
           }
         }
-        if (Object.keys(scannedSessions).length > 0) {
-          setParsedSessions((prev) => ({ ...prev, ...scannedSessions }))
+        if (result?.scheduleTexts) {
+          for (const [date, txt] of Object.entries(result.scheduleTexts)) {
+            mergedTexts[date] = mergedTexts[date] ? `${mergedTexts[date]}\n${txt}` : txt
+          }
         }
+        if (result?.venues && typeof result.venues === 'object') {
+          for (const [date, v] of Object.entries(result.venues)) {
+            if (!mergedVenues[date] && v) mergedVenues[date] = v as string
+          }
+        }
+        if (result?.projectName && !mergedProjectName) mergedProjectName = result.projectName
+        if (result?.venue && !mergedVenue) mergedVenue = result.venue
       }
 
-      // Set schedule texts
-      if (result?.scheduleTexts) {
-        setScheduleTexts(result.scheduleTexts)
+      if (dateSet.size > 0) {
+        const dates = [...dateSet].sort().map((d) => new Date(d + 'T12:00:00'))
+        setSelectedDates(dates)
+      }
+      if (Object.keys(mergedSessions).length > 0) {
+        setParsedSessions((prev) => ({ ...prev, ...mergedSessions }))
+      }
+      if (Object.keys(mergedTexts).length > 0) {
+        setScheduleTexts((prev) => ({ ...prev, ...mergedTexts }))
+      }
+      if (Object.keys(mergedVenues).length > 0) {
+        setDateVenues((prev) => ({ ...prev, ...mergedVenues }))
+      }
+      if (mergedProjectName && !formData.project_name) {
+        setFormData((f) => ({ ...f, project_name: mergedProjectName }))
+      }
+      if (mergedVenue && !formData.venue) {
+        setFormData((f) => ({ ...f, venue: mergedVenue }))
       }
 
-      // Set per-date venue overrides (for touring schedules)
-      if (result?.venues && typeof result.venues === 'object') {
-        setDateVenues(result.venues as Record<string, string>)
+      if (okCount > 0) {
+        setScheduleFiles((prev) => [...prev, ...files])
+        toast.success(tToast('scheduleScanned') || 'Schema importerat')
       }
-
-      // Pre-fill project name and venue if empty
-      if (result?.projectName && !formData.project_name) {
-        setFormData((f) => ({ ...f, project_name: result.projectName! }))
-      }
-      if (result?.venue && !formData.venue) {
-        setFormData((f) => ({ ...f, venue: result.venue! }))
-      }
-
-      setScheduleFile(file)
-      toast.success(tToast('scheduleScanned') || 'Schema importerat')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Okänt fel'
       console.error('Schedule scan error:', message)
@@ -694,6 +702,7 @@ export function GigDialog({
     { value: 'completed', label: tStatus('completed') },
     { value: 'invoiced', label: tStatus('invoiced') },
     { value: 'paid', label: tStatus('paid') },
+    { value: 'cancelled', label: tStatus('cancelled') },
   ]
 
   const sectionHeader = 'text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70'
@@ -1045,6 +1054,7 @@ export function GigDialog({
                   ref={scheduleFileRef}
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
+                  multiple
                   className="hidden"
                   onChange={handleScheduleFileSelected}
                 />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkStorageQuota } from '@/lib/usage'
+import { yearFromDateString } from '@/lib/dates'
 
 // Extrahera filsökväg från public URL
 function extractFilePath(attachmentUrl: string): string | null {
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Ladda upp ny fil
     const fileExt = file.name.split('.').pop() || 'jpg'
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-    const year = new Date(expense.date).getFullYear()
+    const year = yearFromDateString(expense.date)
     const filePath = `receipts/${year}/${fileName}`
 
     const arrayBuffer = await file.arrayBuffer()

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { findDuplicateExpense, type DuplicateExpense } from '@/lib/expenses/duplicate-checker'
 import { checkStorageQuota } from '@/lib/usage'
+import { yearFromDateString } from '@/lib/dates'
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
 
       const fileExt = file.name.split('.').pop() || 'jpg'
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `receipts/${new Date(date).getFullYear()}/${fileName}`
+      const filePath = `receipts/${yearFromDateString(date)}/${fileName}`
 
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)

@@ -47,6 +47,7 @@ import { GigDialog } from '@/components/gigs/gig-dialog'
 import { UploadReceiptDialog } from '@/components/expenses/upload-receipt-dialog'
 import { format } from 'date-fns'
 import type { Locale } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { toast } from 'sonner'
@@ -169,11 +170,11 @@ type GigExpense = {
 
 function formatGigDates(gig: Gig, locale: Locale): string {
   if (!gig.total_days || gig.total_days === 1) {
-    return format(new Date(gig.date), 'PPP', { locale })
+    return format(parseLocalDate(gig.date), 'PPP', { locale })
   }
 
-  const start = format(new Date(gig.start_date!), 'd MMM', { locale })
-  const end = format(new Date(gig.end_date!), 'd MMM yyyy', { locale })
+  const start = format(parseLocalDate(gig.start_date!), 'd MMM', { locale })
+  const end = format(parseLocalDate(gig.end_date!), 'd MMM yyyy', { locale })
   return `${start} - ${end}`
 }
 
@@ -240,6 +241,7 @@ const statusConfig = {
   completed: { icon: Check, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' },
   invoiced: { icon: FileText, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' },
   paid: { icon: DollarSign, color: 'bg-green-200 dark:bg-green-900/30 text-green-900 dark:text-green-300' },
+  cancelled: { icon: Ban, color: 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300' },
 }
 
 const activeStatuses = new Set(['tentative', 'pending', 'accepted'])
@@ -266,7 +268,8 @@ export default function GigsPage() {
   const [upcomingSort, setUpcomingSort] = useState<SortConfig>({ column: 'date', direction: 'asc' })
   const [historySort, setHistorySort] = useState<SortConfig>({ column: 'date', direction: 'desc' })
   const [declinedSort, setDeclinedSort] = useState<SortConfig>({ column: 'date', direction: 'desc' })
-  const [mobileLimit, setMobileLimit] = useState({ upcoming: 20, history: 20, declined: 20 })
+  const [cancelledSort, setCancelledSort] = useState<SortConfig>({ column: 'date', direction: 'desc' })
+  const [mobileLimit, setMobileLimit] = useState({ upcoming: 20, history: 20, declined: 20, cancelled: 20 })
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesText, setNotesText] = useState('')
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
@@ -297,6 +300,7 @@ export default function GigsPage() {
   const upcomingScrollRef = useRef<HTMLDivElement>(null)
   const historyScrollRef = useRef<HTMLDivElement>(null)
   const declinedScrollRef = useRef<HTMLDivElement>(null)
+  const cancelledScrollRef = useRef<HTMLDivElement>(null)
 
   const updatePanelScroll = useCallback(() => {
     const el = panelScrollRef.current
@@ -575,6 +579,15 @@ export default function GigsPage() {
     [gigs, declinedSort, matchesSearch],
   )
 
+  const sortedCancelled = useMemo(
+    () =>
+      sortGigs(
+        gigs.filter((g) => g.status === 'cancelled' && matchesSearch(g)),
+        cancelledSort,
+      ),
+    [gigs, cancelledSort, matchesSearch],
+  )
+
   const pipelineCounts = useMemo(
     () => ({
       completed: gigs.filter((g) => g.status === 'completed').length,
@@ -606,14 +619,22 @@ export default function GigsPage() {
     overscan: 5,
   })
 
+  const cancelledVirtualizer = useVirtualizer({
+    count: sortedCancelled.length,
+    getScrollElement: () => cancelledScrollRef.current,
+    estimateSize: () => 65,
+    overscan: 5,
+  })
+
   // Re-measure virtualizers when tab changes (scroll container may have been hidden)
   useEffect(() => {
     requestAnimationFrame(() => {
       if (activeTab === 'history') historyVirtualizer.measure()
       if (activeTab === 'declined') declinedVirtualizer.measure()
+      if (activeTab === 'cancelled') cancelledVirtualizer.measure()
       if (activeTab === 'upcoming') upcomingVirtualizer.measure()
     })
-  }, [activeTab, historyVirtualizer, declinedVirtualizer, upcomingVirtualizer])
+  }, [activeTab, historyVirtualizer, declinedVirtualizer, cancelledVirtualizer, upcomingVirtualizer])
 
   return (
     <>
@@ -841,6 +862,10 @@ export default function GigsPage() {
                   <TabsTrigger value="declined" className="gap-1.5">
                     <Ban className="h-4 w-4 shrink-0 hidden sm:block" />
                     {t('declined')} ({sortedDeclined.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="cancelled" className="gap-1.5">
+                    <Ban className="h-4 w-4 shrink-0 hidden sm:block" />
+                    {t('cancelled')} ({sortedCancelled.length})
                   </TabsTrigger>
                 </TabsList>
                 <Button onClick={() => setShowCreateDialog(true)} size="sm" className="shrink-0">
@@ -1868,6 +1893,331 @@ export default function GigsPage() {
                                         height:
                                           declinedVirtualizer.getTotalSize() -
                                           (declinedVirtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                                        padding: 0,
+                                        border: 'none',
+                                      }}
+                                    />
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                          {showScrollHint && (
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none animate-bounce">
+                              <ChevronDown className="h-5 w-5 text-muted-foreground/40" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Cancelled */}
+              <TabsContent value="cancelled" className="mt-4 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+                <Card className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+                  <CardHeader>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="flex items-center gap-2">
+                          <Ban className="h-5 w-5" />
+                          {t('cancelled')} ({sortedCancelled.length})
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {activeTab === 'cancelled' && sortedCancelled.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {tc('total')}:{' '}
+                              {sortedCancelled
+                                .reduce((sum, g) => sum + (g.fee_base || g.fee || 0), 0)
+                                .toLocaleString(formatLocale)}{' '}
+                              {baseCurrencySymbol}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={`${tc('search')}...`}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+                    {sortedCancelled.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Ban className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>{t('noCancelled')}</p>
+                        <p className="text-sm">{t('noCancelledHint')}</p>
+                      </div>
+                    ) : (
+                      <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+                        {/* Mobile card view */}
+                        <div className="lg:hidden space-y-2">
+                          {sortedCancelled.slice(0, mobileLimit.cancelled).map((gig) => {
+                            const StatusIcon = statusConfig[gig.status as keyof typeof statusConfig]?.icon
+                            return (
+                              <div
+                                key={gig.id}
+                                className="py-2.5 pr-3 pl-3 rounded-lg border border-l-4 bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                                style={{ borderLeftColor: gig.gig_type.color || '#9ca3af' }}
+                                onClick={() => {
+                                  setSelectedGig(selectedGig?.id === gig.id ? null : gig)
+                                  setEditingNotes(false)
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-sm">{formatGigDates(gig, dateLocale)}</p>
+                                    <p className="text-sm text-muted-foreground truncate">
+                                      {gig.client?.name || t('notSpecified')}
+                                    </p>
+                                    {isSharedMode && gig.user_id !== currentUserId && (
+                                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                                        {getMemberLabel(gig.user_id)}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="text-right shrink-0 flex items-start gap-1.5">
+                                    <div>
+                                      <span className="font-semibold text-sm">
+                                        {gig.fee !== null ? fmtFee(gig.fee, gig.currency) : '-'}
+                                      </span>
+                                      <div className="mt-0.5">
+                                        <Badge
+                                          className={`text-xs ${statusConfig[gig.status as keyof typeof statusConfig]?.color}`}
+                                        >
+                                          {StatusIcon && <StatusIcon className="h-3 w-3 mr-0.5" />}
+                                          {tStatus(gig.status)}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <button
+                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      title={t('editGig')}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openEditById(gig.id)
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                          {sortedCancelled.length > mobileLimit.cancelled && (
+                            <Button
+                              variant="ghost"
+                              className="w-full mt-2 text-sm text-muted-foreground"
+                              onClick={() => setMobileLimit((prev) => ({ ...prev, cancelled: prev.cancelled + 20 }))}
+                            >
+                              {t('showMore', { count: sortedCancelled.length - mobileLimit.cancelled })}
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Desktop table view */}
+                        <div className="relative hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
+                          <div
+                            ref={cancelledScrollRef}
+                            onScroll={handleScroll}
+                            className="lg:flex-1 lg:min-h-0 overflow-auto rounded-md border"
+                          >
+                            <table className="w-full caption-bottom text-sm table-fixed">
+                              <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+                                <TableRow>
+                                  <SortableHead
+                                    column="date"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[18%]"
+                                  >
+                                    {t('date')}
+                                  </SortableHead>
+                                  <SortableHead
+                                    column="client"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[18%]"
+                                  >
+                                    {t('client')}
+                                  </SortableHead>
+                                  <SortableHead
+                                    column="type"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[16%]"
+                                  >
+                                    {t('type')}
+                                  </SortableHead>
+                                  <SortableHead
+                                    column="venue"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[14%]"
+                                  >
+                                    {t('venue')}
+                                  </SortableHead>
+                                  <SortableHead
+                                    column="fee"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[12%]"
+                                  >
+                                    {t('fee')}
+                                  </SortableHead>
+                                  <SortableHead
+                                    column="status"
+                                    sort={cancelledSort}
+                                    onSort={(c) => toggleSort(setCancelledSort, cancelledSort, c)}
+                                    className="w-[10%]"
+                                  >
+                                    {t('status')}
+                                  </SortableHead>
+                                  <TableHead className="w-[12%] text-right">{t('actions')}</TableHead>
+                                </TableRow>
+                              </thead>
+                              <tbody className="[&_tr:last-child]:border-0">
+                                {cancelledVirtualizer.getVirtualItems().length > 0 && (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      style={{
+                                        height: cancelledVirtualizer.getVirtualItems()[0].start,
+                                        padding: 0,
+                                        border: 'none',
+                                      }}
+                                    />
+                                  </tr>
+                                )}
+                                {cancelledVirtualizer.getVirtualItems().map((virtualRow) => {
+                                  const gig = sortedCancelled[virtualRow.index]
+                                  const StatusIcon = statusConfig[gig.status as keyof typeof statusConfig]?.icon
+                                  return (
+                                    <TableRow
+                                      key={gig.id}
+                                      data-index={virtualRow.index}
+                                      ref={cancelledVirtualizer.measureElement}
+                                      className="cursor-pointer hover:bg-muted/50"
+                                      onClick={() => {
+                                        setSelectedGig(selectedGig?.id === gig.id ? null : gig)
+                                        setEditingNotes(false)
+                                      }}
+                                    >
+                                      <TableCell className="font-medium">
+                                        <div>
+                                          {formatGigDates(gig, dateLocale)}
+                                          {gig.total_days > 1 && (
+                                            <span className="text-xs text-muted-foreground ml-1">
+                                              ({gig.total_days} {tc('days')})
+                                            </span>
+                                          )}
+                                          {gig.project_name && (
+                                            <div
+                                              className="text-sm text-muted-foreground truncate max-w-[250px]"
+                                              title={gig.project_name}
+                                            >
+                                              {gig.project_name}
+                                            </div>
+                                          )}
+                                          {isSharedMode && gig.user_id !== currentUserId && (
+                                            <div className="text-xs text-blue-600 dark:text-blue-400">
+                                              {getMemberLabel(gig.user_id)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        {gig.client?.name || (
+                                          <span className="text-muted-foreground italic">{t('notSpecified')}</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-3 h-3 rounded-full"
+                                            style={{ backgroundColor: gig.gig_type.color || '#9ca3af' }}
+                                          />
+                                          <span className="text-sm">{gig.gig_type.name}</span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {gig.gig_type.vat_rate}%
+                                          </Badge>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        {(() => {
+                                          const { venue, isMixed, allVenues } = getDisplayVenue(gig)
+                                          if (isMixed) {
+                                            return (
+                                              <span
+                                                className="text-sm text-muted-foreground cursor-help"
+                                                title={allVenues.join('\n')}
+                                              >
+                                                {t('multipleVenues')}
+                                              </span>
+                                            )
+                                          }
+                                          return <span className="text-sm text-muted-foreground">{venue || '-'}</span>
+                                        })()}
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {gig.fee !== null ? (
+                                          fmtFee(gig.fee, gig.currency)
+                                        ) : (
+                                          <span className="text-muted-foreground italic">{t('notSet')}</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge className={statusConfig[gig.status as keyof typeof statusConfig]?.color}>
+                                          {StatusIcon && <StatusIcon className="h-3 w-3 mr-1" />}
+                                          {tStatus(gig.status)}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-end gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleDuplicate(gig)}
+                                            title={t('duplicateGig')}
+                                          >
+                                            <Copy className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setEditingGig(gig)}
+                                            title={t('editGig')}
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => confirmDeleteGig(gig.id)}
+                                            title={t('deleteGig')}
+                                          >
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                                {cancelledVirtualizer.getVirtualItems().length > 0 && (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      style={{
+                                        height:
+                                          cancelledVirtualizer.getTotalSize() -
+                                          (cancelledVirtualizer.getVirtualItems().at(-1)?.end ?? 0),
                                         padding: 0,
                                         border: 'none',
                                       }}

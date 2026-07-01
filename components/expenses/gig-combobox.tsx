@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, ChevronsUpDown, Calendar, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -46,17 +47,17 @@ export function GigCombobox({ gigs, value, onValueChange, disabled = false }: Gi
 
     const kommandeGigs = gigs
       .filter((g) => {
-        const gigDate = new Date(g.date)
+        const gigDate = parseLocalDate(g.date)
         return gigDate >= today || upcomingStatuses.includes(g.status)
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime())
 
     const historiskaGigs = gigs
       .filter((g) => {
-        const gigDate = new Date(g.date)
+        const gigDate = parseLocalDate(g.date)
         return gigDate < today && completedStatuses.includes(g.status)
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime())
 
     return { kommande: kommandeGigs, historiska: historiskaGigs }
   }, [gigs])
@@ -67,7 +68,7 @@ export function GigCombobox({ gigs, value, onValueChange, disabled = false }: Gi
 
   // Format: "2025-12-25 Projektnamn - Klient"
   const formatGigLabel = (gig: Gig): string => {
-    const date = format(new Date(gig.date), 'yyyy-MM-dd')
+    const date = format(parseLocalDate(gig.date), 'yyyy-MM-dd')
     const name = gig.project_name || gig.venue || t('unknownGig')
     const client = gig.client?.name
     return client ? `${date} ${name} - ${client}` : `${date} ${name}`

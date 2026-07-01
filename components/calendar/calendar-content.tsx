@@ -93,6 +93,7 @@ const statusColors: Record<string, string> = {
   completed: 'bg-blue-500',
   invoiced: 'bg-purple-500',
   paid: 'bg-green-800',
+  cancelled: 'bg-slate-400',
 }
 
 const statusConfigColors: Record<string, string> = {
@@ -103,6 +104,7 @@ const statusConfigColors: Record<string, string> = {
   completed: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
   invoiced: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
   paid: 'bg-green-200 dark:bg-green-900/30 text-green-900 dark:text-green-300',
+  cancelled: 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
 }
 
 type ViewMode = 'month' | 'year'

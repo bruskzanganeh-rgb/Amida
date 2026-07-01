@@ -449,7 +449,11 @@ describe('POST /api/v1/invoices', () => {
 
     let callCount = 0
     vi.mocked(createAdminClient).mockReturnValue({
-      from: vi.fn().mockImplementation(() => {
+      from: vi.fn().mockImplementation((table: string) => {
+        // Timezone lookup (getUserTimeZone) — independent of the invoice flow.
+        if (table === 'company_settings') {
+          return chainMock({ timezone: 'Europe/Stockholm' })
+        }
         callCount++
         if (callCount === 1) {
           // last invoice number

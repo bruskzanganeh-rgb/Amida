@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Receipt, Plus, Loader2, ExternalLink, Trash2 } from 'lucide-react'
 import { UploadReceiptDialog } from '@/components/expenses/upload-receipt-dialog'
 import { format } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -130,7 +131,7 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {format(new Date(expense.date), 'PPP', { locale: dateLocale })} •{' '}
+                  {format(parseLocalDate(expense.date), 'PPP', { locale: dateLocale })} •{' '}
                   {expense.currency && expense.currency !== 'SEK' ? (
                     <>
                       {formatCurrency(expense.amount, expense.currency as SupportedCurrency, 'sv-SE')} (

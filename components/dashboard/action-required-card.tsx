@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, ArrowUpRight, Check, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { format, type Locale } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import Link from 'next/link'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
@@ -47,7 +48,7 @@ function fmtFee(amount: number, currency?: string | null): string {
 
 function formatGigDate(gig: NeedsActionGig, locale: Locale): string {
   if (!gig.total_days || gig.total_days === 1) {
-    return format(new Date(gig.date), 'd MMM', { locale })
+    return format(parseLocalDate(gig.date), 'd MMM', { locale })
   }
   const start = format(new Date(gig.start_date!), 'd MMM', { locale })
   const end = format(new Date(gig.end_date!), 'd MMM', { locale })

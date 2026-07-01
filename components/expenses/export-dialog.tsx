@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { readJsonSafe } from '@/lib/http'
+import { parseLocalDate } from '@/lib/dates'
 import {
   Dialog,
   DialogContent,
@@ -65,7 +66,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       const monthMap = new Map<string, MonthSummary>()
 
       for (const expense of expenses) {
-        const date = new Date(expense.date)
+        const date = parseLocalDate(expense.date)
         const year = date.getFullYear()
         const month = date.getMonth() + 1
         const key = `${year}-${month}`

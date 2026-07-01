@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { parseLocalDate, formatYMD } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -145,9 +146,9 @@ export function CreateInvoiceDialog({
 
   // Calculate due date
   const dueDate = useMemo(() => {
-    const date = new Date(formData.invoice_date)
+    const date = parseLocalDate(formData.invoice_date)
     date.setDate(date.getDate() + parseInt(formData.payment_terms || '30'))
-    return date.toISOString().split('T')[0]
+    return formatYMD(date)
   }, [formData.invoice_date, formData.payment_terms])
 
   // Get selected client for preview
@@ -731,8 +732,8 @@ export function CreateInvoiceDialog({
                         const isSelected = selectedGigIds.has(gig.id)
                         const dateStr =
                           gig.total_days > 1 && gig.start_date && gig.end_date
-                            ? `${new Date(gig.start_date).toLocaleDateString(formatLocale)} - ${new Date(gig.end_date).toLocaleDateString(formatLocale)}`
-                            : new Date(gig.date).toLocaleDateString(formatLocale)
+                            ? `${parseLocalDate(gig.start_date).toLocaleDateString(formatLocale)} - ${parseLocalDate(gig.end_date).toLocaleDateString(formatLocale)}`
+                            : parseLocalDate(gig.date).toLocaleDateString(formatLocale)
                         return (
                           <div
                             key={gig.id}

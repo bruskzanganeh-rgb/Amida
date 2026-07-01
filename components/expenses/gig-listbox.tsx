@@ -1,9 +1,10 @@
-"use client"
+'use client'
 
 import { useState, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, Calendar, ChevronDown, Search } from 'lucide-react'
 import { format } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 
@@ -25,11 +26,7 @@ type GigListBoxProps = {
 const INITIAL_LIMIT = 10
 const LOAD_MORE_COUNT = 10
 
-export function GigListBox({
-  gigs,
-  value,
-  onValueChange,
-}: GigListBoxProps) {
+export function GigListBox({ gigs, value, onValueChange }: GigListBoxProps) {
   const t = useTranslations('expense')
   const tg = useTranslations('gig')
   const [search, setSearch] = useState('')
@@ -37,7 +34,7 @@ export function GigListBox({
   const [historiskaLimitExtra, setHistoriskaLimitExtra] = useState(0)
 
   const formatGigLabel = (gig: Gig): string => {
-    const date = format(new Date(gig.date), 'yyyy-MM-dd')
+    const date = format(parseLocalDate(gig.date), 'yyyy-MM-dd')
     const name = gig.project_name || gig.venue || t('unknownGig')
     const client = gig.client?.name
     return client ? `${date} ${name} - ${client}` : `${date} ${name}`
@@ -51,18 +48,18 @@ export function GigListBox({
     const completedStatuses = ['completed', 'invoiced', 'paid']
 
     const kommandeGigs = gigs
-      .filter(g => {
-        const gigDate = new Date(g.date)
+      .filter((g) => {
+        const gigDate = parseLocalDate(g.date)
         return gigDate >= today || upcomingStatuses.includes(g.status)
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime())
 
     const historiskaGigs = gigs
-      .filter(g => {
-        const gigDate = new Date(g.date)
+      .filter((g) => {
+        const gigDate = parseLocalDate(g.date)
         return gigDate < today && completedStatuses.includes(g.status)
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime())
 
     return { kommande: kommandeGigs, historiska: historiskaGigs }
   }, [gigs])
@@ -106,12 +103,12 @@ export function GigListBox({
           <button
             type="button"
             className={cn(
-              "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0",
-              value === 'none' && "bg-muted"
+              'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0',
+              value === 'none' && 'bg-muted',
             )}
             onClick={() => onValueChange('none')}
           >
-            <Check className={cn("h-4 w-4 shrink-0", value === 'none' ? "opacity-100" : "opacity-0")} />
+            <Check className={cn('h-4 w-4 shrink-0', value === 'none' ? 'opacity-100' : 'opacity-0')} />
             <span>{t('noGig')}</span>
           </button>
         )}
@@ -127,12 +124,12 @@ export function GigListBox({
                 type="button"
                 key={gig.id}
                 className={cn(
-                  "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0",
-                  value === gig.id && "bg-muted"
+                  'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0',
+                  value === gig.id && 'bg-muted',
                 )}
                 onClick={() => onValueChange(gig.id)}
               >
-                <Check className={cn("h-4 w-4 shrink-0", value === gig.id ? "opacity-100" : "opacity-0")} />
+                <Check className={cn('h-4 w-4 shrink-0', value === gig.id ? 'opacity-100' : 'opacity-0')} />
                 <Calendar className="h-4 w-4 shrink-0 text-blue-500" />
                 <span className="truncate">{formatGigLabel(gig)}</span>
               </button>
@@ -141,7 +138,7 @@ export function GigListBox({
               <button
                 type="button"
                 className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-blue-600 hover:bg-muted/50 transition-colors"
-                onClick={() => setKommandeLimitExtra(prev => prev + LOAD_MORE_COUNT)}
+                onClick={() => setKommandeLimitExtra((prev) => prev + LOAD_MORE_COUNT)}
               >
                 <ChevronDown className="h-4 w-4" />
                 {t('showMore', { count: Math.min(LOAD_MORE_COUNT, filteredKommande.length - visibleKommande.length) })}
@@ -161,12 +158,12 @@ export function GigListBox({
                 type="button"
                 key={gig.id}
                 className={cn(
-                  "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0",
-                  value === gig.id && "bg-muted"
+                  'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors text-left min-w-0',
+                  value === gig.id && 'bg-muted',
                 )}
                 onClick={() => onValueChange(gig.id)}
               >
-                <Check className={cn("h-4 w-4 shrink-0", value === gig.id ? "opacity-100" : "opacity-0")} />
+                <Check className={cn('h-4 w-4 shrink-0', value === gig.id ? 'opacity-100' : 'opacity-0')} />
                 <Calendar className="h-4 w-4 shrink-0 text-green-500" />
                 <span className="truncate">{formatGigLabel(gig)}</span>
               </button>
@@ -175,20 +172,18 @@ export function GigListBox({
               <button
                 type="button"
                 className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-blue-600 hover:bg-muted/50 transition-colors"
-                onClick={() => setHistoriskaLimitExtra(prev => prev + LOAD_MORE_COUNT)}
+                onClick={() => setHistoriskaLimitExtra((prev) => prev + LOAD_MORE_COUNT)}
               >
                 <ChevronDown className="h-4 w-4" />
-                {t('showMore', { count: Math.min(LOAD_MORE_COUNT, filteredHistoriska.length - visibleHistoriska.length) })}
+                {t('showMore', {
+                  count: Math.min(LOAD_MORE_COUNT, filteredHistoriska.length - visibleHistoriska.length),
+                })}
               </button>
             )}
           </div>
         )}
 
-        {noResults && (
-          <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-            {t('noGigsFound')}
-          </div>
-        )}
+        {noResults && <div className="px-3 py-4 text-sm text-muted-foreground text-center">{t('noGigsFound')}</div>}
       </div>
     </div>
   )

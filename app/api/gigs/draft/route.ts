@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getUserTimeZone } from '@/lib/company-timezone'
+import { todayInTimeZone } from '@/lib/dates'
 
 /**
  * POST /api/gigs/draft
@@ -30,7 +32,7 @@ export async function POST() {
       return NextResponse.json({ error: 'No gig types configured' }, { status: 400 })
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayInTimeZone(await getUserTimeZone(user.id))
 
     const { data: draft, error } = await supabase
       .from('gigs')

@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { ALLOWED_RECEIPT_TYPES, MAX_FILE_SIZE } from '@/lib/upload/file-validation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { yearFromDateString } from '@/lib/dates'
 import { checkStorageQuota } from '@/lib/usage'
 
 type Params = { params: Promise<{ id: string }> }
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
       if (!file) return apiError('No file uploaded. Send multipart/form-data with field "file".', 400)
 
-      if (!ALLOWED_RECEIPT_TYPES.includes(file.type as typeof ALLOWED_RECEIPT_TYPES[number])) {
+      if (!ALLOWED_RECEIPT_TYPES.includes(file.type as (typeof ALLOWED_RECEIPT_TYPES)[number])) {
         return apiError('Invalid file type. Use PDF or image (JPEG, PNG, WebP, GIF).', 400)
       }
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       fileExt = file.name.split('.').pop() || 'jpg'
     } else {
       const rawType = contentType.split(';')[0].trim()
-      if (!ALLOWED_RECEIPT_TYPES.includes(rawType as typeof ALLOWED_RECEIPT_TYPES[number])) {
+      if (!ALLOWED_RECEIPT_TYPES.includes(rawType as (typeof ALLOWED_RECEIPT_TYPES)[number])) {
         return apiError('Invalid content type. Use multipart/form-data or raw binary with correct Content-Type.', 400)
       }
 
@@ -111,7 +112,13 @@ export async function POST(request: NextRequest, { params }: Params) {
 
       fileBuffer = Buffer.from(arrayBuffer)
       fileType = rawType
-      const extMap: Record<string, string> = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+      const extMap: Record<string, string> = {
+        'application/pdf': 'pdf',
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+      }
       fileExt = extMap[rawType] || 'jpg'
     }
 
@@ -139,7 +146,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // Upload new file
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-    const year = new Date(expense.date).getFullYear()
+    const year = yearFromDateString(expense.date)
     const filePath = `receipts/${year}/${fileName}`
 
     const { error: uploadError } = await supabase.storage
@@ -158,9 +165,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     if (updateError) return apiError('Could not update expense', 500)
 
-    const { data: signedData } = await supabase.storage
-      .from('expenses')
-      .createSignedUrl(filePath, 3600)
+    const { data: signedData } = await supabase.storage.from('expenses').createSignedUrl(filePath, 3600)
 
     return apiSuccess({
       url: signedData?.signedUrl || urlData.publicUrl,

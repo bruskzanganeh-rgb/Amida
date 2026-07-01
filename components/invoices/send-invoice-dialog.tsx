@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Mail, Receipt, FileText, ExternalLink, FileCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { parseLocalDate } from '@/lib/dates'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { getSignedUrl, type GigAttachment } from '@/lib/supabase/storage'
@@ -88,7 +89,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
         t('emailDefaultBody', {
           number: invoice.invoice_number,
           total: `${invoice.total.toLocaleString(formatLocale)} ${currencyLabel}`,
-          dueDate: format(new Date(invoice.due_date), 'PPP', { locale: dateLocale }),
+          dueDate: format(parseLocalDate(invoice.due_date), 'PPP', { locale: dateLocale }),
           company: companyName,
         }),
       )
@@ -365,7 +366,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(receipt.date), 'd MMM yyyy', { locale: dateLocale })} •{' '}
+                          {format(parseLocalDate(receipt.date), 'd MMM yyyy', { locale: dateLocale })} •{' '}
                           {(receipt.amount_base || receipt.amount).toLocaleString(formatLocale)} {baseCurrencySymbol}
                         </p>
                       </div>

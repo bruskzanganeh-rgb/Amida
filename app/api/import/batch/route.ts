@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRateServer, type SupportedCurrency } from '@/lib/currency/exchange'
+import { getUserTimeZone } from '@/lib/company-timezone'
+import { todayInTimeZone } from '@/lib/dates'
 
 /** Convert amount to the company's base currency. For future dates, uses today's rate. */
 async function toBase(amount: number, currency: string, baseCurrency: string, date: string | null): Promise<number> {
@@ -185,6 +187,10 @@ export async function POST(request: NextRequest) {
       if (companyRow?.base_currency) baseCurrency = companyRow.base_currency
     }
 
+    // Local "today" in the user's timezone, used as a fallback date for
+    // imported rows that lack one (server runs in UTC, which can be a day off).
+    const todayLocal = todayInTimeZone(await getUserTimeZone(user.id))
+
     const results: ImportResult[] = []
 
     for (const fileMeta of metadata) {
@@ -265,8 +271,8 @@ export async function POST(request: NextRequest) {
         const fileExt = file.name.split('.').pop() || 'pdf'
         const year =
           fileMeta.type === 'expense'
-            ? (fileMeta.data as ExpenseData).date?.substring(0, 4) || new Date().getFullYear().toString()
-            : (fileMeta.data as InvoiceData).invoiceDate?.substring(0, 4) || new Date().getFullYear().toString()
+            ? (fileMeta.data as ExpenseData).date?.substring(0, 4) || todayLocal.slice(0, 4)
+            : (fileMeta.data as InvoiceData).invoiceDate?.substring(0, 4) || todayLocal.slice(0, 4)
 
         const storagePath =
           fileMeta.type === 'expense'
@@ -331,7 +337,7 @@ export async function POST(request: NextRequest) {
           const { data: expense, error: insertError } = await supabase
             .from('expenses')
             .insert({
-              date: expenseData.date || new Date().toISOString().split('T')[0],
+              date: expenseData.date || todayLocal,
               supplier: expenseData.supplier,
               subtotal: expenseData.subtotal,
               vat_rate: expenseData.vatRate,
@@ -361,7 +367,7 @@ export async function POST(request: NextRequest) {
           if (expense) {
             existingExpenses?.push({
               id: expense.id,
-              date: expenseData.date || new Date().toISOString().split('T')[0],
+              date: expenseData.date || todayLocal,
               supplier: expenseData.supplier,
               amount: expenseData.total,
               category: expenseData.category || 'other',
@@ -456,7 +462,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Använd dagens datum om fakturadatum saknas
-          const invoiceDate = invoiceData.invoiceDate || new Date().toISOString().split('T')[0]
+          const invoiceDate = invoiceData.invoiceDate || todayLocal
 
           // Beräkna förfallodatum om det saknas (fakturadatum + 30 dagar)
           let dueDate = invoiceData.dueDate

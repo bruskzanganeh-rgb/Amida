@@ -72,7 +72,8 @@
     "declined": "Avböjt",
     "completed": "Genomfört",
     "invoiced": "Fakturerat",
-    "paid": "Betalt"
+    "paid": "Betalt",
+    "cancelled": "Inställt"
   },
   "gig": {
     "newGig": "Nytt event",
@@ -120,6 +121,12 @@
     "noHistoryHint": "Genomförda och betalda event visas här",
     "noDeclined": "Inga avböjda event",
     "noDeclinedHint": "Event du tackat nej till visas här",
+    "cancelled": "Inställda",
+    "noCancelled": "Inga inställda event",
+    "noCancelledHint": "Event som ställts in visas här",
+    "cancelGig": "Ställ in eventet",
+    "cancelConfirmTitle": "Ställ in event",
+    "cancelConfirmDescription": "Eventet markeras som inställt. Fortsätta?",
     "days": "dagar",
     "notSpecified": "Ej angiven",
     "notSet": "Ej angivet",

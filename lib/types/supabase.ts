@@ -1708,7 +1708,16 @@ export type Database = {
       }
     }
     Enums: {
-      gig_status: 'tentative' | 'pending' | 'accepted' | 'declined' | 'completed' | 'invoiced' | 'paid' | 'draft'
+      gig_status:
+        | 'tentative'
+        | 'pending'
+        | 'accepted'
+        | 'declined'
+        | 'completed'
+        | 'invoiced'
+        | 'paid'
+        | 'draft'
+        | 'cancelled'
       invoice_status: 'draft' | 'sent' | 'paid' | 'overdue'
       subscription_plan: 'free' | 'pro' | 'team'
       subscription_status: 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete'

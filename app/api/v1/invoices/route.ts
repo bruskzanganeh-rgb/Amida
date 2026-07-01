@@ -4,6 +4,8 @@ import { apiSuccess, apiError, apiValidationError } from '@/lib/api-response'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createInvoiceSchema } from '@/lib/schemas/invoice'
+import { getUserTimeZone } from '@/lib/company-timezone'
+import { todayInTimeZone, parseLocalDate, formatYMD } from '@/lib/dates'
 import type { Database } from '@/lib/types/supabase'
 
 type InvoiceStatus = Database['public']['Enums']['invoice_status']
@@ -93,8 +95,11 @@ export async function POST(request: NextRequest) {
     const vatAmount = Math.round(subtotal * (parsed.data.vat_rate / 100) * 100) / 100
     const total = Math.round((subtotal + vatAmount) * 100) / 100
 
-    const invoiceDate = new Date().toISOString().split('T')[0]
-    const dueDate = new Date(Date.now() + parsed.data.payment_terms * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    const tz = await getUserTimeZone(auth.userId)
+    const invoiceDate = todayInTimeZone(tz)
+    const dueDateObj = parseLocalDate(invoiceDate)
+    dueDateObj.setDate(dueDateObj.getDate() + parsed.data.payment_terms)
+    const dueDate = formatYMD(dueDateObj)
 
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')

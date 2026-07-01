@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
       )
       .neq('status', 'declined')
       .neq('status', 'draft')
+      .neq('status', 'cancelled')
       .order('date', { ascending: true })
 
     if (scope === 'shared' && membership) {
@@ -257,6 +258,7 @@ function getStatusLabel(status: string, locale: string): string {
     completed: 'Genomfört',
     invoiced: 'Fakturerat',
     paid: 'Betalt',
+    cancelled: 'Inställt',
   }
   const en: Record<string, string> = {
     tentative: 'Tentative',
@@ -266,6 +268,7 @@ function getStatusLabel(status: string, locale: string): string {
     completed: 'Completed',
     invoiced: 'Invoiced',
     paid: 'Paid',
+    cancelled: 'Cancelled',
   }
   const labels = locale === 'en' ? en : sv
   return labels[status] || status
