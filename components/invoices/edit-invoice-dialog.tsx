@@ -230,6 +230,12 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
     setDeleting(true)
 
     try {
+      // Collect linked gigs BEFORE deleting so we can revert their status —
+      // otherwise a gig (incl. an auto "Övrigt" gig) stays 'invoiced' forever
+      // and keeps counting as income with no backing invoice.
+      const { data: linkedGigs } = await supabase.from('invoice_gigs').select('gig_id').eq('invoice_id', invoice.id)
+      const gigIds = (linkedGigs || []).map((g: { gig_id: string }) => g.gig_id)
+
       // Delete invoice_lines first
       await supabase.from('invoice_lines').delete().eq('invoice_id', invoice.id)
 
@@ -237,9 +243,16 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
 
       if (error) throw error
 
+      // Revert linked gigs back to completed so they can be re-invoiced and stop
+      // counting as paid/invoiced income.
+      if (gigIds.length > 0) {
+        await supabase.from('gigs').update({ status: 'completed' }).in('id', gigIds)
+      }
+
       toast.success(t('invoiceDeleted'))
       onSuccess()
       onOpenChange(false)
+      document.dispatchEvent(new Event('gig-status-changed'))
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('errorOccurred'))
     } finally {

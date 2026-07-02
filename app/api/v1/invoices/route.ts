@@ -78,16 +78,33 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient()
 
-    // Get next invoice number
-    const { data: lastInvoice } = await supabase
-      .from('invoices')
-      .select('invoice_number')
+    // Atomic, never-reused invoice number via the company counter (avoids the
+    // race + number-reuse of max+1). Fall back to max+1 only if there's no
+    // company or the RPC fails.
+    let nextNumber: number
+    const { data: membership } = await supabase
+      .from('company_members')
+      .select('company_id')
       .eq('user_id', auth.userId)
-      .order('invoice_number', { ascending: false })
       .limit(1)
       .maybeSingle()
-
-    const nextNumber = (lastInvoice?.invoice_number || 0) + 1
+    const companyId = membership?.company_id
+    if (companyId) {
+      const { data: rpcNum, error: rpcErr } = await supabase.rpc('get_next_invoice_number', { cid: companyId })
+      if (rpcErr || rpcNum == null) {
+        return apiError('Could not allocate invoice number', 500)
+      }
+      nextNumber = rpcNum as number
+    } else {
+      const { data: lastInvoice } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('user_id', auth.userId)
+        .order('invoice_number', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      nextNumber = (lastInvoice?.invoice_number || 0) + 1
+    }
 
     // Calculate totals from lines
     const lines = parsed.data.lines

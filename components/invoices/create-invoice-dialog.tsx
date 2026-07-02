@@ -128,6 +128,7 @@ export function CreateInvoiceDialog({
   const [, setCompletedGigs] = useState<Gig[]>([])
   const [gigTypes, setGigTypes] = useState<GigType[]>([])
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null)
+  const [companyId, setCompanyId] = useState<string | null>(null)
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState<number>(46)
   const [formData, setFormData] = useState({
     client_id: '',
@@ -242,6 +243,7 @@ export function CreateInvoiceDialog({
       async function loadCompanySettings() {
         const { data: membership } = await supabase.from('company_members').select('company_id').limit(1).single()
         if (membership) {
+          setCompanyId(membership.company_id)
           const { data } = await supabase
             .from('companies')
             .select(
@@ -478,13 +480,22 @@ export function CreateInvoiceDialog({
       }
     }
 
+    // Get an atomic, never-reused invoice number from the DB counter (the
+    // client-side max+1 in `nextInvoiceNumber` is only for the preview and is
+    // race-prone / can reuse a deleted number). Fall back to it if the RPC fails.
+    let invoiceNumber = nextInvoiceNumber
+    if (companyId) {
+      const { data: rpcNum, error: rpcErr } = await supabase.rpc('get_next_invoice_number', { cid: companyId })
+      if (!rpcErr && rpcNum != null) invoiceNumber = rpcNum as number
+    }
+
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert([
         {
           client_id: formData.client_id,
           gig_id: null,
-          invoice_number: nextInvoiceNumber,
+          invoice_number: invoiceNumber,
           invoice_date: formData.invoice_date,
           due_date: dueDate,
           subtotal,

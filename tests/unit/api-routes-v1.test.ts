@@ -447,29 +447,23 @@ describe('POST /api/v1/invoices', () => {
       },
     } as never)
 
-    let callCount = 0
+    let invoiceCalls = 0
     vi.mocked(createAdminClient).mockReturnValue({
       from: vi.fn().mockImplementation((table: string) => {
-        // Timezone lookup (getUserTimeZone) — independent of the invoice flow.
-        if (table === 'company_settings') {
-          return chainMock({ timezone: 'Europe/Stockholm' })
+        if (table === 'company_settings') return chainMock({ timezone: 'Europe/Stockholm' })
+        if (table === 'company_members') return chainMock({ company_id: 'comp-1' })
+        if (table === 'invoice_lines') return { insert: vi.fn().mockResolvedValue({ error: null }) }
+        if (table === 'invoices') {
+          invoiceCalls++
+          // 1st: insert invoice, 2nd: fetch full invoice
+          return invoiceCalls === 1
+            ? chainMock({ id: 'inv-new', invoice_number: 43 })
+            : chainMock({ id: 'inv-new', total: 1250 })
         }
-        callCount++
-        if (callCount === 1) {
-          // last invoice number
-          return chainMock({ invoice_number: 42 })
-        }
-        if (callCount === 2) {
-          // insert invoice
-          return chainMock({ id: 'inv-new', invoice_number: 43 })
-        }
-        if (callCount === 3) {
-          // insert lines
-          return { insert: vi.fn().mockResolvedValue({ error: null }) }
-        }
-        // full invoice fetch
-        return chainMock({ id: 'inv-new', total: 1250 })
+        return chainMock(null)
       }),
+      // Atomic invoice-number allocation
+      rpc: vi.fn().mockResolvedValue({ data: 43, error: null }),
     } as never)
 
     const { POST } = await import('@/app/api/v1/invoices/route')
