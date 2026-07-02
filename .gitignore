@@ -56,3 +56,5 @@ valuation-report.html
 # Local business docs (do not commit)
 Amida — Business & Valuation Overview.pdf
 *.Valuation*.pdf
+
+supabase/.temp/
