@@ -5,6 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { EXPENSE_CATEGORIES } from '@/lib/expenses/categories'
+import { getRateServer, type SupportedCurrency } from '@/lib/currency/exchange'
 
 const createExpenseSchema = z.object({
   date: z.string().min(1),
@@ -79,9 +80,42 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient()
+
+    // Compute amount_base in the company base currency, otherwise foreign-currency
+    // expenses store null base and get summed as base currency in dashboards.
+    let baseCurrency = 'SEK'
+    const { data: membership } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', auth.userId)
+      .limit(1)
+      .maybeSingle()
+    if (membership?.company_id) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('base_currency')
+        .eq('id', membership.company_id)
+        .single()
+      if (company?.base_currency) baseCurrency = company.base_currency
+    }
+    const currency = parsed.data.currency || baseCurrency
+    let amount_base = parsed.data.amount
+    if (currency !== baseCurrency) {
+      try {
+        const rate = await getRateServer(
+          currency as SupportedCurrency,
+          baseCurrency as SupportedCurrency,
+          parsed.data.date.slice(0, 10),
+        )
+        amount_base = Math.round(parsed.data.amount * rate * 100) / 100
+      } catch {
+        amount_base = parsed.data.amount
+      }
+    }
+
     const { data, error } = await supabase
       .from('expenses')
-      .insert({ ...parsed.data, user_id: auth.userId })
+      .insert({ ...parsed.data, currency, amount_base, user_id: auth.userId })
       .select()
       .single()
 

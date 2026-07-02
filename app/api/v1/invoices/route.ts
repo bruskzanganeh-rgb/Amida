@@ -118,6 +118,14 @@ export async function POST(request: NextRequest) {
     dueDateObj.setDate(dueDateObj.getDate() + parsed.data.payment_terms)
     const dueDate = formatYMD(dueDateObj)
 
+    // v1 invoices are created in the company base currency; set the base-currency
+    // columns explicitly so they're never null (else totals mis-sum as raw).
+    let baseCurrency = 'SEK'
+    if (companyId) {
+      const { data: company } = await supabase.from('companies').select('base_currency').eq('id', companyId).single()
+      if (company?.base_currency) baseCurrency = company.base_currency
+    }
+
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
@@ -130,6 +138,9 @@ export async function POST(request: NextRequest) {
         vat_rate: parsed.data.vat_rate,
         vat_amount: vatAmount,
         total,
+        total_base: total,
+        currency: baseCurrency,
+        exchange_rate: 1,
         status: 'draft',
       })
       .select()

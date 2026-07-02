@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { validateCodeSchema } from '@/lib/schemas/auth'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  // Unauthenticated endpoint — rate-limit per IP to stop code brute-forcing.
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  if (!rateLimit(`validate-code:${ip}`, 10, 60_000).success) return rateLimitResponse()
+
   const body = await request.json()
   const parsed = validateCodeSchema.safeParse(body)
   if (!parsed.success) {
@@ -11,10 +16,7 @@ export async function POST(request: Request) {
 
   const { code } = parsed.data
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
   const { data, error } = await supabase
     .from('invitation_codes')

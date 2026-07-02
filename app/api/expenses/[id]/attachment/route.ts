@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkStorageQuota } from '@/lib/usage'
 import { yearFromDateString } from '@/lib/dates'
+import { isValidReceiptFile } from '@/lib/upload/file-validation'
 
 // Extrahera filsökväg från public URL
 function extractFilePath(attachmentUrl: string): string | null {
@@ -90,6 +91,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!file) {
       return NextResponse.json({ error: 'No file attached' }, { status: 400 })
+    }
+
+    // Validate type & size (this route previously skipped it, unlike its siblings)
+    const validation = isValidReceiptFile(file)
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error || 'Invalid file' }, { status: 400 })
     }
 
     // Check storage quota

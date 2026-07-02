@@ -1,11 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { authSetupSchema } from '@/lib/schemas/auth'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // Uses service_role key to bypass RLS — needed because after signUp()
 // there's no session yet (email confirmation required), so auth.uid() is NULL.
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    if (!rateLimit(`auth-setup:${ip}`, 10, 60_000).success) return rateLimitResponse()
+
     const body = await request.json().catch(() => ({}))
     const parsed = authSetupSchema.safeParse(body)
     if (!parsed.success) {
@@ -54,13 +58,20 @@ export async function POST(request: Request) {
     if (invitation_token) {
       const { data: invitation } = await supabase
         .from('company_invitations')
-        .select('id, company_id, used_by, expires_at')
+        .select('id, company_id, used_by, expires_at, invited_email')
         .eq('token', invitation_token)
         .single()
+
+      // Bind the token to the person it was sent to: the authenticated user's
+      // email must match invited_email. Otherwise a valid token could be used to
+      // attach an arbitrary victim user_id to the inviter's company.
+      const emailMatches =
+        !!invitation?.invited_email && invitation.invited_email.toLowerCase() === (user.user.email || '').toLowerCase()
 
       if (
         invitation &&
         !invitation.used_by &&
+        emailMatches &&
         (!invitation.expires_at || new Date(invitation.expires_at) >= new Date())
       ) {
         // Add user as company member
