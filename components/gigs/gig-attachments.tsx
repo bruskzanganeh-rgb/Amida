@@ -268,6 +268,8 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
             variant="outline"
             size="icon"
             className="h-7 w-7"
+            aria-label={tc('upload')}
+            title={tc('upload')}
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || uploading}
           >

@@ -104,6 +104,8 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
           variant="outline"
           size="icon"
           className="h-7 w-7"
+          aria-label={t('addReceipt')}
+          title={t('addReceipt')}
           onClick={() => setShowUploadDialog(true)}
           disabled={disabled}
         >

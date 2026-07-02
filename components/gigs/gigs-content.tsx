@@ -865,7 +865,12 @@ export default function GigsPage() {
                     {t('cancelled')} ({sortedCancelled.length})
                   </TabsTrigger>
                 </TabsList>
-                <Button onClick={() => setShowCreateDialog(true)} size="sm" className="shrink-0">
+                <Button
+                  onClick={() => setShowCreateDialog(true)}
+                  size="sm"
+                  className="shrink-0"
+                  aria-label={t('newGig')}
+                >
                   <Plus className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">{t('newGig')}</span>
                 </Button>
@@ -2351,6 +2356,8 @@ export default function GigsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 rounded-full"
+                            aria-label={tc('close')}
+                            title={tc('close')}
                             onClick={() => setSelectedGig(null)}
                           >
                             <X className="h-3.5 w-3.5 text-muted-foreground" />
@@ -2684,6 +2691,8 @@ export default function GigsPage() {
                           variant="ghost"
                           size="icon"
                           className="rounded-full hover:bg-muted"
+                          aria-label={tc('edit')}
+                          title={tc('edit')}
                           onClick={() => setEditingGig(selectedGig)}
                         >
                           <Edit className="h-4 w-4 text-muted-foreground" />
@@ -2692,9 +2701,11 @@ export default function GigsPage() {
                           variant="ghost"
                           size="icon"
                           className="rounded-full hover:bg-muted"
+                          aria-label={tc('close')}
+                          title={tc('close')}
                           onClick={() => setSelectedGig(null)}
                         >
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
                         </Button>
                       </div>
                     </div>
