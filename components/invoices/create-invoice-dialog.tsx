@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { parseLocalDate, formatYMD } from '@/lib/dates'
+import { parseLocalDate, formatYMD, localToday } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -132,7 +132,7 @@ export function CreateInvoiceDialog({
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState<number>(46)
   const [formData, setFormData] = useState({
     client_id: '',
-    invoice_date: new Date().toISOString().split('T')[0],
+    invoice_date: localToday(),
     payment_terms: '30',
     reference_person: '',
     notes: '',
@@ -282,7 +282,7 @@ export function CreateInvoiceDialog({
       const invoiceLang = client?.invoice_language || 'sv'
       // Format dates matching the PDF output: sv → yyyy-MM-dd, en → dd/MM/yyyy
       const fmtDate = (dateStr: string) => {
-        const d = new Date(dateStr)
+        const d = parseLocalDate(dateStr)
         const y = d.getFullYear()
         const m = String(d.getMonth() + 1).padStart(2, '0')
         const day = String(d.getDate()).padStart(2, '0')
@@ -337,7 +337,7 @@ export function CreateInvoiceDialog({
 
     setFormData({
       client_id: firstGig.client_id,
-      invoice_date: new Date().toISOString().split('T')[0],
+      invoice_date: localToday(),
       payment_terms: firstGig.client_payment_terms.toString(),
       reference_person: client?.reference_person || '',
       notes: combinedNotes,
@@ -623,7 +623,7 @@ export function CreateInvoiceDialog({
     setLoading(false)
     setFormData({
       client_id: '',
-      invoice_date: new Date().toISOString().split('T')[0],
+      invoice_date: localToday(),
       payment_terms: '30',
       reference_person: '',
       notes: '',

@@ -235,8 +235,8 @@ export default function ExpensesTab() {
       }
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: t('exportFailed') }))
-        throw new Error(err.error || t('exportFailed'))
+        const err = await readJsonSafe<{ error?: string }>(response)
+        throw new Error(err?.error || t('exportFailed'))
       }
 
       const blob = await response.blob()

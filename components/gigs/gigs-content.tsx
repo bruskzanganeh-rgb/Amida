@@ -47,7 +47,7 @@ import { GigDialog } from '@/components/gigs/gig-dialog'
 import { UploadReceiptDialog } from '@/components/expenses/upload-receipt-dialog'
 import { format } from 'date-fns'
 import type { Locale } from 'date-fns'
-import { parseLocalDate } from '@/lib/dates'
+import { parseLocalDate, localToday } from '@/lib/dates'
 import { useDateLocale } from '@/lib/hooks/use-date-locale'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { toast } from 'sonner'
@@ -228,8 +228,8 @@ function getDeadlineStatus(
 }
 
 function gigHasPassed(gig: Gig): boolean {
-  const lastDate = gig.end_date || gig.date
-  const today = new Date().toISOString().split('T')[0]
+  const lastDate = (gig.end_date || gig.date).slice(0, 10)
+  const today = localToday()
   return lastDate < today
 }
 

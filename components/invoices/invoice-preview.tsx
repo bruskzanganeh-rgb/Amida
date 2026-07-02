@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
+import { parseLocalDate } from '@/lib/dates'
 
 // Premium color palette (same as PDF)
 const colors = {
@@ -171,7 +172,7 @@ export function InvoicePreview({
 
   function formatDate(dateStr: string): string {
     if (!dateStr) return '-'
-    const date = new Date(dateStr)
+    const date = parseLocalDate(dateStr)
     if (isNaN(date.getTime())) return dateStr
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')

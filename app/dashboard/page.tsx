@@ -23,7 +23,7 @@ import { UsageSummary } from '@/components/dashboard/usage-summary'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
-import { localToday } from '@/lib/dates'
+import { localToday, parseLocalDate } from '@/lib/dates'
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" />
                         <span className="font-mono text-muted-foreground shrink-0 w-14">
-                          {format(new Date(gig.date), 'd MMM', { locale: dateLocale })}
+                          {format(parseLocalDate(gig.date), 'd MMM', { locale: dateLocale })}
                         </span>
                         <span className="font-medium truncate flex-1">
                           {gig.project_name || gig.client?.name || gig.gig_type?.name || '—'}
