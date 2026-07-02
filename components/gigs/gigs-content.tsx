@@ -2655,10 +2655,10 @@ export default function GigsPage() {
                           style={{ backgroundColor: selectedGig.gig_type.color || '#6366f1' }}
                         />
                         <div className="space-y-0.5">
-                          <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+                          <h2 className="text-xl font-semibold tracking-tight text-foreground">
                             {selectedGig.project_name || selectedGig.gig_type.name}
                           </h2>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {selectedGig.client?.name || <span className="italic">{t('clientNotSpecified')}</span>}
                           </p>
                           <div className="flex items-center gap-2 pt-0.5">
@@ -2683,15 +2683,15 @@ export default function GigsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="rounded-full hover:bg-gray-100"
+                          className="rounded-full hover:bg-muted"
                           onClick={() => setEditingGig(selectedGig)}
                         >
-                          <Edit className="h-4 w-4 text-gray-500" />
+                          <Edit className="h-4 w-4 text-muted-foreground" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="rounded-full hover:bg-gray-100"
+                          className="rounded-full hover:bg-muted"
                           onClick={() => setSelectedGig(null)}
                         >
                           <ChevronDown className="h-5 w-5 text-gray-400" />
@@ -2723,7 +2723,7 @@ export default function GigsPage() {
                                   {t('venue')}
                                 </p>
                               </div>
-                              <p className="text-sm font-medium text-gray-900">{selectedGig.venue}</p>
+                              <p className="text-sm font-medium text-foreground">{selectedGig.venue}</p>
                             </div>
                           ) : (
                             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -2752,10 +2752,10 @@ export default function GigsPage() {
                                       <span className="text-[8px] font-medium text-gray-400 uppercase">
                                         {format(date, 'EEE', { locale: dateLocale })}
                                       </span>
-                                      <span className="text-sm font-bold text-gray-900">
+                                      <span className="text-sm font-bold text-foreground">
                                         {format(date, 'd', { locale: dateLocale })}
                                       </span>
-                                      <span className="text-[8px] font-medium text-gray-500">
+                                      <span className="text-[8px] font-medium text-muted-foreground">
                                         {format(date, 'MMM', { locale: dateLocale })}
                                       </span>
                                     </div>
@@ -2763,7 +2763,7 @@ export default function GigsPage() {
                                 })}
                             </div>
                           ) : (
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-foreground">
                               {formatGigDates(selectedGig, dateLocale)}
                             </p>
                           )}
@@ -2771,9 +2771,9 @@ export default function GigsPage() {
                       </div>
                     </div>
                     {/* Footer */}
-                    <div className="py-3 pb-5 border-t border-gray-100 flex items-center gap-2">
+                    <div className="py-3 pb-5 border-t border-border flex items-center gap-2">
                       <Button
-                        className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg px-4 h-9 text-sm shadow-lg shadow-gray-900/10"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 h-9 text-sm shadow-lg shadow-black/10"
                         onClick={() => setEditingGig(selectedGig)}
                       >
                         <Edit className="h-3.5 w-3.5 mr-1.5" />
