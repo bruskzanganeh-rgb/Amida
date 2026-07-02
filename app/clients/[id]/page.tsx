@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/stat-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -183,59 +184,30 @@ export default function ClientDetailPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {approx}
-              {totalRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
-            </div>
-            <p className="text-xs text-muted-foreground">{t('allPaidSentInvoices')}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('unpaidInvoices')}</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {approx}
-              {unpaidAmount.toLocaleString(formatLocale)} {baseCurrencySymbol}
-            </div>
-            <p className="text-xs text-muted-foreground">{t('awaitingPayment')}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('invoiceCount')}</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{invoiceCount}</div>
-            <p className="text-xs text-muted-foreground">{t('totalCount')}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('latestInvoice')}</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {lastInvoiceDate ? format(new Date(lastInvoiceDate), 'MMM yyyy', { locale: dateLocale }) : '-'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {lastInvoiceDate ? format(new Date(lastInvoiceDate), 'PPP', { locale: dateLocale }) : t('noInvoices')}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label={t('totalRevenue')}
+          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+          value={`${approx}${totalRevenue.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+          subtext={t('allPaidSentInvoices')}
+        />
+        <StatCard
+          label={t('unpaidInvoices')}
+          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          value={`${approx}${unpaidAmount.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+          subtext={t('awaitingPayment')}
+        />
+        <StatCard
+          label={t('invoiceCount')}
+          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+          value={invoiceCount}
+          subtext={t('totalCount')}
+        />
+        <StatCard
+          label={t('latestInvoice')}
+          icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+          value={lastInvoiceDate ? format(new Date(lastInvoiceDate), 'MMM yyyy', { locale: dateLocale }) : '-'}
+          subtext={lastInvoiceDate ? format(new Date(lastInvoiceDate), 'PPP', { locale: dateLocale }) : t('noInvoices')}
+        />
       </div>
 
       {/* Invoice chart */}

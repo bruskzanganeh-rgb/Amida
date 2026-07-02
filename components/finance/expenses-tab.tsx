@@ -13,6 +13,7 @@ import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { readJsonSafe } from '@/lib/http'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -520,26 +521,20 @@ export default function ExpensesTab() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:shrink-0">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {yearFilter !== 'all' ||
-                categoryFilter !== 'all' ||
-                supplierFilter !== 'all' ||
-                gigFilter !== 'all' ||
-                memberFilter !== 'all'
-                  ? `${t('filteredExpenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
-                  : shouldFilter
-                    ? t('myTotalExpenses')
-                    : t('totalExpenses')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {totalExpenses.toLocaleString(formatLocale)} {baseCurrencySymbol}
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label={
+              yearFilter !== 'all' ||
+              categoryFilter !== 'all' ||
+              supplierFilter !== 'all' ||
+              gigFilter !== 'all' ||
+              memberFilter !== 'all'
+                ? `${t('filteredExpenses')} ${yearFilter !== 'all' ? yearFilter : ''} (${filteredExpenses.length} / ${expenses.length})`
+                : shouldFilter
+                  ? t('myTotalExpenses')
+                  : t('totalExpenses')
+            }
+            value={`${totalExpenses.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+          />
 
           {yearlyData.length > 0 && (
             <Card>
