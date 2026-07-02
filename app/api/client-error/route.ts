@@ -22,8 +22,7 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser()
 
     const admin = createAdminClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from as any)('client_errors').insert({
+    await admin.from('client_errors').insert({
       user_id: user?.id || null,
       error_message: message.slice(0, 1000),
       error_stack: typeof stack === 'string' ? stack.slice(0, 5000) : null,

@@ -20,7 +20,7 @@ type Subscription = {
 type Usage = {
   invoice_count: number
   receipt_scan_count: number
-  email_send_count: number
+  email_send_count: number | null
 }
 
 type StorageQuota = {
