@@ -11,6 +11,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -560,53 +561,22 @@ export default function InvoicesTab() {
 
           return (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('invoicedYear', { year: currentYear })}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Math.round(invoicedThisYear).toLocaleString(formatLocale)} {baseCurrencySymbol}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('paidYear', { year: currentYear })}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {paidThisYear.toLocaleString(formatLocale)} {baseCurrencySymbol}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('unpaid')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {unpaidTotal.toLocaleString(formatLocale)} {baseCurrencySymbol}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('upcomingRevenue')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {upcomingRevenue.toLocaleString(formatLocale)} {baseCurrencySymbol}
-                  </div>
-                </CardContent>
-              </Card>
+              <StatCard
+                label={t('invoicedYear', { year: currentYear })}
+                value={`${Math.round(invoicedThisYear).toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+              />
+              <StatCard
+                label={t('paidYear', { year: currentYear })}
+                value={`${paidThisYear.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+              />
+              <StatCard
+                label={t('unpaid')}
+                value={`${unpaidTotal.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+              />
+              <StatCard
+                label={t('upcomingRevenue')}
+                value={`${upcomingRevenue.toLocaleString(formatLocale)} ${baseCurrencySymbol}`}
+              />
             </div>
           )
         })()}

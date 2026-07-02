@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BarChart3, TrendingUp, XCircle, Calendar, Music, CalendarClock, Wallet, HelpCircle } from 'lucide-react'
@@ -342,59 +343,30 @@ export function AnalyticsContent() {
 
           {/* History */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('completedRevenue')}</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {totalRevenue.toLocaleString(formatLocale)} {currencySymbol}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t('completedGigsCount', { count: completedGigs.length })}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('completedDays')}</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {totalDays} {tc('days')}
-                </div>
-                <p className="text-xs text-muted-foreground">{t('totalDaysCount')}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{tStatus('declined')}</CardTitle>
-                <XCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{t('declinedCount', { count: declinedGigs.length })}</div>
-                <p className="text-xs text-muted-foreground">
-                  {declinedAmount.toLocaleString(formatLocale)} {currencySymbol} {tc('total').toLowerCase()}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('avgPerDay')}</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.round(avgPerDay).toLocaleString(formatLocale)} {currencySymbol}
-                </div>
-                <p className="text-xs text-muted-foreground">{t('avgPerWorkDay')}</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              label={t('completedRevenue')}
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+              value={`${totalRevenue.toLocaleString(formatLocale)} ${currencySymbol}`}
+              subtext={t('completedGigsCount', { count: completedGigs.length })}
+            />
+            <StatCard
+              label={t('completedDays')}
+              icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+              value={`${totalDays} ${tc('days')}`}
+              subtext={t('totalDaysCount')}
+            />
+            <StatCard
+              label={tStatus('declined')}
+              icon={<XCircle className="h-4 w-4 text-muted-foreground" />}
+              value={t('declinedCount', { count: declinedGigs.length })}
+              subtext={`${declinedAmount.toLocaleString(formatLocale)} ${currencySymbol} ${tc('total').toLowerCase()}`}
+            />
+            <StatCard
+              label={t('avgPerDay')}
+              icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
+              value={`${Math.round(avgPerDay).toLocaleString(formatLocale)} ${currencySymbol}`}
+              subtext={t('avgPerWorkDay')}
+            />
           </div>
 
           {/* Best paying gigs per day */}
