@@ -618,7 +618,7 @@ export function GigDialog({
         const res = await fetch('/api/gigs/scan-schedule', { method: 'POST', body: formDataUpload })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          toast.error(body.error || `Scan failed (${res.status})`)
+          toast.error(body.error || tToast('scheduleScanFailed'))
           continue
         }
 
@@ -675,10 +675,10 @@ export function GigDialog({
 
       if (okCount > 0) {
         setScheduleFiles((prev) => [...prev, ...files])
-        toast.success(tToast('scheduleScanned') || 'Schema importerat')
+        toast.success(tToast('scheduleScanned'))
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Okänt fel'
+      const message = err instanceof Error ? err.message : tToast('unknownError')
       console.error('Schedule scan error:', message)
       toast.error(message)
     } finally {

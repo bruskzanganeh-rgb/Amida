@@ -567,7 +567,7 @@ export function UploadReceiptDialog({
                   list="supplier-suggestions"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  placeholder="T.ex. SJ, ICA, Spotify"
+                  placeholder={t('supplierPlaceholder')}
                 />
                 {existingSuppliers.length > 0 && (
                   <datalist id="supplier-suggestions">
