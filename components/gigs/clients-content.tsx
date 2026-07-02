@@ -170,6 +170,8 @@ export default function ClientsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
+                            aria-label={tc('edit')}
+                            title={tc('edit')}
                             onClick={() => setEditingClient(client)}
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -178,6 +180,8 @@ export default function ClientsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
+                            aria-label={tc('delete')}
+                            title={tc('delete')}
                             onClick={() => confirmDelete(client.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -240,10 +244,22 @@ export default function ClientsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => setEditingClient(client)}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label={tc('edit')}
+                                title={tc('edit')}
+                                onClick={() => setEditingClient(client)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => confirmDelete(client.id)}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label={tc('delete')}
+                                title={tc('delete')}
+                                onClick={() => confirmDelete(client.id)}
+                              >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>

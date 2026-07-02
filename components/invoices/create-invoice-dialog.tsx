@@ -892,6 +892,8 @@ export function CreateInvoiceDialog({
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9 shrink-0"
+                            aria-label={tc('delete')}
+                            title={tc('delete')}
                             onClick={() => removeLine(index)}
                           >
                             <Trash2 className="h-4 w-4" />

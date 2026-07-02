@@ -436,10 +436,24 @@ export default function CalendarPage() {
                   <Button variant="outline" size="sm" className="h-8" onClick={goToToday}>
                     {t('today')}
                   </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={previous}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label={tc('previous')}
+                    title={tc('previous')}
+                    onClick={previous}
+                  >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={next}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label={tc('next')}
+                    title={tc('next')}
+                    onClick={next}
+                  >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
