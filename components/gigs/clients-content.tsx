@@ -138,6 +138,11 @@ export default function ClientsPage() {
               <p>{t('noClientsYet')}</p>
               <p className="text-sm">{t('noClientsHint')}</p>
             </div>
+          ) : filteredClients.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>{tc('noResults')}</p>
+            </div>
           ) : (
             <>
               {/* Mobile card view */}
