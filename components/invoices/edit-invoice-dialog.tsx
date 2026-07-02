@@ -93,6 +93,10 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
   const [vatAmountStr, setVatAmountStr] = useState('')
   const [totalStr, setTotalStr] = useState('')
   const [invoiceNumberStr, setInvoiceNumberStr] = useState('')
+  // Invoices with lines at different VAT rates can't be recomputed from a single
+  // rate — doing so would overwrite the correct per-line VAT. Detect it and treat
+  // net/VAT as independent inputs instead.
+  const [hasMixedVat, setHasMixedVat] = useState(false)
 
   const statuses = [
     { value: 'draft', label: t('status.draft') },
@@ -121,6 +125,16 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
       setVatAmountStr(invoice.vat_amount ? String(invoice.vat_amount) : '')
       setTotalStr(invoice.total ? String(invoice.total) : '')
       setInvoiceNumberStr(String(invoice.invoice_number ?? ''))
+      // Detect mixed VAT rates across the invoice's lines.
+      setHasMixedVat(false)
+      supabase
+        .from('invoice_lines')
+        .select('vat_rate')
+        .eq('invoice_id', invoice.id)
+        .then(({ data }) => {
+          const rates = new Set((data || []).map((l) => l.vat_rate).filter((r) => r != null))
+          setHasMixedVat(rates.size > 1)
+        })
       const hasSentPdf = !!invoice.pdf_url
       const hasOriginalPdf = !!invoice.original_pdf_url
       setHasPdf(hasSentPdf || hasOriginalPdf)
@@ -134,6 +148,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
         setPdfSource(null)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoice, open])
 
   // Clear state when dialog closes
@@ -391,7 +406,11 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                       onChange={(e) => {
                         setSubtotalStr(e.target.value)
                         const subtotal = parseFloat(e.target.value) || 0
-                        const vat_amount = round2((subtotal * formData.vat_rate) / 100)
+                        // Mixed VAT: keep the existing VAT amount (can't derive from
+                        // one rate); otherwise recompute from the single rate.
+                        const vat_amount = hasMixedVat
+                          ? formData.vat_amount
+                          : round2((subtotal * formData.vat_rate) / 100)
                         const total = round2(subtotal + vat_amount)
                         setVatAmountStr(String(vat_amount))
                         setTotalStr(String(total))
@@ -416,29 +435,36 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="vat_rate">{t('vatRate')}</Label>
-                  <Select
-                    value={formData.vat_rate.toString()}
-                    onValueChange={(value) => {
-                      const vat_rate = parseInt(value)
-                      const vat_amount = round2((formData.subtotal * vat_rate) / 100)
-                      const total = round2(formData.subtotal + vat_amount)
-                      setVatAmountStr(String(vat_amount))
-                      setTotalStr(String(total))
-                      setFormData({ ...formData, vat_rate, vat_amount, total })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">0%</SelectItem>
-                      <SelectItem value="6">6%</SelectItem>
-                      <SelectItem value="25">25%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {hasMixedVat ? (
+                  <div className="space-y-1">
+                    <Label>{t('vatRate')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('mixedVatHint')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <Label htmlFor="vat_rate">{t('vatRate')}</Label>
+                    <Select
+                      value={formData.vat_rate.toString()}
+                      onValueChange={(value) => {
+                        const vat_rate = parseInt(value)
+                        const vat_amount = round2((formData.subtotal * vat_rate) / 100)
+                        const total = round2(formData.subtotal + vat_amount)
+                        setVatAmountStr(String(vat_amount))
+                        setTotalStr(String(total))
+                        setFormData({ ...formData, vat_rate, vat_amount, total })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="6">6%</SelectItem>
+                        <SelectItem value="25">25%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <Label htmlFor="vat_amount">{t('vatAmount')}</Label>
@@ -471,8 +497,10 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                     onChange={(e) => {
                       setTotalStr(e.target.value)
                       // Derive net + VAT from the total so they can never diverge.
+                      // Mixed VAT: keep the net and put the delta in VAT (can't
+                      // split by a single rate); otherwise back out net from rate.
                       const total = parseFloat(e.target.value) || 0
-                      const subtotal = round2(total / (1 + formData.vat_rate / 100))
+                      const subtotal = hasMixedVat ? formData.subtotal : round2(total / (1 + formData.vat_rate / 100))
                       const vat_amount = round2(total - subtotal)
                       setSubtotalStr(String(subtotal))
                       setVatAmountStr(String(vat_amount))

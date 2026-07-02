@@ -288,6 +288,7 @@
     "createdManually": "Invoice was created manually",
     "netAmount": "Net amount",
     "vatRate": "VAT rate (%)",
+    "mixedVatHint": "Mixed VAT rates — edit the net and VAT amounts directly.",
     "vatAmount": "VAT amount",
     "totalAmount": "Total amount",
     "paidDate": "Payment date",

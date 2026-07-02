@@ -288,6 +288,7 @@
     "createdManually": "Fakturan skapades manuellt",
     "netAmount": "Nettobelopp",
     "vatRate": "Momssats (%)",
+    "mixedVatHint": "Blandade momssatser — redigera netto- och momsbeloppet direkt.",
     "vatAmount": "Momsbelopp",
     "totalAmount": "Totalbelopp",
     "paidDate": "Betalningsdatum",
