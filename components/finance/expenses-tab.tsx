@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
@@ -294,46 +294,71 @@ export default function ExpensesTab() {
     }
   }
 
-  const years = [...new Set(expenses.map((e) => parseLocalDate(e.date).getFullYear()))].sort((a, b) => b - a)
-  const categories = ([...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]).sort((a, b) =>
-    categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
+  const years = useMemo(
+    () => [...new Set(expenses.map((e) => parseLocalDate(e.date).getFullYear()))].sort((a, b) => b - a),
+    [expenses],
   )
-  const suppliers = [...new Set(expenses.map((e) => e.supplier))].sort()
-  const supplierCounts = (() => {
+  const categories = useMemo(
+    () =>
+      ([...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]).sort((a, b) =>
+        categoryLabel(a, t).localeCompare(categoryLabel(b, t)),
+      ),
+    [expenses, t],
+  )
+  const suppliers = useMemo(() => [...new Set(expenses.map((e) => e.supplier))].sort(), [expenses])
+  const supplierCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const e of expenses) {
       if (e.supplier) counts.set(e.supplier, (counts.get(e.supplier) || 0) + 1)
     }
     return [...counts.entries()].map(([supplier, count]) => ({ supplier, count }))
-  })()
+  }, [expenses])
 
-  const filteredExpenses = expenses.filter((e) => {
-    if (yearFilter !== 'all' && parseLocalDate(e.date).getFullYear().toString() !== yearFilter) return false
-    if (categoryFilter !== 'all' && e.category !== categoryFilter) return false
-    if (supplierFilter !== 'all' && e.supplier !== supplierFilter) return false
-    if (gigFilter === 'linked' && !e.gig_id) return false
-    if (gigFilter === 'unlinked' && e.gig_id) return false
-    if (privacyFilter === 'private' && !e.is_private) return false
-    if (privacyFilter === 'business' && e.is_private) return false
-    if (accountantFilter === 'sent' && !e.sent_to_accountant_at) return false
-    if (accountantFilter === 'not_sent' && e.sent_to_accountant_at) return false
-    if (memberFilter !== 'all' && e.user_id !== memberFilter) return false
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      const matchesSupplier = e.supplier.toLowerCase().includes(q)
-      // Search against both the canonical key and the localized label
-      const matchesCategory =
-        e.category?.toLowerCase().includes(q) || categoryLabel(e.category, t).toLowerCase().includes(q)
-      const matchesNotes = e.notes?.toLowerCase().includes(q)
-      if (!matchesSupplier && !matchesCategory && !matchesNotes) return false
-    }
-    return true
-  })
+  const filteredExpenses = useMemo(
+    () =>
+      expenses.filter((e) => {
+        if (yearFilter !== 'all' && parseLocalDate(e.date).getFullYear().toString() !== yearFilter) return false
+        if (categoryFilter !== 'all' && e.category !== categoryFilter) return false
+        if (supplierFilter !== 'all' && e.supplier !== supplierFilter) return false
+        if (gigFilter === 'linked' && !e.gig_id) return false
+        if (gigFilter === 'unlinked' && e.gig_id) return false
+        if (privacyFilter === 'private' && !e.is_private) return false
+        if (privacyFilter === 'business' && e.is_private) return false
+        if (accountantFilter === 'sent' && !e.sent_to_accountant_at) return false
+        if (accountantFilter === 'not_sent' && e.sent_to_accountant_at) return false
+        if (memberFilter !== 'all' && e.user_id !== memberFilter) return false
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase()
+          const matchesSupplier = e.supplier.toLowerCase().includes(q)
+          // Search against both the canonical key and the localized label
+          const matchesCategory =
+            e.category?.toLowerCase().includes(q) || categoryLabel(e.category, t).toLowerCase().includes(q)
+          const matchesNotes = e.notes?.toLowerCase().includes(q)
+          if (!matchesSupplier && !matchesCategory && !matchesNotes) return false
+        }
+        return true
+      }),
+    [
+      expenses,
+      yearFilter,
+      categoryFilter,
+      supplierFilter,
+      gigFilter,
+      privacyFilter,
+      accountantFilter,
+      memberFilter,
+      searchQuery,
+      t,
+    ],
+  )
 
-  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
+  const totalExpenses = useMemo(
+    () => filteredExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0),
+    [filteredExpenses],
+  )
 
   // Selection scoped to currently visible (filtered) rows
-  const filteredIds = filteredExpenses.map((e) => e.id)
+  const filteredIds = useMemo(() => filteredExpenses.map((e) => e.id), [filteredExpenses])
   const visibleSelectedCount = filteredIds.reduce((n, id) => (selectedIds.has(id) ? n + 1 : n), 0)
   const allVisibleSelected = filteredIds.length > 0 && visibleSelectedCount === filteredIds.length
   const someVisibleSelected = visibleSelectedCount > 0 && !allVisibleSelected
@@ -350,17 +375,21 @@ export default function ExpensesTab() {
     })
   }
 
-  const yearlyData = years
-    .map((year) => {
-      const yearExpenses = expenses.filter((e) => parseLocalDate(e.date).getFullYear() === year)
-      const total = yearExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
-      return {
-        year: year.toString(),
-        total: Math.round(total),
-        count: yearExpenses.length,
-      }
-    })
-    .sort((a, b) => parseInt(a.year) - parseInt(b.year))
+  const yearlyData = useMemo(
+    () =>
+      years
+        .map((year) => {
+          const yearExpenses = expenses.filter((e) => parseLocalDate(e.date).getFullYear() === year)
+          const total = yearExpenses.reduce((sum, e) => sum + (e.amount_base || e.amount), 0)
+          return {
+            year: year.toString(),
+            total: Math.round(total),
+            count: yearExpenses.length,
+          }
+        })
+        .sort((a, b) => parseInt(a.year) - parseInt(b.year)),
+    [years, expenses],
+  )
 
   useEffect(() => {
     function handleUpload() {

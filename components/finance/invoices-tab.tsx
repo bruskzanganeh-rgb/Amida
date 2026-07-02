@@ -180,16 +180,6 @@ export default function InvoicesTab() {
   } = useSWR(
     filterLoaded ? ['invoices-with-reminders', shouldFilter, filterUserId] : null,
     async () => {
-      // Mark overdue invoices
-      const today = localToday()
-      let overdueQuery = supabase
-        .from('invoices')
-        .update({ status: 'overdue' })
-        .eq('status', 'sent')
-        .lt('due_date', today)
-      if (shouldFilter && filterUserId) overdueQuery = overdueQuery.eq('user_id', filterUserId)
-      await overdueQuery
-
       let invoiceQuery = supabase.from('invoices').select(
         `
           *,
@@ -220,6 +210,22 @@ export default function InvoicesTab() {
     },
     { revalidateOnFocus: true, dedupingInterval: 10_000 },
   )
+
+  // Mark overdue invoices once on mount (not on every focus revalidation — that
+  // fired a table-wide UPDATE every time the window regained focus).
+  const overdueMarkedRef = useRef(false)
+  useEffect(() => {
+    if (!filterLoaded || overdueMarkedRef.current) return
+    overdueMarkedRef.current = true
+    ;(async () => {
+      const today = localToday()
+      let q = supabase.from('invoices').update({ status: 'overdue' }).eq('status', 'sent').lt('due_date', today)
+      if (shouldFilter && filterUserId) q = q.eq('user_id', filterUserId)
+      const { error } = await q
+      if (!error) mutateInvoices()
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterLoaded])
 
   const allInvoices = invoiceData?.invoices ?? []
   const reminderCounts = invoiceData?.reminderCounts ?? {}
