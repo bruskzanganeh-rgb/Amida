@@ -30,6 +30,7 @@ type WeekInfo = {
 
 export function AvailableWeeks() {
   const t = useTranslations('dashboard')
+  const tc = useTranslations('common')
   const [weeks, setWeeks] = useState<WeekInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -142,6 +143,8 @@ export function AvailableWeeks() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
+              aria-label={tc('previous')}
+              title={tc('previous')}
               onClick={() => setSelectedYear((y) => Math.max(minYear, y - 1))}
               disabled={selectedYear <= minYear}
             >
@@ -152,6 +155,8 @@ export function AvailableWeeks() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
+              aria-label={tc('next')}
+              title={tc('next')}
               onClick={() => setSelectedYear((y) => Math.min(maxYear, y + 1))}
               disabled={selectedYear >= maxYear}
             >

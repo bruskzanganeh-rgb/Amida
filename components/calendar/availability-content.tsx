@@ -293,6 +293,8 @@ export default function AvailabilityPage() {
           <Button
             variant="outline"
             size="icon"
+            aria-label={tc('previous')}
+            title={tc('previous')}
             onClick={() => {
               if (viewMode === 'year') {
                 setCurrentYear(currentYear - 1)
@@ -309,6 +311,8 @@ export default function AvailabilityPage() {
           <Button
             variant="outline"
             size="icon"
+            aria-label={tc('next')}
+            title={tc('next')}
             onClick={() => {
               if (viewMode === 'year') {
                 setCurrentYear(currentYear + 1)
@@ -461,7 +465,14 @@ export default function AvailabilityPage() {
                   </h2>
                   <div className="flex items-center gap-2">
                     <Badge className={getStatusColor(selectedWeek.status)}>{getStatusLabel(selectedWeek.status)}</Badge>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedWeek(null)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label={tc('close')}
+                      title={tc('close')}
+                      onClick={() => setSelectedWeek(null)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -527,7 +538,14 @@ export default function AvailabilityPage() {
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Badge className={getStatusColor(selectedWeek.status)}>{getStatusLabel(selectedWeek.status)}</Badge>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedWeek(null)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={tc('close')}
+                    title={tc('close')}
+                    onClick={() => setSelectedWeek(null)}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>

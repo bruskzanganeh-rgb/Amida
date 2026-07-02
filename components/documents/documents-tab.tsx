@@ -35,6 +35,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function DocumentsTab() {
   const t = useTranslations('documents')
+  const tc = useTranslations('common')
   const dateLocale = useDateLocale()
   const [documents, setDocuments] = useState<CompanyDocument[]>([])
   const [loading, setLoading] = useState(true)
@@ -193,10 +194,24 @@ export default function DocumentsTab() {
                     <TableCell className="text-right text-muted-foreground">{formatFileSize(doc.file_size)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={tc('download')}
+                          title={tc('download')}
+                          onClick={() => handleDownload(doc)}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(doc)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={tc('delete')}
+                          title={tc('delete')}
+                          onClick={() => setDeleteTarget(doc)}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
