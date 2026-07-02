@@ -36,9 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { getVenueForDate } from '@/lib/gigs/venue-helpers'
 
-function fmtFee(amount: number, currency?: string | null): string {
-  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
-}
+import { fmtFee } from '@/lib/currency/format'
 
 type Gig = {
   id: string

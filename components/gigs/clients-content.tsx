@@ -17,6 +17,7 @@ import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 
 type Client = {
   id: string
@@ -52,6 +53,7 @@ export default function ClientsPage() {
   const t = useTranslations('client')
   const tc = useTranslations('common')
   const { symbol: baseCurrencySymbol } = useBaseCurrency()
+  const formatLocale = useFormatLocale()
 
   const {
     data: clients = [],
@@ -159,7 +161,7 @@ export default function ClientsPage() {
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {invoiceCount} {t('invoicesColumn').toLowerCase()} ·{' '}
                             {totalInvoiced > 0
-                              ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString('sv-SE')} ${baseCurrencySymbol}`
+                              ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString(formatLocale)} ${baseCurrencySymbol}`
                               : '-'}
                           </p>
                         </div>
@@ -224,7 +226,7 @@ export default function ClientsPage() {
                           <TableCell className="text-right">
                             <span className="text-sm font-medium">
                               {totalInvoiced > 0
-                                ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString('sv-SE')} ${baseCurrencySymbol}`
+                                ? `${hasConverted ? '≈ ' : ''}${totalInvoiced.toLocaleString(formatLocale)} ${baseCurrencySymbol}`
                                 : '-'}
                             </span>
                           </TableCell>

@@ -54,13 +54,10 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { fmtFee } from '@/lib/currency/format'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useGigFilter } from '@/lib/hooks/use-gig-filter'
 import { PageTransition } from '@/components/ui/page-transition'
-
-function fmtFee(amount: number, currency?: string | null): string {
-  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
-}
 
 type SortColumn = 'date' | 'client' | 'type' | 'venue' | 'fee' | 'status'
 type SortDir = 'asc' | 'desc'

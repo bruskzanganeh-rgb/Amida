@@ -37,11 +37,7 @@ import {
   endOfYear,
   getMonth,
 } from 'date-fns'
-import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
-
-function fmtFee(amount: number, currency?: string | null): string {
-  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
-}
+import { fmtFee } from '@/lib/currency/format'
 
 type GigDate = {
   date: string

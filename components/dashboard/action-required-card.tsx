@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { format, type Locale } from 'date-fns'
 import { parseLocalDate } from '@/lib/dates'
 import Link from 'next/link'
-import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
+import { fmtFee } from '@/lib/currency/format'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 
 export type PendingGig = {
@@ -40,10 +40,6 @@ type Props = {
   formatLocale: string
   onStatusChange: (gigId: string, status: string) => void
   getDeadlineInfo: (deadline: string | null) => { label: string; urgent: boolean; isKey: boolean } | null
-}
-
-function fmtFee(amount: number, currency?: string | null): string {
-  return formatCurrency(amount, (currency || 'SEK') as SupportedCurrency)
 }
 
 function formatGigDate(gig: NeedsActionGig, locale: Locale): string {

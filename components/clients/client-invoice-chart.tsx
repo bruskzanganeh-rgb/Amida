@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
+import { useFormatLocale } from '@/lib/hooks/use-format-locale'
 import { parseLocalDate } from '@/lib/dates'
 
 type Invoice = {
@@ -27,6 +28,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
   const t = useTranslations('client')
   const td = useTranslations('dashboard')
   const { symbol: baseCurrencySymbol } = useBaseCurrency()
+  const formatLocale = useFormatLocale()
 
   // Get available years from invoices
   const availableYears = useMemo(() => {
@@ -80,7 +82,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
           <p className="text-sm text-muted-foreground mt-1">
             {t('totalYear', { year: selectedYear })}:{' '}
             <span className="font-semibold">
-              {yearTotal.toLocaleString('sv-SE')} {baseCurrencySymbol}
+              {yearTotal.toLocaleString(formatLocale)} {baseCurrencySymbol}
             </span>
           </p>
         </div>
@@ -116,7 +118,7 @@ export function ClientInvoiceChart({ invoices }: Props) {
             />
             <Tooltip
               formatter={(value: number) => [
-                `${value.toLocaleString('sv-SE')} ${baseCurrencySymbol}`,
+                `${value.toLocaleString(formatLocale)} ${baseCurrencySymbol}`,
                 t('invoicedLabel'),
               ]}
               labelFormatter={(label) => `${label} ${selectedYear}`}
