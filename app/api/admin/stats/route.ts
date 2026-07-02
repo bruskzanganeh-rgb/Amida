@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   > = {}
   for (const row of impressionRows || []) {
     const id = row.sponsor_id
-    const name = (row.sponsor as unknown as { name: string } | null)?.name || 'Unknown'
+    const name = row.sponsor?.name || 'Unknown'
     const type = row.impression_type || 'pdf'
     if (!sponsorStats[id]) {
       sponsorStats[id] = { name, app: 0, pdf: 0, click: 0, total: 0, latest: row.created_at || '' }

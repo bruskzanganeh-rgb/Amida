@@ -330,7 +330,7 @@ export default function InvoicesTab() {
       )
 
       return filteredGigs.map((gig) => {
-        const client = gig.client as unknown as { name: string; payment_terms: number | null } | null
+        const client = gig.client
         const gigType = gig.gig_type as unknown as {
           id: string
           name: string

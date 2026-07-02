@@ -246,7 +246,7 @@ export default function AdminPage() {
           target_city: s.target_city,
           target_country: geoMap.get(s.id)?.target_country || null,
           target_cities: geoMap.get(s.id)?.target_cities || null,
-          category_name: (s.category as unknown as { name: string } | null)?.name,
+          category_name: s.category?.name,
         })),
       )
     }

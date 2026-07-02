@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         'Status',
       ]
       const rows = (invoices || []).map((inv) => {
-        const client = inv.client as unknown as { name: string } | null
+        const client = inv.client
         return [
           inv.invoice_number,
           inv.invoice_date,

@@ -44,7 +44,7 @@ export async function GET() {
   // Build categories map (user_id -> { id, name }[])
   const categoriesMap = new Map<string, { id: string; name: string }[]>()
   for (const uc of userCategoriesData || []) {
-    const category = uc.category as unknown as { name: string } | null
+    const category = uc.category
     if (!category) continue
     if (!categoriesMap.has(uc.user_id)) categoriesMap.set(uc.user_id, [])
     const list = categoriesMap.get(uc.user_id)!

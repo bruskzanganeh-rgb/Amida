@@ -389,7 +389,7 @@ export async function POST(request: NextRequest) {
 
           // Dublettkontroll för fakturor (datum + belopp + kundnamn)
           const invoiceDuplicate = existingInvoices?.find((inv) => {
-            const client = inv.client as unknown as { name: string } | null
+            const client = inv.client
             const nameMatch = client?.name?.toLowerCase() === invoiceData.clientName?.toLowerCase()
             const dateMatch = inv.invoice_date === invoiceData.invoiceDate
             const amountMatch = Math.abs(Number(inv.total) - invoiceData.total) < 0.01

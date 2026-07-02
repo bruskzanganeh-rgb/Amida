@@ -378,7 +378,7 @@ export function CreateInvoiceDialog({
     const gigs: InitialGig[] = (data || [])
       .filter((g) => !linkedGigIds.has(g.id))
       .map((g) => {
-        const client = g.client as unknown as { name: string; payment_terms: number | null } | null
+        const client = g.client
         const gigType = g.gig_type as unknown as {
           id: string
           name: string

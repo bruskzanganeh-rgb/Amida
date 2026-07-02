@@ -92,7 +92,7 @@ export async function PUT(request: NextRequest) {
       if (!results[i].isDuplicate && existingInvoices) {
         const exp = expenses[i]
         const invoiceMatch = existingInvoices.find((inv) => {
-          const client = inv.client as unknown as { name: string } | null
+          const client = inv.client
           const dateAmountMatch = inv.invoice_date === exp.date && Math.abs(Number(inv.total) - exp.amount) < 0.01
           const nameAmountMatch =
             client?.name?.toLowerCase() === exp.supplier?.toLowerCase() &&

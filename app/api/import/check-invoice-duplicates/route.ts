@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const results = invoices.map((inv) => {
       // Check against existing invoices
       const invoiceDup = existingInvoices?.find((ex) => {
-        const client = ex.client as unknown as { name: string } | null
+        const client = ex.client
         const numberMatch = ex.invoice_number === inv.invoiceNumber && inv.invoiceNumber > 0
         const dateAmountMatch = ex.invoice_date === inv.invoiceDate && Math.abs(Number(ex.total) - inv.total) < 0.01
         const nameAmountMatch =
