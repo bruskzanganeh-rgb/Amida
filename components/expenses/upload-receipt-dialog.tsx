@@ -409,21 +409,21 @@ export function UploadReceiptDialog({
         </DialogHeader>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
 
         {duplicateWarning && (
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                   {duplicateWarning.matchType === 'exact' ? t('duplicateFound') : t('possibleDuplicateFound')}
                 </p>
-                <p className="text-sm text-amber-700 mt-1">
+                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
                   {t('similarExpenseExists')}: <strong>{duplicateWarning.supplier}</strong> -{' '}
                   {duplicateWarning.amount.toLocaleString(formatLocale)} {baseCurrencySymbol} ({duplicateWarning.date})
                   {duplicateWarning.category && ` [${duplicateWarning.category}]`}
@@ -432,7 +432,7 @@ export function UploadReceiptDialog({
                   duplicateWarning.matchType !== 'exact' &&
                   duplicateWarning.inputSupplier &&
                   duplicateWarning.inputSupplier.toLowerCase() !== duplicateWarning.supplier.toLowerCase() && (
-                    <p className="text-xs text-amber-600 mt-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                       {t('youEntered')}: &quot;{duplicateWarning.inputSupplier}&quot; → {t('matchedWith')}: &quot;
                       {duplicateWarning.supplier}&quot;
                     </p>
@@ -458,7 +458,7 @@ export function UploadReceiptDialog({
               className={`
                 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                 transition-colors
-                ${preview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-gray-400'}
+                ${preview ? 'border-green-300 dark:border-green-900/40 bg-green-50 dark:bg-green-950/30' : 'border-gray-300 dark:border-border hover:border-gray-400 dark:hover:border-gray-600'}
               `}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
@@ -479,7 +479,7 @@ export function UploadReceiptDialog({
                   ) : (
                     <div className="flex flex-col items-center">
                       <FileText className="h-16 w-16 text-red-500" />
-                      <p className="text-sm text-gray-500 mt-2">{t('pdfFile')}</p>
+                      <p className="text-sm text-gray-500 dark:text-muted-foreground mt-2">{t('pdfFile')}</p>
                     </div>
                   )}
                   <p className="text-sm text-green-600 font-medium">{file?.name}</p>
@@ -499,11 +499,11 @@ export function UploadReceiptDialog({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 dark:bg-muted flex items-center justify-center">
+                    <ImageIcon className="h-6 w-6 text-gray-400 dark:text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-gray-600">{t('dragAndDropOrClick')}</p>
-                  <p className="text-xs text-gray-400">{t('fileFormats')}</p>
+                  <p className="text-sm text-gray-600 dark:text-muted-foreground">{t('dragAndDropOrClick')}</p>
+                  <p className="text-xs text-gray-400 dark:text-muted-foreground">{t('fileFormats')}</p>
                 </div>
               )}
             </div>
@@ -535,14 +535,14 @@ export function UploadReceiptDialog({
                     title="PDF preview"
                   />
                 ) : (
-                  <div className="w-full h-40 md:h-56 rounded-lg border flex flex-col items-center justify-center bg-gray-50">
+                  <div className="w-full h-40 md:h-56 rounded-lg border flex flex-col items-center justify-center bg-gray-50 dark:bg-muted">
                     <FileText className="h-12 w-12 text-red-500" />
-                    <p className="text-xs text-gray-500 mt-2">{t('pdfFile')}</p>
+                    <p className="text-xs text-gray-500 dark:text-muted-foreground mt-2">{t('pdfFile')}</p>
                   </div>
                 ))}
-              {file && <p className="text-xs text-gray-500 truncate">{file.name}</p>}
+              {file && <p className="text-xs text-gray-500 dark:text-muted-foreground truncate">{file.name}</p>}
               {formData.confidence > 0 && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 dark:text-muted-foreground">
                   {t('aiConfidence')}: {Math.round(formData.confidence * 100)}%
                 </p>
               )}

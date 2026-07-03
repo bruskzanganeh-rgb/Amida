@@ -693,7 +693,7 @@ export default function CalendarPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="h-7 w-7 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                           onClick={() => confirmDeleteGig(selectedGig.id)}
                           title={tc('delete')}
                         >
@@ -715,7 +715,7 @@ export default function CalendarPage() {
                       </span>
                       <span className="text-muted-foreground/40">·</span>
                       <span
-                        className={`inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium ${statusConfigColors[selectedGig.status] || 'bg-gray-100 text-gray-800'}`}
+                        className={`inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium ${statusConfigColors[selectedGig.status] || 'bg-gray-100 dark:bg-muted text-gray-800 dark:text-muted-foreground'}`}
                       >
                         {tStatus(selectedGig.status)}
                       </span>
@@ -735,15 +735,15 @@ export default function CalendarPage() {
                     >
                       {/* Fee + Venue */}
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-lg p-2.5 border border-emerald-100">
-                          <p className="text-[9px] font-medium text-emerald-600 uppercase tracking-wider mb-0.5">
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-900/40">
+                          <p className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-0.5">
                             {tGig('fee')}
                           </p>
-                          <p className="text-sm font-bold text-emerald-700">
+                          <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                             {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                           </p>
                           {selectedGig.travel_expense && (
-                            <p className="text-[10px] text-emerald-600 mt-0.5">
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">
                               + {fmtFee(selectedGig.travel_expense, selectedGig.currency)} {tGig('travelShort')}
                             </p>
                           )}
@@ -968,9 +968,9 @@ export default function CalendarPage() {
             style={{ height: '70vh', minHeight: '400px' }}
           >
             <div className="h-full bg-gradient-to-b from-background/95 to-background/98 backdrop-blur-xl border-t border-white/20 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.2)]">
-              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
               <div className="flex justify-center pt-2 pb-0">
-                <div className="w-10 h-1 rounded-full bg-gray-300/80" />
+                <div className="w-10 h-1 rounded-full bg-gray-300/80 dark:bg-gray-600" />
               </div>
               {selectedGig && (
                 <div className="h-full flex flex-col px-5">
@@ -989,7 +989,7 @@ export default function CalendarPage() {
                         </p>
                         <div className="flex items-center gap-2 pt-0.5">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfigColors[selectedGig.status] || 'bg-gray-100 text-gray-800'}`}
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfigColors[selectedGig.status] || 'bg-gray-100 dark:bg-muted text-gray-800 dark:text-muted-foreground'}`}
                           >
                             {tStatus(selectedGig.status)}
                           </span>
@@ -1003,7 +1003,7 @@ export default function CalendarPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full hover:bg-gray-100 -mt-1"
+                      className="rounded-full hover:bg-gray-100 dark:hover:bg-muted -mt-1"
                       onClick={() => setSelectedGig(null)}
                     >
                       <ChevronDown className="h-5 w-5 text-muted-foreground" />
@@ -1013,11 +1013,11 @@ export default function CalendarPage() {
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-3 border border-emerald-100">
-                            <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider mb-0.5">
+                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 rounded-xl p-3 border border-emerald-100 dark:border-emerald-900/40">
+                            <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-0.5">
                               {tGig('fee')}
                             </p>
-                            <p className="text-base font-bold text-emerald-700">
+                            <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
                               {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                             </p>
                           </div>
@@ -1086,10 +1086,14 @@ export default function CalendarPage() {
                                           <span className="text-muted-foreground w-[55px] shrink-0">
                                             {format(date, 'EEE d MMM', { locale: dateLocale })}
                                           </span>
-                                          <span className="text-gray-700">
+                                          <span className="text-gray-700 dark:text-gray-300">
                                             {gd.sessions!.map((s, j) => (
                                               <span key={j}>
-                                                {j > 0 && <span className="text-gray-300 mx-0.5">&middot;</span>}
+                                                {j > 0 && (
+                                                  <span className="text-gray-300 dark:text-gray-600 mx-0.5">
+                                                    &middot;
+                                                  </span>
+                                                )}
                                                 {s.label && <span className="font-medium">{s.label} </span>}
                                                 {s.start}
                                                 {s.end && `\u2013${s.end}`}
@@ -1183,7 +1187,7 @@ export default function CalendarPage() {
                           <ul className="space-y-1">
                             {gigExpenses.map((exp) => (
                               <li key={exp.id} className="flex items-center justify-between text-xs">
-                                <span className="truncate text-gray-700">{exp.supplier}</span>
+                                <span className="truncate text-gray-700 dark:text-gray-300">{exp.supplier}</span>
                                 <span className="font-medium shrink-0 ml-2 text-foreground">
                                   {formatCurrency(
                                     exp.amount,
@@ -1217,7 +1221,7 @@ export default function CalendarPage() {
                     <div className="flex-1" />
                     <Button
                       variant="ghost"
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg px-3 h-9 text-sm"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg px-3 h-9 text-sm"
                       onClick={() => confirmDeleteGig(selectedGig.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5 mr-1.5" />

@@ -55,7 +55,7 @@ function AttachmentRow({
   const category = attachment.category || 'gig_info'
 
   return (
-    <div className="flex items-center justify-between p-2 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+    <div className="flex items-center justify-between p-2 border rounded-lg bg-gray-50 dark:bg-muted hover:bg-gray-100 dark:hover:bg-muted/70 transition-colors">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <FileText className="h-4 w-4 text-red-500 flex-shrink-0" />
         <p className="text-sm font-medium truncate min-w-0 flex-1">{attachment.file_name}</p>
@@ -66,7 +66,7 @@ function AttachmentRow({
           onValueChange={(value) => onCategoryChange(attachment, value as AttachmentCategory)}
           disabled={disabled}
         >
-          <SelectTrigger className="h-6 text-[10px] w-auto min-w-0 px-2 border-0 bg-transparent hover:bg-gray-200 gap-1">
+          <SelectTrigger className="h-6 text-[10px] w-auto min-w-0 px-2 border-0 bg-transparent hover:bg-gray-200 dark:hover:bg-muted gap-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -370,14 +370,16 @@ export function GigAttachments({ gigId, disabled }: GigAttachmentsProps) {
             </div>
             {previewLoading ? (
               <div className="flex items-center justify-center h-96 sm:h-96 flex-1 sm:flex-none">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-muted-foreground" />
               </div>
             ) : previewData ? (
               <div className="flex-1 sm:flex-none overflow-auto">
                 <PdfViewer data={previewData} />
               </div>
             ) : (
-              <div className="flex items-center justify-center h-96 text-gray-500">{t('openError')}</div>
+              <div className="flex items-center justify-center h-96 text-gray-500 dark:text-muted-foreground">
+                {t('openError')}
+              </div>
             )}
           </div>
         </DialogContent>

@@ -948,7 +948,7 @@ export default function ImportPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className={`h-7 text-xs ${file.selected ? 'bg-amber-100 border-amber-300' : ''}`}
+                              className={`h-7 text-xs ${file.selected ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-900/40' : ''}`}
                               onClick={() => updateFile(file.id, { selected: true })}
                             >
                               {t('importAnyway')}

@@ -15,6 +15,7 @@ import { ImportClientsDialog } from '@/components/clients/import-clients-dialog'
 import { EditClientDialog } from '@/components/clients/edit-client-dialog'
 import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { useFormatLocale } from '@/lib/hooks/use-format-locale'
@@ -49,6 +50,7 @@ export default function ClientsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [clientToDelete, setClientToDelete] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const router = useRouter()
   const supabase = createClient()
   const t = useTranslations('client')
   const tc = useTranslations('common')
@@ -223,9 +225,17 @@ export default function ClientsPage() {
                       const hasConverted = client.invoices?.some((inv) => inv.currency && inv.currency !== 'SEK')
 
                       return (
-                        <TableRow key={client.id}>
+                        <TableRow
+                          key={client.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => router.push(`/clients/${client.id}`)}
+                        >
                           <TableCell className="font-medium">
-                            <Link href={`/clients/${client.id}`} className="hover:text-primary hover:underline">
+                            <Link
+                              href={`/clients/${client.id}`}
+                              className="hover:text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {client.name}
                             </Link>
                           </TableCell>
@@ -247,7 +257,7 @@ export default function ClientsPage() {
                               {client.payment_terms} {tc('days')}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               <Button
                                 variant="ghost"

@@ -171,9 +171,17 @@ body[data-authed] {
   }
 }
 
-/* Compact density — smaller base font shrinks all rem-based sizing */
+/* Density scale. This app's mobile views are dense (stat cards with large
+   numbers, tab bars, mini-tables), so they were tuned for a compact root and
+   overflow/wrap at a larger one — keep mobile tight at 12px. Desktop has room,
+   so bump to 14px at lg (1024px) for readability. */
 html {
-  font-size: 11px;
+  font-size: 12px;
+}
+@media (min-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
 }
 
 /* Smooth card transitions */

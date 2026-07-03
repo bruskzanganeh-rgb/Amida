@@ -720,7 +720,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {calendarUrl.includes('localhost') ? (
-                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300">
                   <p className="font-medium text-sm">{t('localDevTitle')}</p>
                   <p className="text-xs mt-1">{t('localDevWarning')}</p>
                 </div>

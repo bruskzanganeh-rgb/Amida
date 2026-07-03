@@ -44,8 +44,10 @@ import {
   Ban,
   Search,
   Copy,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { GigAttachments } from '@/components/gigs/gig-attachments'
 import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import { GigDialog } from '@/components/gigs/gig-dialog'
@@ -93,6 +95,7 @@ export default function GigsPage() {
   const [mobileLimit, setMobileLimit] = useState({ upcoming: 20, history: 20, declined: 20, cancelled: 20 })
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesText, setNotesText] = useState('')
+  const [sheetExpanded, setSheetExpanded] = useState(false)
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
   const [duplicateValues, setDuplicateValues] = useState<
     | {
@@ -470,10 +473,10 @@ export default function GigsPage() {
           >
             {/* Section 1: Past gigs needing action */}
             {pastNeedingAction.length > 0 && (
-              <Card className="border-amber-200 bg-amber-50/50">
+              <Card className="border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/30">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-amber-800">
+                    <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
                       <AlertTriangle className="h-5 w-5" />
                       {t('needsActionCount', { count: pastNeedingAction.length })}
                     </CardTitle>
@@ -487,7 +490,7 @@ export default function GigsPage() {
                 </CardHeader>
                 <CardContent>
                   {pastUnanswered.length > 0 && (
-                    <div className="mb-4 p-3 rounded-lg bg-yellow-100/50 border border-yellow-200 text-sm text-yellow-800">
+                    <div className="mb-4 p-3 rounded-lg bg-yellow-100/50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/40 text-sm text-yellow-800 dark:text-yellow-300">
                       <AlertTriangle className="h-4 w-4 inline mr-1.5" />
                       {t('passedNoResponse', { count: pastUnanswered.length })}
                     </div>
@@ -571,7 +574,7 @@ export default function GigsPage() {
                           return (
                             <TableRow
                               key={gig.id}
-                              className="cursor-pointer hover:bg-amber-100/50"
+                              className="cursor-pointer hover:bg-amber-100/50 dark:hover:bg-amber-900/20"
                               onClick={() => {
                                 setSelectedGig(selectedGig?.id === gig.id ? null : gig)
                                 setEditingNotes(false)
@@ -782,14 +785,14 @@ export default function GigsPage() {
                                       </div>
                                     </div>
                                     <button
-                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      className="-mr-1.5 -mt-1.5 flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                                       title={t('editGig')}
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         openEditById(gig.id)
                                       }}
                                     >
-                                      <Pencil className="h-3.5 w-3.5" />
+                                      <Pencil className="h-4 w-4" />
                                     </button>
                                   </div>
                                 </div>
@@ -1013,30 +1016,35 @@ export default function GigsPage() {
                                               <Check className="h-4 w-4 text-blue-600" />
                                             </Button>
                                           )}
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDuplicate(gig)}
-                                            title={t('duplicateGig')}
-                                          >
-                                            <Copy className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setEditingGig(gig)}
-                                            title={t('editGig')}
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => confirmDeleteGig(gig.id)}
-                                            title={t('deleteGig')}
-                                          >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                          </Button>
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                title={tc('more')}
+                                              >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                              <DropdownMenuItem onClick={() => setEditingGig(gig)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                {t('editGig')}
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => handleDuplicate(gig)}>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                {t('duplicateGig')}
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem
+                                                className="text-destructive"
+                                                onClick={() => confirmDeleteGig(gig.id)}
+                                              >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                {t('deleteGig')}
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
                                         </div>
                                       </TableCell>
                                     </TableRow>
@@ -1085,7 +1093,7 @@ export default function GigsPage() {
                           {activeTab === 'history' && (
                             <>
                               {pipelineCounts.completed > 0 && (
-                                <Badge className="bg-blue-100 text-blue-800">
+                                <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                                   <Check className="h-3 w-3 mr-1" />
                                   {pipelineCounts.completed} {t('completedPipeline')}
                                 </Badge>
@@ -1094,7 +1102,7 @@ export default function GigsPage() {
                                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
                               )}
                               {pipelineCounts.invoiced > 0 && (
-                                <Badge className="bg-purple-100 text-purple-800">
+                                <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
                                   <FileText className="h-3 w-3 mr-1" />
                                   {pipelineCounts.invoiced} {t('invoicedPipeline')}
                                 </Badge>
@@ -1103,7 +1111,7 @@ export default function GigsPage() {
                                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
                               )}
                               {pipelineCounts.paid > 0 && (
-                                <Badge className="bg-green-200 text-green-900">
+                                <Badge className="bg-green-200 dark:bg-green-900/30 text-green-900 dark:text-green-300">
                                   <DollarSign className="h-3 w-3 mr-1" />
                                   {pipelineCounts.paid} {t('paidPipeline')}
                                 </Badge>
@@ -1173,14 +1181,14 @@ export default function GigsPage() {
                                       </div>
                                     </div>
                                     <button
-                                      className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                                      className="-mr-1.5 -mt-1.5 flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                                       title={t('editGig')}
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         openEditById(gig.id)
                                       }}
                                     >
-                                      <Pencil className="h-3.5 w-3.5" />
+                                      <Pencil className="h-4 w-4" />
                                     </button>
                                   </div>
                                 </div>
@@ -1357,30 +1365,35 @@ export default function GigsPage() {
                                       </TableCell>
                                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-end gap-1">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDuplicate(gig)}
-                                            title={t('duplicateGig')}
-                                          >
-                                            <Copy className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setEditingGig(gig)}
-                                            title={t('editGig')}
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => confirmDeleteGig(gig.id)}
-                                            title={t('deleteGig')}
-                                          >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                          </Button>
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                title={tc('more')}
+                                              >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                              <DropdownMenuItem onClick={() => setEditingGig(gig)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                {t('editGig')}
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => handleDuplicate(gig)}>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                {t('duplicateGig')}
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem
+                                                className="text-destructive"
+                                                onClick={() => confirmDeleteGig(gig.id)}
+                                              >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                {t('deleteGig')}
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
                                         </div>
                                       </TableCell>
                                     </TableRow>
@@ -1636,15 +1649,15 @@ export default function GigsPage() {
                       >
                         {/* Fee + Venue */}
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-lg p-2.5 border border-emerald-100">
-                            <p className="text-[9px] font-medium text-emerald-600 uppercase tracking-wider mb-0.5">
+                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-900/40">
+                            <p className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-0.5">
                               {t('fee')}
                             </p>
-                            <p className="text-sm font-bold text-emerald-700">
+                            <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                               {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                             </p>
                             {selectedGig.travel_expense && (
-                              <p className="text-[10px] text-emerald-600 mt-0.5">
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">
                                 + {fmtFee(selectedGig.travel_expense, selectedGig.currency)} {t('travelShort')}
                               </p>
                             )}
@@ -1882,13 +1895,19 @@ export default function GigsPage() {
               className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 selectedGig ? 'translate-y-0' : 'translate-y-full'
               }`}
-              style={{ height: '50vh', minHeight: '320px' }}
+              style={{ height: sheetExpanded ? '92dvh' : '72vh', minHeight: '340px' }}
             >
               <div className="h-full bg-gradient-to-b from-background/95 to-background/98 backdrop-blur-xl border-t border-white/20 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.2)]">
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-                <div className="flex justify-center pt-2 pb-0">
-                  <div className="w-10 h-1 rounded-full bg-gray-300/80" />
-                </div>
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
+                <button
+                  type="button"
+                  className="flex w-full justify-center pt-2.5 pb-1.5"
+                  onClick={() => setSheetExpanded((v) => !v)}
+                  aria-label={sheetExpanded ? tc('collapse') : tc('expand')}
+                  title={sheetExpanded ? tc('collapse') : tc('expand')}
+                >
+                  <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+                </button>
 
                 {selectedGig && (
                   <div className="h-full flex flex-col px-5">
@@ -1912,7 +1931,7 @@ export default function GigsPage() {
                             >
                               {tStatus(selectedGig.status)}
                             </span>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-muted-foreground">
                               {selectedGig.gig_type.name}
                               {selectedGig.position && ` · ${selectedGig.position.name}`}
                             </span>
@@ -1951,40 +1970,40 @@ export default function GigsPage() {
                     <div className="flex-1 overflow-y-auto pb-2">
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-3 border border-emerald-100">
-                            <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider mb-0.5">
+                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 rounded-xl p-3 border border-emerald-100 dark:border-emerald-900/40">
+                            <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-0.5">
                               {t('fee')}
                             </p>
-                            <p className="text-base font-bold text-emerald-700">
+                            <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
                               {selectedGig.fee !== null ? fmtFee(selectedGig.fee, selectedGig.currency) : '—'}
                             </p>
                             {selectedGig.travel_expense && (
-                              <p className="text-xs text-emerald-600 mt-1">
+                              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                                 + {fmtFee(selectedGig.travel_expense, selectedGig.currency)} {t('travelShort')}
                               </p>
                             )}
                           </div>
                           {selectedGig.venue ? (
-                            <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                            <div className="bg-white dark:bg-card rounded-xl p-3 border border-gray-100 dark:border-border shadow-sm">
                               <div className="flex items-center gap-1.5 mb-0.5">
-                                <MapPin className="h-3 w-3 text-gray-400" />
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                <MapPin className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+                                <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                                   {t('venue')}
                                 </p>
                               </div>
                               <p className="text-sm font-medium text-foreground">{selectedGig.venue}</p>
                             </div>
                           ) : (
-                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">
+                            <div className="bg-gray-50 dark:bg-muted rounded-xl p-3 border border-gray-100 dark:border-border">
+                              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
                                 {t('venue')}
                               </p>
-                              <p className="text-sm text-gray-400">—</p>
+                              <p className="text-sm text-gray-400 dark:text-gray-500">—</p>
                             </div>
                           )}
                         </div>
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-100">
-                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-muted dark:to-muted/50 rounded-xl p-3 border border-gray-100 dark:border-border">
+                          <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
                             {t('date')} ({selectedGig.gig_dates?.length || selectedGig.total_days} {tc('days')})
                           </p>
                           {selectedGig.gig_dates && selectedGig.gig_dates.length > 0 ? (
@@ -1996,9 +2015,9 @@ export default function GigsPage() {
                                   return (
                                     <div
                                       key={i}
-                                      className="flex flex-col items-center bg-white rounded-lg px-2 py-1 border border-gray-200 shadow-sm min-w-[44px]"
+                                      className="flex flex-col items-center bg-white dark:bg-card rounded-lg px-2 py-1 border border-gray-200 dark:border-border shadow-sm min-w-[44px]"
                                     >
-                                      <span className="text-[8px] font-medium text-gray-400 uppercase">
+                                      <span className="text-[8px] font-medium text-gray-400 dark:text-gray-500 uppercase">
                                         {format(date, 'EEE', { locale: dateLocale })}
                                       </span>
                                       <span className="text-sm font-bold text-foreground">
@@ -2017,41 +2036,141 @@ export default function GigsPage() {
                             </p>
                           )}
                         </div>
+
+                        {/* Notes */}
+                        <div className="bg-card rounded-xl p-3 border shadow-sm">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                              {t('notes')}
+                            </p>
+                            {!editingNotes && (
+                              <button
+                                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  setNotesText(selectedGig.notes || '')
+                                  setEditingNotes(true)
+                                }}
+                                aria-label={tc('edit')}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          {editingNotes ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={notesText}
+                                onChange={(e) => setNotesText(e.target.value)}
+                                className="text-sm min-h-[90px] resize-none"
+                                placeholder={tc('writeNotesHere')}
+                                autoFocus
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" size="sm" onClick={() => setEditingNotes(false)}>
+                                  {tc('cancel')}
+                                </Button>
+                                <Button size="sm" onClick={() => saveNotes(selectedGig.id, notesText)}>
+                                  {tc('save')}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-snug">
+                              {selectedGig.notes || <span className="italic">{tc('noNotes')}</span>}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Attachments */}
+                        <div className="bg-card rounded-xl p-3 border shadow-sm">
+                          <GigAttachments gigId={selectedGig.id} />
+                        </div>
+
+                        {/* Receipts */}
+                        <div className="bg-card rounded-xl p-3 border shadow-sm">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                              <Receipt className="h-3 w-3" />
+                              {t('receipts')} ({gigExpenses.length})
+                            </p>
+                          </div>
+                          {gigExpenses.length === 0 ? (
+                            <p className="text-sm text-muted-foreground italic">{t('noReceiptsLinked')}</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {gigExpenses.map((exp) => (
+                                <li key={exp.id} className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    {exp.attachment_url && (
+                                      <a
+                                        href={exp.attachment_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 hover:text-blue-700 shrink-0"
+                                      >
+                                        <Receipt className="h-3.5 w-3.5" />
+                                      </a>
+                                    )}
+                                    <span className="truncate">{exp.supplier}</span>
+                                  </div>
+                                  <span className="font-medium shrink-0 ml-2">
+                                    {formatCurrency(
+                                      exp.amount,
+                                      (exp.currency || 'SEK') as SupportedCurrency,
+                                      formatLocale,
+                                    )}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {gigExpenses.length > 0 && (
+                            <div className="mt-1.5 pt-1.5 border-t flex justify-between text-sm">
+                              <span className="text-muted-foreground">{tc('total')}</span>
+                              <span className="font-semibold">
+                                {gigExpenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(formatLocale)}{' '}
+                                {baseCurrencySymbol}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {/* Footer */}
-                    <div className="py-3 pb-5 border-t border-border flex items-center gap-2">
-                      <Button
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 h-9 text-sm shadow-lg shadow-black/10"
-                        onClick={() => setEditingGig(selectedGig)}
-                      >
-                        <Edit className="h-3.5 w-3.5 mr-1.5" />
+                    <div className="py-3 pb-[calc(env(safe-area-inset-bottom)+16px)] border-t border-border flex items-center gap-2">
+                      <Button className="flex-1 h-11 rounded-lg" onClick={() => setEditingGig(selectedGig)}>
+                        <Edit className="h-4 w-4 mr-1.5" />
                         {tc('edit')}
                       </Button>
                       <Button
                         variant="outline"
-                        className="rounded-lg px-4 h-9 text-sm border-gray-200 hover:bg-gray-50"
+                        size="icon"
+                        className="h-11 w-11 shrink-0 rounded-lg"
+                        aria-label={t('addReceipt')}
+                        title={t('addReceipt')}
                         onClick={() => setShowReceiptDialog(true)}
                       >
-                        <Receipt className="h-3.5 w-3.5 mr-1.5" />
-                        {t('addReceipt')}
+                        <Receipt className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
-                        className="rounded-lg px-4 h-9 text-sm border-gray-200 hover:bg-gray-50"
+                        size="icon"
+                        className="h-11 w-11 shrink-0 rounded-lg"
+                        aria-label={t('duplicateGig')}
+                        title={t('duplicateGig')}
                         onClick={() => handleDuplicate(selectedGig)}
                       >
-                        <Copy className="h-3.5 w-3.5 mr-1.5" />
-                        {t('duplicateGig')}
+                        <Copy className="h-4 w-4" />
                       </Button>
-                      <div className="flex-1" />
                       <Button
                         variant="ghost"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg px-3 h-9 text-sm"
+                        size="icon"
+                        className="h-11 w-11 shrink-0 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        aria-label={tc('delete')}
+                        title={tc('delete')}
                         onClick={() => confirmDeleteGig(selectedGig.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        {tc('delete')}
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

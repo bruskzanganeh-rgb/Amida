@@ -122,7 +122,10 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
       ) : (
         <div className="space-y-2">
           {expenses.map((expense) => (
-            <div key={expense.id} className="flex items-center justify-between p-2 rounded-lg border bg-white">
+            <div
+              key={expense.id}
+              className="flex items-center justify-between p-2 rounded-lg border bg-white dark:bg-card"
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm truncate">{expense.supplier}</span>
@@ -152,7 +155,7 @@ export function GigReceipts({ gigId, gigTitle, disabled }: GigReceiptsProps) {
                     href={expense.attachment_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded hover:bg-gray-100"
+                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-muted"
                     title={t('viewReceipt')}
                   >
                     <ExternalLink className="h-4 w-4 text-blue-600" />

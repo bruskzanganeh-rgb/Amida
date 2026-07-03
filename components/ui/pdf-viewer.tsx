@@ -39,7 +39,7 @@ export function PdfViewer({ data }: PdfViewerProps) {
     const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' })
     const url = URL.createObjectURL(blob)
     return (
-      <div className="h-[80vh] flex flex-col items-center justify-center bg-gray-100 rounded-lg gap-4">
+      <div className="h-[80vh] flex flex-col items-center justify-center bg-gray-100 dark:bg-muted rounded-lg gap-4">
         <p className="text-sm text-muted-foreground">Could not render PDF preview.</p>
         <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 underline">
           Open PDF in new tab
@@ -49,7 +49,7 @@ export function PdfViewer({ data }: PdfViewerProps) {
   }
 
   return (
-    <div ref={containerRef} className="h-[80vh] overflow-auto bg-gray-100 rounded-lg">
+    <div ref={containerRef} className="h-[80vh] overflow-auto bg-gray-100 dark:bg-muted rounded-lg">
       <Document
         file={file}
         onLoadSuccess={({ numPages: n }) => setNumPages(n)}

@@ -100,12 +100,18 @@ export function StripeTab({ data }: { data: StripeData | null }) {
           <CardTitle className="text-base flex items-center gap-2">
             Webhook
             {webhookConfigured ? (
-              <Badge variant="outline" className="text-green-600 border-green-300 text-xs font-normal">
+              <Badge
+                variant="outline"
+                className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-800 text-xs font-normal"
+              >
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {t('webhookConfigured')}
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-red-600 border-red-300 text-xs font-normal">
+              <Badge
+                variant="outline"
+                className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-800 text-xs font-normal"
+              >
                 <XCircle className="h-3 w-3 mr-1" />
                 {t('webhookMissing')}
               </Badge>

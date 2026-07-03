@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCompany } from '@/lib/hooks/use-company'
 import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
@@ -15,6 +15,7 @@ import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Plus,
   FileText,
@@ -30,6 +31,7 @@ import {
   X,
   Eye,
   CheckCircle,
+  CheckCircle2,
   MoreHorizontal,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -48,6 +50,7 @@ import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { PdfViewer } from '@/components/ui/pdf-viewer'
 import { PageTransition } from '@/components/ui/page-transition'
+import { claimAction } from '@/lib/pending-action'
 
 type Invoice = {
   id: string
@@ -131,11 +134,18 @@ export default function InvoicesTab() {
   const [currentUserId, setCurrentUserId] = useState<string>('')
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [accountantFilter, setAccountantFilter] = useState<string>('all')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
-  // Listen for create-invoice event from page-level button
+  // Listen for create-invoice from the page-level button/FAB. Also claim any
+  // intent buffered before this lazily-imported tab mounted (avoids a dead click).
   useEffect(() => {
-    const handler = () => setShowCreateDialog(true)
+    const handler = () => {
+      claimAction('create-invoice')
+      setShowCreateDialog(true)
+    }
+    if (claimAction('create-invoice')) setShowCreateDialog(true)
     window.addEventListener('create-invoice', handler)
     return () => window.removeEventListener('create-invoice', handler)
   }, [])
@@ -228,16 +238,24 @@ export default function InvoicesTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterLoaded])
 
-  const allInvoices = invoiceData?.invoices ?? []
+  const allInvoices = useMemo(() => invoiceData?.invoices ?? [], [invoiceData])
   const reminderCounts = invoiceData?.reminderCounts ?? {}
 
-  // Filter invoices by search query
-  const invoices = searchQuery.trim()
-    ? allInvoices.filter((inv) => {
-        const q = searchQuery.toLowerCase()
-        return String(inv.invoice_number).includes(q) || (inv.client?.name?.toLowerCase() ?? '').includes(q)
-      })
-    : allInvoices
+  // Filter invoices by search query + accountant status
+  const invoices = useMemo(
+    () =>
+      allInvoices.filter((inv) => {
+        if (accountantFilter === 'sent' && !inv.sent_to_accountant_at) return false
+        if (accountantFilter === 'not_sent' && inv.sent_to_accountant_at) return false
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase()
+          if (!String(inv.invoice_number).includes(q) && !(inv.client?.name?.toLowerCase() ?? '').includes(q))
+            return false
+        }
+        return true
+      }),
+    [allInvoices, searchQuery, accountantFilter],
+  )
 
   // SWR: Clients
   const { data: clients = [] } = useSWR<Client[]>(
@@ -506,6 +524,51 @@ export default function InvoicesTab() {
     }
   }
 
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  // Selection scoped to currently visible (filtered) rows
+  const visibleSelectedCount = invoices.reduce((n, inv) => (selectedIds.has(inv.id) ? n + 1 : n), 0)
+  const allVisibleSelected = invoices.length > 0 && visibleSelectedCount === invoices.length
+  const someVisibleSelected = visibleSelectedCount > 0 && !allVisibleSelected
+
+  function toggleSelectAllVisible() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        invoices.forEach((inv) => next.delete(inv.id))
+      } else {
+        invoices.forEach((inv) => next.add(inv.id))
+      }
+      return next
+    })
+  }
+
+  async function markSelectedSentToAccountant(sent: boolean) {
+    if (selectedIds.size === 0) return
+    const { error } = await supabase
+      .from('invoices')
+      .update({ sent_to_accountant_at: sent ? new Date().toISOString() : null })
+      .in('id', Array.from(selectedIds))
+    if (error) {
+      toast.error(tToast('statusUpdateError'))
+    } else {
+      toast.success(sent ? tToast('markedSentToAccountant') : tToast('unmarkedSentToAccountant'))
+      clearSelection()
+      mutateInvoices()
+    }
+  }
+
   function confirmDeleteInvoice(invoice: Invoice) {
     setInvoiceToDelete(invoice)
     setDeleteConfirmOpen(true)
@@ -589,10 +652,10 @@ export default function InvoicesTab() {
               selectedGigs.length > 0 && selectedGigs.every((g) => g.client_id === selectedGigs[0].client_id)
 
             return (
-              <Card className="border-amber-200 bg-amber-50/50">
+              <Card className="border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/30">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-amber-800">
+                    <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
                       <ClipboardList className="h-5 w-5" />
                       {t('toInvoiceCount', { count: pendingGigs.length })}
                     </CardTitle>
@@ -608,7 +671,7 @@ export default function InvoicesTab() {
                       </Button>
                     )}
                     {selectedPendingGigIds.size > 1 && !allSameClient && (
-                      <p className="text-sm text-amber-700">{t('sameClientRequired')}</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-400">{t('sameClientRequired')}</p>
                     )}
                   </div>
                 </CardHeader>
@@ -617,11 +680,11 @@ export default function InvoicesTab() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-8"></TableHead>
-                        <TableHead className="w-[18%]">{tGig('date')}</TableHead>
-                        <TableHead className="w-[22%]">{tGig('clientShort')}</TableHead>
+                        <TableHead className="w-[22%] sm:w-[18%]">{tGig('date')}</TableHead>
+                        <TableHead className="w-[30%] sm:w-[22%]">{tGig('clientShort')}</TableHead>
                         <TableHead className="w-[20%] hidden xl:table-cell">{tGig('project')}</TableHead>
-                        <TableHead className="w-[15%]">{tGig('fee')}</TableHead>
-                        <TableHead className="w-[10%] text-right">{tGig('action')}</TableHead>
+                        <TableHead className="w-[20%] sm:w-[15%]">{tGig('fee')}</TableHead>
+                        <TableHead className="w-[16%] sm:w-[10%] text-right">{tGig('action')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -642,9 +705,17 @@ export default function InvoicesTab() {
                             />
                           </TableCell>
                           <TableCell>
-                            {gig.total_days > 1 && gig.start_date && gig.end_date
-                              ? `${format(parseLocalDate(gig.start_date), 'd MMM', { locale: dateLocale })} - ${format(parseLocalDate(gig.end_date), 'd MMM yyyy', { locale: dateLocale })}`
-                              : format(parseLocalDate(gig.date), 'PPP', { locale: dateLocale })}
+                            {/* Compact numeric date on mobile so it fits beside the select checkbox */}
+                            <span className="sm:hidden">
+                              {gig.total_days > 1 && gig.start_date && gig.end_date
+                                ? `${format(parseLocalDate(gig.start_date), 'd/M', { locale: dateLocale })} - ${format(parseLocalDate(gig.end_date), 'd/M yyyy', { locale: dateLocale })}`
+                                : format(parseLocalDate(gig.date), 'd/M yyyy', { locale: dateLocale })}
+                            </span>
+                            <span className="hidden sm:inline">
+                              {gig.total_days > 1 && gig.start_date && gig.end_date
+                                ? `${format(parseLocalDate(gig.start_date), 'd MMM', { locale: dateLocale })} - ${format(parseLocalDate(gig.end_date), 'd MMM yyyy', { locale: dateLocale })}`
+                                : format(parseLocalDate(gig.date), 'PPP', { locale: dateLocale })}
+                            </span>
                           </TableCell>
                           <TableCell className="font-medium truncate" title={gig.client_name}>
                             {gig.client_name}
@@ -688,21 +759,61 @@ export default function InvoicesTab() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 {t('allInvoices', { count: invoices.length })}
               </CardTitle>
-              <div className="relative w-full max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={`${tc('search')}...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+              <div className="flex items-center gap-2">
+                <Select value={accountantFilter} onValueChange={setAccountantFilter}>
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder={t('allAccountant')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('allAccountant')}</SelectItem>
+                    <SelectItem value="sent">{t('onlySentToAccountant')}</SelectItem>
+                    <SelectItem value="not_sent">{t('onlyNotSentToAccountant')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="relative w-full max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={`${tc('search')}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </div>
             </div>
+            {selectedIds.size > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                <span className="text-sm font-medium">{t('selectedCount', { count: selectedIds.size })}</span>
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm">
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        {t('sentToAccountant')}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => markSelectedSentToAccountant(true)}>
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                        {t('markSentToAccountant')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => markSelectedSentToAccountant(false)}>
+                        <X className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {t('unmarkSentToAccountant')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>
+                    {t('clearSelection')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -724,13 +835,22 @@ export default function InvoicesTab() {
                   {invoices.slice(0, mobileInvoiceLimit).map((invoice) => (
                     <div
                       key={invoice.id}
-                      className="p-3 rounded-lg border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedIds.has(invoice.id) ? 'bg-primary/5 border-primary/40' : 'bg-card hover:bg-muted/50'
+                      }`}
                       onClick={() => {
                         setSelectedInvoice(invoice)
                         setShowEditDialog(true)
                       }}
                     >
                       <div className="flex items-start justify-between gap-2">
+                        <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(invoice.id)}
+                            onCheckedChange={() => toggleSelected(invoice.id)}
+                            aria-label={t('selectRow')}
+                          />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">#{invoice.invoice_number}</span>
@@ -776,55 +896,26 @@ export default function InvoicesTab() {
                           )}
                         </div>
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          {invoice.status !== 'paid' && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                              aria-label={t('markPaid')}
-                              title={t('markPaid')}
-                              onClick={() => setConfirmPaidInvoice(invoice.id)}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9"
-                            aria-label={t('previewPdf')}
-                            title={t('previewPdf')}
-                            onClick={() => openPdfPreview(invoice.id, invoice.invoice_number)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => downloadInvoicePdf(invoice.id, invoice.invoice_number)}
-                            title={tc('download')}
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </Button>
+                          {/* Primary contextual action */}
                           {invoice.status === 'overdue' ? (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-amber-600"
+                              className="h-11 w-11 text-amber-600"
+                              aria-label={t('reminder.sendReminder')}
+                              title={t('reminder.sendReminder')}
                               onClick={() => {
                                 setSelectedInvoice(invoice)
                                 setShowReminderDialog(true)
                               }}
-                              title={t('reminder.sendReminder')}
                             >
-                              <Bell className="h-3.5 w-3.5" />
+                              <Bell className="h-5 w-5" />
                             </Button>
                           ) : invoice.status !== 'sent' && invoice.status !== 'paid' ? (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9"
+                              className="h-11 w-11"
                               aria-label={t('sendViaEmail')}
                               title={t('sendViaEmail')}
                               onClick={() => {
@@ -832,22 +923,48 @@ export default function InvoicesTab() {
                                 setShowSendDialog(true)
                               }}
                             >
-                              <Mail className="h-3.5 w-3.5" />
+                              <Mail className="h-5 w-5" />
+                            </Button>
+                          ) : invoice.status === 'sent' ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-11 w-11"
+                              aria-label={t('markPaid')}
+                              title={t('markPaid')}
+                              onClick={() => setConfirmPaidInvoice(invoice.id)}
+                            >
+                              <Check className="h-5 w-5" />
                             </Button>
                           ) : null}
+                          {/* Everything else in an overflow menu */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9"
+                                className="h-11 w-11"
                                 aria-label={tc('more')}
                                 title={tc('more')}
                               >
-                                <MoreHorizontal className="h-3.5 w-3.5" />
+                                <MoreHorizontal className="h-5 w-5" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openPdfPreview(invoice.id, invoice.invoice_number)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                {t('previewPdf')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => downloadInvoicePdf(invoice.id, invoice.invoice_number)}>
+                                <Download className="mr-2 h-4 w-4" />
+                                {tc('download')}
+                              </DropdownMenuItem>
+                              {invoice.status !== 'paid' && invoice.status !== 'sent' && (
+                                <DropdownMenuItem onClick={() => setConfirmPaidInvoice(invoice.id)}>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  {t('markPaid')}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => toggleSentToAccountant(invoice)}>
                                 <ClipboardList className="mr-2 h-4 w-4" />
                                 {invoice.sent_to_accountant_at
@@ -909,12 +1026,20 @@ export default function InvoicesTab() {
                     <table className="w-full caption-bottom text-sm table-fixed">
                       <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
                         <TableRow>
-                          <TableHead className="w-[8%]">{t('invoiceNumberShort')}</TableHead>
-                          <TableHead className="w-[20%]">{t('customer')}</TableHead>
-                          <TableHead className="w-[15%]">{tGig('date')}</TableHead>
-                          <TableHead className="w-[15%]">{t('dueDate')}</TableHead>
-                          <TableHead className="w-[12%]">{t('amount')}</TableHead>
-                          <TableHead className="w-[10%]">{tGig('status')}</TableHead>
+                          <TableHead className="w-[4%]">
+                            <Checkbox
+                              checked={allVisibleSelected ? true : someVisibleSelected ? 'indeterminate' : false}
+                              onCheckedChange={toggleSelectAllVisible}
+                              aria-label={t('selectAll')}
+                            />
+                          </TableHead>
+                          <TableHead className="w-[7%]">{t('invoiceNumberShort')}</TableHead>
+                          <TableHead className="w-[19%]">{t('customer')}</TableHead>
+                          <TableHead className="w-[12%]">{tGig('date')}</TableHead>
+                          <TableHead className="w-[12%]">{t('dueDate')}</TableHead>
+                          <TableHead className="w-[11%]">{t('amount')}</TableHead>
+                          <TableHead className="w-[9%]">{tGig('status')}</TableHead>
+                          <TableHead className="w-[6%] text-center">{t('accountantShort')}</TableHead>
                           <TableHead className="w-[20%] text-right">{tGig('actions')}</TableHead>
                         </TableRow>
                       </thead>
@@ -922,7 +1047,7 @@ export default function InvoicesTab() {
                         {virtualizer.getVirtualItems().length > 0 && (
                           <tr>
                             <td
-                              colSpan={7}
+                              colSpan={9}
                               style={{ height: virtualizer.getVirtualItems()[0].start, padding: 0, border: 'none' }}
                             />
                           </tr>
@@ -934,12 +1059,20 @@ export default function InvoicesTab() {
                               key={invoice.id}
                               data-index={virtualRow.index}
                               ref={virtualizer.measureElement}
-                              className="cursor-pointer hover:bg-muted/50"
+                              data-state={selectedIds.has(invoice.id) ? 'selected' : undefined}
+                              className="cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-primary/5"
                               onClick={() => {
                                 setSelectedInvoice(invoice)
                                 setShowEditDialog(true)
                               }}
                             >
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={selectedIds.has(invoice.id)}
+                                  onCheckedChange={() => toggleSelected(invoice.id)}
+                                  aria-label={t('selectRow')}
+                                />
+                              </TableCell>
                               <TableCell className="font-medium">#{invoice.invoice_number}</TableCell>
                               <TableCell>
                                 <div>
@@ -967,9 +1100,6 @@ export default function InvoicesTab() {
                                   <Badge className={statusConfig[invoice.status as keyof typeof statusConfig]?.color}>
                                     {t(`status.${invoice.status}`)}
                                   </Badge>
-                                  {invoice.sent_to_accountant_at && (
-                                    <span className="text-[10px] text-green-600">{t('sentToAccountant')}</span>
-                                  )}
                                   {invoice.status === 'overdue' ? (
                                     <span className="text-[10px] text-red-600">
                                       {invoice.sent_date &&
@@ -993,6 +1123,28 @@ export default function InvoicesTab() {
                                     </span>
                                   ) : null}
                                 </div>
+                              </TableCell>
+                              <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                                {invoice.sent_to_accountant_at ? (
+                                  <button
+                                    onClick={() => toggleSentToAccountant(invoice)}
+                                    title={t('sentToAccountant')}
+                                    className="inline-flex"
+                                  >
+                                    <CheckCircle2
+                                      className="h-4 w-4 text-green-600 dark:text-green-400"
+                                      aria-label={t('sentToAccountant')}
+                                    />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => toggleSentToAccountant(invoice)}
+                                    title={t('markSentToAccountant')}
+                                    className="text-muted-foreground/40 hover:text-muted-foreground"
+                                  >
+                                    –
+                                  </button>
+                                )}
                               </TableCell>
                               <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-end gap-1">
@@ -1099,7 +1251,7 @@ export default function InvoicesTab() {
                         {virtualizer.getVirtualItems().length > 0 && (
                           <tr>
                             <td
-                              colSpan={7}
+                              colSpan={9}
                               style={{
                                 height: virtualizer.getTotalSize() - (virtualizer.getVirtualItems().at(-1)?.end ?? 0),
                                 padding: 0,
@@ -1248,14 +1400,16 @@ export default function InvoicesTab() {
               </div>
               {pdfPreviewLoading ? (
                 <div className="flex items-center justify-center h-96 sm:h-96 flex-1 sm:flex-none">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-muted-foreground" />
                 </div>
               ) : pdfPreviewData ? (
                 <div className="flex-1 sm:flex-none overflow-auto">
                   <PdfViewer data={pdfPreviewData} />
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-96 text-gray-500">{t('errorLoadingPdf')}</div>
+                <div className="flex items-center justify-center h-96 text-gray-500 dark:text-muted-foreground">
+                  {t('errorLoadingPdf')}
+                </div>
               )}
             </div>
           </DialogContent>

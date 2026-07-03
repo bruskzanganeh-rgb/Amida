@@ -453,7 +453,10 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           <Crown className="h-3 w-3 text-yellow-500" />
                           {u.admin_override ? (
-                            <Badge variant="outline" className="text-[10px] text-purple-600 border-purple-300">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-800"
+                            >
                               {t('adminSet')}
                             </Badge>
                           ) : (
@@ -477,18 +480,27 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
                             </span>
                           )}
                           {u.cancel_at_period_end && (
-                            <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                            >
                               {t('endsAtPeriod')}
                             </Badge>
                           )}
                           {u.status === 'past_due' && (
-                            <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                            >
                               <AlertTriangle className="h-3 w-3 mr-1" />
                               past_due
                             </Badge>
                           )}
                           {u.status === 'canceled' && (
-                            <Badge variant="outline" className="text-[10px] text-red-600 border-red-300">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-red-600 dark:text-red-400 border-red-300 dark:border-red-800"
+                            >
                               canceled
                             </Badge>
                           )}
@@ -619,8 +631,8 @@ export function OrganizationsTab({ users, setUsers, onReload }: Props) {
 
                       {/* Delete company */}
                       {confirmDeleteId === u.user_id ? (
-                        <div className="flex items-center gap-2 p-2 rounded bg-red-50 border border-red-200">
-                          <p className="text-xs text-red-700 flex-1">{t('deleteCompanyConfirm')}</p>
+                        <div className="flex items-center gap-2 p-2 rounded bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40">
+                          <p className="text-xs text-red-700 dark:text-red-300 flex-1">{t('deleteCompanyConfirm')}</p>
                           <Button
                             size="sm"
                             variant="outline"

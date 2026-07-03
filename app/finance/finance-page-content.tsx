@@ -8,7 +8,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useRouter, usePathname } from 'next/navigation'
 import { FileText, BarChart3, Tag, Music, Users, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { requestAction } from '@/lib/pending-action'
 import { PageTransition } from '@/components/ui/page-transition'
+import { StatsSkeleton } from '@/components/skeletons/stats-skeleton'
+import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 
 import dynamic from 'next/dynamic'
 
@@ -35,9 +38,11 @@ const ClientsTab = dynamic(() => import('@/components/settings/clients-tab'), {
 
 function TabSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="h-8 w-48 bg-muted rounded" />
-      <div className="h-64 bg-muted rounded" />
+    <div className="space-y-6">
+      <StatsSkeleton count={4} />
+      <div className="rounded-lg border p-4">
+        <TableSkeleton columns={7} rows={6} />
+      </div>
     </div>
   )
 }
@@ -89,7 +94,7 @@ export function FinancePageContent() {
               </TabsTrigger>
             </TabsList>
             {currentTab === 'invoices' && (
-              <Button size="sm" onClick={() => window.dispatchEvent(new Event('create-invoice'))}>
+              <Button size="sm" onClick={() => requestAction('create-invoice')}>
                 <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">{tInvoice('newInvoice')}</span>
               </Button>

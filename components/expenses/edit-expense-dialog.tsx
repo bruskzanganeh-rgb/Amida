@@ -334,7 +334,7 @@ export function EditExpenseDialog({
               <Label className="text-sm font-medium">{t('receiptImage')}</Label>
 
               {attachmentLoading ? (
-                <div className="flex flex-col items-center justify-center h-40 md:h-56 text-sm text-gray-500">
+                <div className="flex flex-col items-center justify-center h-40 md:h-56 text-sm text-gray-500 dark:text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mb-2" />
                   {tc('loading')}
                 </div>
@@ -378,7 +378,7 @@ export function EditExpenseDialog({
                 </div>
               ) : hasAttachment && !attachmentUrl ? (
                 <div className="space-y-2">
-                  <div className="w-full h-40 md:h-56 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 flex items-center justify-center">
+                  <div className="w-full h-40 md:h-56 rounded-lg border-2 border-dashed border-amber-300 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
                     <p className="text-xs text-amber-600 text-center px-2">{t('couldNotLoad')}</p>
                   </div>
                   <Button
@@ -401,11 +401,11 @@ export function EditExpenseDialog({
               ) : (
                 <div className="space-y-2">
                   <div
-                    className="w-full h-40 md:h-56 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+                    className="w-full h-40 md:h-56 rounded-lg border-2 border-dashed border-gray-300 dark:border-border flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <ImageIcon className="h-8 w-8 text-gray-300 mb-2" />
-                    <p className="text-xs text-gray-400">{t('noImage')}</p>
+                    <ImageIcon className="h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" />
+                    <p className="text-xs text-gray-400 dark:text-muted-foreground">{t('noImage')}</p>
                   </div>
                   <Button
                     variant="outline"
@@ -577,7 +577,7 @@ export function EditExpenseDialog({
           <DialogFooter className="flex justify-between">
             <Button
               variant="ghost"
-              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
               onClick={() => setDeleteConfirmOpen(true)}
               disabled={saving || deleting}
             >

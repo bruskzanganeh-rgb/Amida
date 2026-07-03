@@ -347,7 +347,7 @@ export function MultiDayDatePicker({
                     {sessions.map((s, i) => (
                       <span
                         key={i}
-                        className="text-[10px] bg-white border border-gray-200 rounded px-1.5 py-0.5 text-gray-600"
+                        className="text-[10px] bg-white dark:bg-muted border border-gray-200 dark:border-border rounded px-1.5 py-0.5 text-gray-600 dark:text-muted-foreground"
                       >
                         {s.label && <span className="font-medium">{s.label} </span>}
                         {s.start}
@@ -393,7 +393,7 @@ export function MultiDayDatePicker({
                         {sessions.map((s, i) => (
                           <span
                             key={i}
-                            className="text-[10px] bg-white border border-gray-200 rounded px-1.5 py-0.5 text-gray-600"
+                            className="text-[10px] bg-white dark:bg-muted border border-gray-200 dark:border-border rounded px-1.5 py-0.5 text-gray-600 dark:text-muted-foreground"
                           >
                             {s.label && <span className="font-medium">{s.label} </span>}
                             {s.start}

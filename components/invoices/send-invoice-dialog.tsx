@@ -277,7 +277,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
           </div>
 
           {/* Invoice PDF attachment (always included) */}
-          <div className="p-3 rounded-lg border bg-gray-50">
+          <div className="p-3 rounded-lg border bg-gray-50 dark:bg-muted">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium">
@@ -300,11 +300,11 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                 </Button>
               </div>
 
-              <div className="space-y-2 border rounded-lg p-3 bg-white">
+              <div className="space-y-2 border rounded-lg p-3 bg-white dark:bg-card">
                 {invoiceDocs.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-muted cursor-pointer"
                     onClick={() => toggleDoc(doc.id)}
                   >
                     <Checkbox
@@ -351,11 +351,11 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
               ) : receipts.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-2">{t('noReceiptsLinked')}</p>
               ) : (
-                <div className="space-y-2 border rounded-lg p-3 bg-white">
+                <div className="space-y-2 border rounded-lg p-3 bg-white dark:bg-card">
                   {receipts.map((receipt) => (
                     <div
                       key={receipt.id}
-                      className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-muted cursor-pointer"
                       onClick={() => toggleReceipt(receipt.id)}
                     >
                       <Checkbox
@@ -380,7 +380,7 @@ export function SendInvoiceDialog({ invoice, open, onOpenChange, onSuccess }: Se
                           href={receipt.attachment_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1 rounded hover:bg-gray-200"
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-muted"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <ExternalLink className="h-3.5 w-3.5 text-blue-600" />

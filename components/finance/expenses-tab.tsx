@@ -11,12 +11,14 @@ import { useBaseCurrency } from '@/lib/hooks/use-base-currency'
 import { parseLocalDate } from '@/lib/dates'
 import { formatCurrency, type SupportedCurrency } from '@/lib/currency/exchange'
 import { readJsonSafe } from '@/lib/http'
+import { claimAction } from '@/lib/pending-action'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   Receipt,
   BarChart3,
@@ -32,6 +34,7 @@ import {
   Files,
   CheckCircle2,
   Merge,
+  SlidersHorizontal,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Input } from '@/components/ui/input'
@@ -105,6 +108,7 @@ export default function ExpensesTab() {
   const [privacyFilter, setPrivacyFilter] = useState<string>('all')
   const [accountantFilter, setAccountantFilter] = useState<string>('all')
   const [memberFilter, setMemberFilter] = useState<string>('all')
+  const [showFilterSheet, setShowFilterSheet] = useState(false)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showMergeDialog, setShowMergeDialog] = useState(false)
@@ -394,11 +398,14 @@ export default function ExpensesTab() {
 
   useEffect(() => {
     function handleUpload() {
+      claimAction('upload-receipt')
       setShowUploadDialog(true)
     }
     function handleExport() {
       setShowExportDialog(true)
     }
+    // Claim any upload intent buffered before this lazily-imported tab mounted.
+    if (claimAction('upload-receipt')) setShowUploadDialog(true)
     window.addEventListener('upload-receipt', handleUpload)
     window.addEventListener('export-expenses', handleExport)
     return () => {
@@ -407,117 +414,182 @@ export default function ExpensesTab() {
     }
   }, [])
 
+  // Filter <Select> controls, shared between the desktop row and the mobile
+  // filter sheet (rendered in a flex-col container that forces full width).
+  const filterSelects = (
+    <>
+      <div>
+        <Select value={yearFilter} onValueChange={setYearFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allYears')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allYears')}</SelectItem>
+            {years.map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allCategories')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allCategories')}</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {categoryLabel(cat, t)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allSuppliers')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allSuppliers')}</SelectItem>
+            {suppliers.map((sup) => (
+              <SelectItem key={sup} value={sup}>
+                {sup}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Select value={gigFilter} onValueChange={setGigFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allGigs')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allGigs')}</SelectItem>
+            <SelectItem value="linked">{t('withGig')}</SelectItem>
+            <SelectItem value="unlinked">{t('withoutGig')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Select value={privacyFilter} onValueChange={setPrivacyFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allTypes')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allTypes')}</SelectItem>
+            <SelectItem value="private">{t('onlyPrivate')}</SelectItem>
+            <SelectItem value="business">{t('onlyBusiness')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Select value={accountantFilter} onValueChange={setAccountantFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder={t('allAccountant')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allAccountant')}</SelectItem>
+            <SelectItem value="sent">{t('onlySentToAccountant')}</SelectItem>
+            <SelectItem value="not_sent">{t('onlyNotSentToAccountant')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {isSharedMode && !shouldFilter && (
+        <div>
+          <Select value={memberFilter} onValueChange={setMemberFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder={tTeam('allMembers')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{tTeam('allMembers')}</SelectItem>
+              {allMembers.map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  {m.user_id === currentUserId
+                    ? tTeam('me')
+                    : m.full_name?.split(' ')[0] || m.email?.split('@')[0] || m.user_id.slice(0, 6)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </>
+  )
+
+  // Active (non-"all") filters, for the mobile count badge + removable chips.
+  const activeFilters: { key: string; label: string; onClear: () => void }[] = []
+  if (yearFilter !== 'all') activeFilters.push({ key: 'year', label: yearFilter, onClear: () => setYearFilter('all') })
+  if (categoryFilter !== 'all')
+    activeFilters.push({ key: 'cat', label: categoryLabel(categoryFilter, t), onClear: () => setCategoryFilter('all') })
+  if (supplierFilter !== 'all')
+    activeFilters.push({ key: 'sup', label: supplierFilter, onClear: () => setSupplierFilter('all') })
+  if (gigFilter !== 'all')
+    activeFilters.push({
+      key: 'gig',
+      label: gigFilter === 'linked' ? t('withGig') : t('withoutGig'),
+      onClear: () => setGigFilter('all'),
+    })
+  if (privacyFilter !== 'all')
+    activeFilters.push({
+      key: 'priv',
+      label: privacyFilter === 'private' ? t('onlyPrivate') : t('onlyBusiness'),
+      onClear: () => setPrivacyFilter('all'),
+    })
+  if (accountantFilter !== 'all')
+    activeFilters.push({
+      key: 'acc',
+      label: accountantFilter === 'sent' ? t('onlySentToAccountant') : t('onlyNotSentToAccountant'),
+      onClear: () => setAccountantFilter('all'),
+    })
+  if (memberFilter !== 'all')
+    activeFilters.push({ key: 'mem', label: getMemberLabel(memberFilter), onClear: () => setMemberFilter('all') })
+
   return (
     <PageTransition className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
       <div className="lg:flex lg:flex-col lg:h-full lg:min-h-0 space-y-6">
-        {/* Filter */}
-        <div className="flex flex-wrap gap-2 lg:shrink-0">
-          <div>
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allYears')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allYears')}</SelectItem>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allCategories')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allCategories')}</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {categoryLabel(cat, t)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allSuppliers')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allSuppliers')}</SelectItem>
-                {suppliers.map((sup) => (
-                  <SelectItem key={sup} value={sup}>
-                    {sup}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={gigFilter} onValueChange={setGigFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allGigs')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allGigs')}</SelectItem>
-                <SelectItem value="linked">{t('withGig')}</SelectItem>
-                <SelectItem value="unlinked">{t('withoutGig')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={privacyFilter} onValueChange={setPrivacyFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allTypes')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allTypes')}</SelectItem>
-                <SelectItem value="private">{t('onlyPrivate')}</SelectItem>
-                <SelectItem value="business">{t('onlyBusiness')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={accountantFilter} onValueChange={setAccountantFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('allAccountant')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allAccountant')}</SelectItem>
-                <SelectItem value="sent">{t('onlySentToAccountant')}</SelectItem>
-                <SelectItem value="not_sent">{t('onlyNotSentToAccountant')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {isSharedMode && !shouldFilter && (
-            <div>
-              <Select value={memberFilter} onValueChange={setMemberFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder={tTeam('allMembers')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{tTeam('allMembers')}</SelectItem>
-                  {allMembers.map((m) => (
-                    <SelectItem key={m.user_id} value={m.user_id}>
-                      {m.user_id === currentUserId
-                        ? tTeam('me')
-                        : m.full_name?.split(' ')[0] || m.email?.split('@')[0] || m.user_id.slice(0, 6)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        {/* Filter — desktop row */}
+        <div className="hidden lg:flex flex-wrap gap-2 lg:shrink-0">
+          {filterSelects}
           {supplierCounts.length > 1 && (
             <Button variant="outline" onClick={() => setShowMergeDialog(true)} className="ml-auto">
               <Merge className="h-4 w-4 mr-1" />
               {t('mergeSuppliers')}
             </Button>
           )}
+        </div>
+
+        {/* Filter — mobile: button + removable chips */}
+        <div className="lg:hidden space-y-2">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => setShowFilterSheet(true)}>
+              <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+              {tc('filter')}
+              {activeFilters.length > 0 && (
+                <Badge className="ml-1.5 h-5 min-w-5 justify-center px-1 bg-primary text-primary-foreground">
+                  {activeFilters.length}
+                </Badge>
+              )}
+            </Button>
+            {activeFilters.length > 0 && (
+              <div className="flex-1 flex gap-1.5 overflow-x-auto scrollbar-hide">
+                {activeFilters.map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={f.onClear}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-1 text-xs"
+                  >
+                    {f.label}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:shrink-0">
@@ -940,6 +1012,31 @@ export default function ExpensesTab() {
           onMerged={() => mutateExpenses()}
         />
 
+        {/* Mobile filter sheet */}
+        <Sheet open={showFilterSheet} onOpenChange={setShowFilterSheet}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[85dvh] rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+16px)]"
+          >
+            <SheetHeader className="pb-0">
+              <SheetTitle>{tc('filter')}</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto px-4 flex flex-col gap-3 [&>div]:w-full [&_button]:w-full">
+              {filterSelects}
+            </div>
+            <div className="flex items-center gap-2 px-4">
+              {activeFilters.length > 0 && (
+                <Button variant="ghost" className="flex-1" onClick={() => activeFilters.forEach((f) => f.onClear())}>
+                  {tc('clearFilters')}
+                </Button>
+              )}
+              <Button className="flex-1" onClick={() => setShowFilterSheet(false)}>
+                {tc('done')}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+
         <ConfirmDialog
           open={bulkDeleteOpen}
           onOpenChange={setBulkDeleteOpen}
@@ -982,7 +1079,7 @@ export default function ExpensesTab() {
               </div>
               {previewLoading ? (
                 <div className="flex items-center justify-center h-96">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-muted-foreground" />
                 </div>
               ) : previewUrl ? (
                 previewIsPdf ? (
@@ -993,7 +1090,9 @@ export default function ExpensesTab() {
                   </div>
                 )
               ) : (
-                <div className="flex items-center justify-center h-96 text-gray-500">{t('couldNotLoadImage')}</div>
+                <div className="flex items-center justify-center h-96 text-gray-500 dark:text-muted-foreground">
+                  {t('couldNotLoadImage')}
+                </div>
               )}
             </div>
           </DialogContent>

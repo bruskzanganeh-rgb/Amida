@@ -298,13 +298,13 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                 <Label className="text-sm font-medium">{pdfSource === 'sent' ? t('sentPdf') : t('originalPdf')}</Label>
 
                 {pdfLoading ? (
-                  <div className="flex flex-col items-center justify-center h-80 text-sm text-gray-500 border rounded-lg">
+                  <div className="flex flex-col items-center justify-center h-80 text-sm text-gray-500 dark:text-muted-foreground border rounded-lg">
                     <Loader2 className="h-6 w-6 animate-spin mb-2" />
                     {tc('loading')}
                   </div>
                 ) : hasPdf && pdfUrl ? (
                   <div className="space-y-2">
-                    <div className="relative h-80 border rounded-lg overflow-hidden bg-gray-100">
+                    <div className="relative h-80 border rounded-lg overflow-hidden bg-gray-100 dark:bg-muted">
                       <iframe
                         src={pdfUrl}
                         className="w-full h-full"
@@ -329,7 +329,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-80 text-sm text-gray-400 border-2 border-dashed rounded-lg">
+                  <div className="flex flex-col items-center justify-center h-80 text-sm text-gray-400 dark:text-muted-foreground border-2 border-dashed rounded-lg">
                     <FileText className="h-12 w-12 mb-2 opacity-50" />
                     <p>{t('noPdf')}</p>
                     {!invoice.imported_from_pdf && <p className="text-xs mt-1">{t('createdManually')}</p>}
@@ -546,7 +546,7 @@ export function EditInvoiceDialog({ invoice, open, onOpenChange, onSuccess, clie
           <DialogFooter className="flex justify-between pt-4 border-t">
             <Button
               variant="ghost"
-              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
               onClick={() => setDeleteConfirmOpen(true)}
               disabled={saving || deleting}
             >
