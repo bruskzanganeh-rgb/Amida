@@ -795,6 +795,18 @@ export default function SettingsPage() {
                     <SelectItem value="America/Chicago">America/Chicago (CT)</SelectItem>
                     <SelectItem value="America/Denver">America/Denver (MT)</SelectItem>
                     <SelectItem value="America/Los_Angeles">America/Los_Angeles (PT)</SelectItem>
+                    <SelectItem value="America/Sao_Paulo">America/Sao_Paulo (BRT)</SelectItem>
+                    <SelectItem value="America/Bahia">America/Bahia (BRT)</SelectItem>
+                    <SelectItem value="America/Fortaleza">America/Fortaleza (BRT)</SelectItem>
+                    <SelectItem value="America/Manaus">America/Manaus (AMT)</SelectItem>
+                    <SelectItem value="America/Argentina/Buenos_Aires">America/Argentina/Buenos_Aires (ART)</SelectItem>
+                    <SelectItem value="America/Santiago">America/Santiago (CLT/CLST)</SelectItem>
+                    <SelectItem value="America/Bogota">America/Bogota (COT)</SelectItem>
+                    <SelectItem value="America/Lima">America/Lima (PET)</SelectItem>
+                    <SelectItem value="America/Montevideo">America/Montevideo (UYT)</SelectItem>
+                    <SelectItem value="America/Asuncion">America/Asuncion (PYT/PYST)</SelectItem>
+                    <SelectItem value="America/La_Paz">America/La_Paz (BOT)</SelectItem>
+                    <SelectItem value="America/Caracas">America/Caracas (VET)</SelectItem>
                     <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
                     <SelectItem value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</SelectItem>
                   </SelectContent>
