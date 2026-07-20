@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { SubscriptionSettings } from '@/components/settings/subscription-settings'
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings'
+import { TIMEZONE_OPTIONS, DEFAULT_TIMEZONE } from '@/lib/timezones'
 import { TeamSettings } from '@/components/settings/team-settings'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
@@ -205,7 +206,7 @@ export default function SettingsPage() {
             locale: personalSettings.locale || 'sv',
             country_code: company.country_code,
             calendar_token: personalSettings.calendar_token,
-            timezone: personalSettings.timezone || 'Europe/Stockholm',
+            timezone: personalSettings.timezone || DEFAULT_TIMEZONE,
           })
           setCompanyId(membership.company_id)
           initialBaseCurrencyRef.current = company.base_currency
@@ -633,6 +634,41 @@ export default function SettingsPage() {
                   </Select>
                   <p className="text-xs text-muted-foreground">{t('languageHint')}</p>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">{t('timezone')}</Label>
+                  <Select
+                    value={settings?.timezone || DEFAULT_TIMEZONE}
+                    onValueChange={async (value) => {
+                      setSettings((s) => (s ? { ...s, timezone: value } : null))
+                      // Save immediately — the only Save button lives further up
+                      // this tab and users edit this field in isolation.
+                      if (!settings?.id) return
+                      const { error } = await supabase
+                        .from('company_settings')
+                        .update({ timezone: value })
+                        .eq('id', settings.id)
+                      if (error) {
+                        console.error('Error saving timezone:', error)
+                        toast.error(tToast('settingsError', { error: error.message }))
+                      } else {
+                        toast.success(tToast('settingsSaved'))
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-[300px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEZONE_OPTIONS.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t('timezoneHint')}</p>
+                </div>
               </CardContent>
             </Card>
 
@@ -778,40 +814,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2 pt-4 border-t">
-                <Label htmlFor="calendar_timezone">{t('calendarTimezone')}</Label>
-                <Select
-                  value={settings?.timezone || 'Europe/Stockholm'}
-                  onValueChange={(value) => setSettings((s) => (s ? { ...s, timezone: value } : null))}
-                >
-                  <SelectTrigger className="w-full sm:w-[300px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Europe/Stockholm">Europe/Stockholm (CET/CEST)</SelectItem>
-                    <SelectItem value="Europe/London">Europe/London (GMT/BST)</SelectItem>
-                    <SelectItem value="Europe/Berlin">Europe/Berlin (CET/CEST)</SelectItem>
-                    <SelectItem value="Europe/Paris">Europe/Paris (CET/CEST)</SelectItem>
-                    <SelectItem value="America/New_York">America/New_York (ET)</SelectItem>
-                    <SelectItem value="America/Chicago">America/Chicago (CT)</SelectItem>
-                    <SelectItem value="America/Denver">America/Denver (MT)</SelectItem>
-                    <SelectItem value="America/Los_Angeles">America/Los_Angeles (PT)</SelectItem>
-                    <SelectItem value="America/Sao_Paulo">America/Sao_Paulo (BRT)</SelectItem>
-                    <SelectItem value="America/Bahia">America/Bahia (BRT)</SelectItem>
-                    <SelectItem value="America/Fortaleza">America/Fortaleza (BRT)</SelectItem>
-                    <SelectItem value="America/Manaus">America/Manaus (AMT)</SelectItem>
-                    <SelectItem value="America/Argentina/Buenos_Aires">America/Argentina/Buenos_Aires (ART)</SelectItem>
-                    <SelectItem value="America/Santiago">America/Santiago (CLT/CLST)</SelectItem>
-                    <SelectItem value="America/Bogota">America/Bogota (COT)</SelectItem>
-                    <SelectItem value="America/Lima">America/Lima (PET)</SelectItem>
-                    <SelectItem value="America/Montevideo">America/Montevideo (UYT)</SelectItem>
-                    <SelectItem value="America/Asuncion">America/Asuncion (PYT/PYST)</SelectItem>
-                    <SelectItem value="America/La_Paz">America/La_Paz (BOT)</SelectItem>
-                    <SelectItem value="America/Caracas">America/Caracas (VET)</SelectItem>
-                    <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
-                    <SelectItem value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{t('calendarTimezoneHint')}</p>
+                <Label>{t('calendarTimezone')}</Label>
+                <p className="text-sm">
+                  {t('calendarTimezoneManaged', { timezone: settings?.timezone || DEFAULT_TIMEZONE })}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setActiveTab('company')}>
+                  {t('tabCompany')}
+                </Button>
               </div>
 
               <p className="text-xs text-muted-foreground">{t('calendarAutoUpdate')}</p>
